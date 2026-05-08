@@ -23,6 +23,7 @@ document covers. Update this index every time you add a new plan file.
 | [architecture.md](./architecture.md) | High-level system design and tech-stack decisions |
 | [frontend/overview.md](./frontend/overview.md) | Frontend goals, chosen framework, folder layout |
 | [frontend/ui-components.md](./frontend/ui-components.md) | UI component catalogue and design-system rules |
+| [frontend/auth-screens.md](./frontend/auth-screens.md) | Auth flow screens: Login, Reset Password, Verify OTP, New Password — components, API contracts, token management |
 | [frontend/api-integration.md](./frontend/api-integration.md) | How the frontend calls the backend API |
 | [backend/overview.md](./backend/overview.md) | Backend goals, chosen framework, folder layout |
 | [backend/api-design.md](./backend/api-design.md) | REST / GraphQL endpoint definitions |
