@@ -1,28 +1,44 @@
 # Backend – Database Schema
 
-> This file defines the data model for GaadiWalo. The agent should read this before creating
-> migrations, writing queries, or adding new fields to existing tables/collections.
+## Engine and Access
 
----
+- Database: Supabase Postgres
+- Access: Supabase client on server + SQL migrations
 
-## What to put in this file
+## Core Entities (MVP)
 
-In this file, describe the database and every entity (table or collection) in enough detail that
-the agent can generate migrations and write queries without guessing. Include:
+- `users`
+  - id, full_name, phone, email, role (`sales|admin`), branch, status, joined_at
+- `leads`
+  - id, full_name, phone, email, source, status, assigned_to, created_by, created_at, updated_at
+- `lead_notes`
+  - id, lead_id, author_id, content, created_at
+- `lead_activities`
+  - id, lead_id, type, description, meta_json, created_at
+- `sales_profiles`
+  - user_id, language_preference, notification_preferences_json
+- `referrers`
+  - id, full_name, phone, source_notes, created_at
+- `cars_catalogue`
+  - id, brand, model, variant, is_active
 
-- **Database engine and version** – which database is used (PostgreSQL, MySQL, MongoDB, SQLite,
-  etc.) and the version, so the agent uses the correct SQL dialect or ODM features.
-- **ORM / query builder** – which library manages the database layer (Prisma, TypeORM, Sequelize,
-  Mongoose, Drizzle, SQLAlchemy, Eloquent, etc.), where the schema/model files live, and how to
-  run migrations.
-- **Entity catalogue** – for each entity, list: table/collection name, purpose, all fields (name,
-  type, nullable, default, indexed), primary key, and any unique constraints. For relational
-  databases, note the foreign keys and describe the relationship type (one-to-many, many-to-many).
-- **Entity-relationship diagram** – an ASCII or Mermaid ERD showing how entities relate to each
-  other, so the agent can understand joins and embedded documents at a glance.
-- **Seed data** – describe any seed data the agent should create for local development and testing
-  (e.g., sample vehicle listings, test user accounts, dealer profiles).
-- **Indexing strategy** – which columns are indexed for performance and the reasoning, so the
-  agent adds indexes when adding new query patterns.
-- **Soft delete and auditing** – whether records are hard- or soft-deleted, and whether an audit
-  log (`created_at`, `updated_at`, `deleted_at`, `created_by`) is required on every entity.
+## Relationships
+
+- `users (1) -> (many) leads` via `assigned_to`
+- `leads (1) -> (many) lead_notes`
+- `leads (1) -> (many) lead_activities`
+
+## Indexing Priorities
+
+- leads: `(assigned_to, status)`, `(created_at)`, `(phone)` unique/near-unique strategy
+- activities/notes: `(lead_id, created_at)`
+- users: `(role, status)`
+
+## Audit Fields
+
+Use `created_at` and `updated_at` on mutable entities.
+Add `created_by` where actor tracking is needed.
+
+## Migration Rule
+
+Every schema change must include migration notes in backend plan updates.

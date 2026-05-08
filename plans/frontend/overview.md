@@ -1,29 +1,68 @@
 # Frontend – Overview
 
-> This file is the starting point for any frontend work. Read it before creating components,
-> adding routes, or installing packages.
+## Stack
 
----
+- Next.js 16 (App Router)
+- React 19
+- TypeScript strict
+- Tailwind CSS v4
+- shadcn/ui
+- React Hook Form + Zod
+- TanStack Query
+- Recharts
 
-## What to put in this file
+## Package Manager and Scripts
 
-In this file, give the agent everything it needs to orient itself inside the frontend project.
-Include:
+Run from `app/frontend`:
 
-- **Framework and version** – the chosen frontend framework and its version (e.g., React 19,
-  Next.js 15, Vue 3, SvelteKit, etc.). If not decided yet, write "TBD" and describe the criteria
-  you will use to choose.
-- **Package manager and key scripts** – the exact commands to install dependencies (`npm install`),
-  start the dev server (`npm run dev`), run tests (`npm test`), and build for production
-  (`npm run build`).
-- **Folder structure** – a tree showing how `app/frontend/` is organised (pages/routes, components,
-  hooks/composables, services/api, stores/state, assets, styles, tests, etc.) so the agent always
-  puts new files in the right place.
-- **Routing strategy** – how pages/routes are defined (file-based, config-based) and any
-  conventions for dynamic segments, layouts, and protected routes.
-- **State management** – which state library is used (Context API, Zustand, Pinia, Redux, etc.)
-  and the rules for what goes in global state vs local component state.
-- **Styling approach** – CSS framework or methodology (Tailwind, CSS Modules, styled-components,
-  etc.) and any design tokens or theme file the agent should use.
-- **Environment variables** – which `VITE_` / `NEXT_PUBLIC_` / etc. variables the frontend needs,
-  pointing to the `.env.example` file.
+- Install: `npm install`
+- Dev: `npm run dev`
+- Build: `npm run build`
+- Lint: `npm run lint`
+- Test: `npm run test` (when configured)
+
+## Folder Layout
+
+```text
+app/frontend/src/
+├── app/
+├── components/
+├── constants/
+├── hooks/
+├── lib/
+├── requests/
+├── services/
+└── types/
+```
+
+## Routing Strategy
+
+- App Router route groups by role:
+  - `(auth)`
+  - `(sales)`
+  - `(admin)`
+- Dynamic routes for detail pages, e.g. `[id]`.
+- Route guards enforced by auth role context.
+
+## State Strategy
+
+- Server state: TanStack Query.
+- Local UI state: React state/hooks.
+- Shared/auth context only when needed globally.
+
+## Styling Strategy
+
+- Tailwind utilities first.
+- Reusable variants with `cva` + `clsx` + `tailwind-merge`.
+- Follow status colors and design tokens from step docs.
+
+## Environment Variables
+
+- Use `.env.example` as source of truth.
+- Public frontend keys must use `NEXT_PUBLIC_*` prefix.
+
+## Execution Rule
+
+Implement frontend in strict order from:
+
+- `plans/frontend/implementation-steps/README.md`

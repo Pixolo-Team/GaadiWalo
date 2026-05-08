@@ -1,30 +1,37 @@
-# Plans – Index
+# Plans - Index
 
 This folder contains all planning documents for the GaadiWalo project.
-AI agents should read the relevant plan file **before** starting work on any feature,
-and update the plan if requirements change during implementation.
 
----
-
-## What to put in this README
-
-In this file, write a short table of contents that links to every plan document so that
-an agent (or a human) can quickly find the right file. Group the links by area (project-wide,
-frontend, backend). Add a short one-line description next to each link explaining what that
-document covers. Update this index every time you add a new plan file.
-
----
-
-## Document index
+## Document Index
 
 | File | What it covers |
 |------|----------------|
 | [project-overview.md](./project-overview.md) | Product vision, target users, core features |
 | [architecture.md](./architecture.md) | High-level system design and tech-stack decisions |
-| [frontend/overview.md](./frontend/overview.md) | Frontend goals, chosen framework, folder layout |
-| [frontend/ui-components.md](./frontend/ui-components.md) | UI component catalogue and design-system rules |
-| [frontend/api-integration.md](./frontend/api-integration.md) | How the frontend calls the backend API |
-| [backend/overview.md](./backend/overview.md) | Backend goals, chosen framework, folder layout |
-| [backend/api-design.md](./backend/api-design.md) | REST / GraphQL endpoint definitions |
+| [frontend/overview.md](./frontend/overview.md) | Frontend goals, stack, and structure |
+| [frontend/ui-components.md](./frontend/ui-components.md) | UI component system and reuse rules |
+| [frontend/api-integration.md](./frontend/api-integration.md) | Frontend API calling conventions |
+| [frontend/implementation-steps/README.md](./frontend/implementation-steps/README.md) | Frontend execution flow |
+| [frontend/implementation-steps/main.md](./frontend/implementation-steps/main.md) | Frontend master plan |
+| [backend/overview.md](./backend/overview.md) | Backend goals and layering |
+| [backend/api-design.md](./backend/api-design.md) | API contracts |
 | [backend/database-schema.md](./backend/database-schema.md) | Data models and relationships |
-| [backend/authentication.md](./backend/authentication.md) | Auth strategy and session management |
+| [backend/authentication.md](./backend/authentication.md) | Auth and authorization strategy |
+
+## Frontend Implementation Files
+
+- [project_setup.md](./frontend/implementation-steps/project_setup.md)
+- [authentication.md](./frontend/implementation-steps/authentication.md)
+- [layouts_navigation.md](./frontend/implementation-steps/layouts_navigation.md)
+- [sales_dashboard.md](./frontend/implementation-steps/sales_dashboard.md)
+- [sales_leads.md](./frontend/implementation-steps/sales_leads.md)
+- [lead_details.md](./frontend/implementation-steps/lead_details.md)
+- [lead_forms.md](./frontend/implementation-steps/lead_forms.md)
+- [sales_profile_settings.md](./frontend/implementation-steps/sales_profile_settings.md)
+- [admin_dashboard.md](./frontend/implementation-steps/admin_dashboard.md)
+- [admin_team_management.md](./frontend/implementation-steps/admin_team_management.md)
+- [admin_lead_management.md](./frontend/implementation-steps/admin_lead_management.md)
+- [admin_reports.md](./frontend/implementation-steps/admin_reports.md)
+- [admin_performance.md](./frontend/implementation-steps/admin_performance.md)
+- [admin_referrers.md](./frontend/implementation-steps/admin_referrers.md)
+- [admin_settings.md](./frontend/implementation-steps/admin_settings.md)
