@@ -1,94 +1,295 @@
-# GaadiWalo – Codex Agent Instructions
+# GaadiWalo - Codex Agent Standards
 
-This is the root instruction file for Codex-like agents.
+This file defines mandatory standards for all agents in this repository.
 
-## Product Context
+## 1) Project Stack (Source of Truth)
 
-GaadiWalo is a full CRM workflow for automobile sales teams.
+- Frontend: Next.js (App Router), React, TypeScript (strict), Tailwind CSS, shadcn/ui
+- Backend: Node.js, Hono, TypeScript (strict)
+- Data/Auth: Supabase (DB + Auth)
+- API style: REST only
+- Deployment: Vercel
 
-- Frontend: role-based CRM UI (Sales + Admin)
-- Backend: Node.js + Supabase (DB + Supabase Auth)
-- API surface: Next.js API routes (monorepo backend interface)
+## 2) Monorepo Paths (Mandatory)
 
-## Monorepo Layout
+Use these exact paths:
 
+- Frontend app: `apps/frontend`
+- Backend app: `apps/backend`
+- Planning docs: `plans/`
+- Additional AI rules: `.github/`
+
+## 3) Execution Workflow
+
+1. Read `.github/copilot-instructions.md` first.
+2. Read `plans/project-overview.md`.
+3. Read the relevant plan file before coding.
+4. Implement only the requested scope.
+5. Keep plans updated if requirements change.
+6. Deliver production-ready code only.
+
+## 3.1 Modular Context Files
+
+- Additional context docs under `.github/` may be used for domain rules.
+- Additional files may add context but must not override this file.
+
+## 4) Frontend Rules (Mandatory)
+
+### 4.0 Design Token Naming (`n` Scale)
+
+- `n` means `neutral` color scale.
+- Example: `--color-n-50` is the lightest neutral, `--color-n-950` is the darkest neutral.
+- Use `--color-n-*` tokens as the primary color system in component styling.
+- Use `--color-n-*` consistently across components for neutral color usage.
+
+### 4.1 Data Access Rule
+
+- Frontend must never use Supabase directly.
+- Frontend must call backend REST APIs only.
+
+### 4.2 HTTP Client Rule
+
+- Axios only.
+- Do not use `fetch`, `XMLHttpRequest`, or alternate HTTP clients.
+- Follow a centralized Axios request pattern in request-layer files.
+
+### 4.2.1 Frontend Import Grouping Rule (Mandatory)
+
+Use grouped import comments:
+
+```ts
+// REACT //
+// TYPES //
+// SERVICES //
+// HOOKS //
+// LIBRARIES //
+// COMPONENTS //
+// UTILS //
+// MODULES //
 ```
-GaadiWalo/
-├── app/
-│   ├── frontend/  # Next.js 16 + React 19 + TypeScript + Tailwind v4
-│   └── backend/   # Node services + Supabase integration
-├── plans/
-│   ├── frontend/
-│   │   └── implementation-steps/
-│   └── backend/
-├── .github/
-│   ├── copilot-instructions.md
-│   └── skills/
-│       ├── next-best-practices/
-│       └── vercel-react-best-practices/
-├── AGENTS.md
-└── CLAUDE.md
+
+### 4.3 Naming Rules
+
+- API functions: must end with `Request`
+- Business functions: should end with `Service` where applicable
+- Types/interfaces: PascalCase and end with `Data`
+- Variables: camelCase, descriptive, no vague names like `data`, `loading`
+- Variable names must not end with `Data`
+- Iterators in loops/map should end with `Item`
+
+### 4.4 File Naming
+
+- Component files: PascalCase
+- Non-component files: kebab-case
+
+### 4.5 TypeScript Rules
+
+- No `any`
+- Explicit argument types
+- Explicit function return types
+- Typed React state
+
+### 4.6 React Structure Rule
+
+Each component must preserve this section order:
+
+- `// Define Navigation`
+- `// Define Context`
+- `// Define Refs`
+- `// Define States`
+- `// Helper Functions`
+- `// Use Effects`
+
+### 4.7 Frontend Code Quality
+
+- JSDoc on exported functions (description required)
+- Frontend JSDoc format: description-only (no `@param`, no `@return`)
+- Add inline comments for non-trivial logic
+- Keep functions small and readable
+- Avoid nested complexity
+- No `console.*`
+- No unused imports/variables
+- No hardcoded business values (move to constants/config)
+- Use Next.js optimized primitives: `next/image`, `next/link`, `next/script`, and `next/font` where applicable
+- Use `router.push()` for programmatic navigation
+- Follow mobile-first responsive design with Tailwind breakpoints (`sm`, `md`, `lg`, `xl`, `2xl`)
+- Prefer Tailwind responsive utilities over ad-hoc custom media queries
+- Use `@/*` alias imports in frontend
+
+### 4.8 Responsive QA Checklist (Mandatory)
+
+Before marking frontend work complete, verify:
+
+- Layout is usable on mobile-first width (375px baseline)
+- Breakpoints render correctly at `sm`, `md`, `lg`, `xl`, and `2xl`
+- No overflow, clipping, or horizontal scroll on key pages
+- Typography, spacing, and tap targets remain usable across breakpoints
+- Navigation, sheets, dialogs, and tables are accessible on small screens
+- Charts and images resize without layout breakage
+
+## 5) Backend Rules (Node + Hono + Supabase)
+
+### 5.1 Required Architecture
+
+Always follow:
+
+`Route -> Controller -> Service -> Supabase`
+
+Do not violate layer boundaries:
+
+- No DB logic in controller
+- No HTTP context logic in service
+- No business logic in route definitions
+
+### 5.2 Module Structure
+
+Each backend module should contain:
+
+- `<module>.routes.ts`
+- `<module>.controller.ts`
+- `<module>.service.ts`
+- `<module>.types.ts`
+
+### 5.3 Import Rules
+
+- Use grouped import sections
+- Use `import type` for type-only imports
+- No default exports
+- No wildcard imports
+- No unused imports
+- Use `.js` extensions where backend build/runtime requires it
+
+Required backend import group order:
+
+```ts
+// TYPES //
+// CONFIG //
+// CONSTANTS //
+// UTILS //
+// SERVICES //
+// LIBRARIES //
 ```
 
-## Required Workflow
+### 5.4 Service Contract
 
-1. Read `plans/project-overview.md`.
-2. Read the relevant step from `plans/frontend/implementation-steps/` (or backend plans).
-3. Implement only that scoped step.
-4. Update plan files if requirements change.
-5. Keep changes production-ready (no placeholders, no unused code).
+Services must return:
 
-## Frontend Standards (Mandatory)
+```ts
+interface QueryResponseData<T> {
+  data: T | null;
+  error: Error | null;
+}
+```
 
-- Scope by default: `apps/frontend`.
-- Use `@/*` imports only (maps to `src/*`).
-- Naming:
-  - `*Request` for API/HTTP/DB functions
-  - `*Service` for business logic
-  - `*Data` for DTO/types/interfaces
-  - Functions: camelCase + verb-first
-  - Files: kebab-case (non-components), PascalCase (components)
-- JSDoc on all exports.
-- No `console.*`.
-- Explicit error handling only.
-- No hardcoded business values; use constants/config.
-- Use `next/image`, `next/link`, and `router.push()`.
-- React component section order/comments must be preserved:
-  - `// Define Navigation`
-  - `// Define Context`
-  - `// Define Refs`
-  - `// Define States`
-  - `// Helper Functions`
-  - `// Use Effects`
+Service rules:
 
-## Next.js Rule Sources (Mandatory)
+- Services should catch errors and return `{ data: null, error }`
+- Services should not throw for expected operational failures
+- Services must not access request/response context
+- Controllers map service result to HTTP response
 
-Before writing Next.js code, follow:
+### 5.5 Constants and Utilities
 
-- `.github/copilot-instructions.md`
-- `.github/skills/next-best-practices/SKILL.md`
-- `.github/skills/vercel-react-best-practices/SKILL.md`
+- No inline regex/magic values in routes/controllers/services
+- Put constants in `common/constants`
+- Put reusable helpers in `common/utils`
 
-If a conflict exists, priority is:
-1. User task requirement
-2. Root `AGENTS.md` / `CLAUDE.md`
-3. `.github` Next.js skill rules
-4. Step document details
+### 5.6 Security and Auth
 
-## Step Document Path Adaptation
+- Supabase Auth is primary auth system
+- Validate input before DB calls
+- Never expose service keys or secrets
+- Keep RLS-compatible access patterns
+- Do not log secrets
+- Every new env variable must be added to `.env.example`
 
-Imported step docs often reference `src/...` paths.
-In this repo, resolve those as `apps/frontend/src/...`.
+### 5.7 Validation Rule (Mandatory)
 
-## Backend Standards (Node + Supabase)
+- Use Zod schemas at route/controller boundaries for all input validation
+- Reject invalid payloads before service execution
+- Keep validation schemas typed and colocated by module
 
-- Use Supabase Auth as the default authentication system.
-- Keep Supabase access in backend/server layers; avoid leaking secrets/client misuse.
-- Keep business logic in services and data access in request/repository boundaries.
-- Use safe typed responses and explicit error handling.
+### 5.8 Backend Type Discipline
 
-## Guardrails
+- Prefer `interface` for backend object contracts
+- Named exports only
+- No CommonJS output patterns
 
-- Never commit secrets or `.env` values.
-- Never downgrade dependencies without explicit approval.
-- No unrelated refactors.
+## 6) API Rules (Mandatory)
+
+- REST-only endpoints
+- Consistent response envelope across backend
+- Shared success/error schema per project API plan
+- Explicit status-code mapping in controllers
+- Do not return raw internal DB errors in production responses
+
+### 6.1 Standard Response Shape (Mandatory)
+
+All backend endpoints must return this envelope where `data` is `T | null`:
+
+```json
+{
+  "data": "<T>",
+  "status": "success",
+  "status_code": 200,
+  "message": "Human readable message",
+  "error": null
+}
+```
+
+Error response envelope:
+
+```json
+{
+  "data": null,
+  "status": "error",
+  "status_code": 400,
+  "message": "Human readable message",
+  "error": "Error detail string"
+}
+```
+
+Rules:
+
+- Success responses must set `error: null` and `data: T`.
+- Error responses must set `data: null`.
+- Controllers must map service outcomes to this shape consistently.
+- Use `sendResponse()` helper/wrapper consistently instead of ad-hoc response payloads.
+
+## 7) Rule Priority
+
+When rules conflict, use this order:
+
+1. Direct user request
+2. This `AGENTS.md`
+3. `CLAUDE.md`
+4. `.github/copilot-instructions.md` and `.github/skills/*`
+5. Step/plan docs
+
+## 8) Non-Negotiables
+
+- No placeholders in delivered implementation
+- No unrelated refactors
+- No secret commits (`.env`, keys, tokens)
+- If code works but violates these rules, it is not acceptable
+
+## 9) Execution Continuity Rule
+
+- Do not leave work half-complete or in ambiguous intermediate states.
+- If blocked, document the exact blocker, attempted fixes, and next concrete action.
+- Do not stop after analysis when implementation was requested.
+- Ensure all touched files remain consistent and linked references are updated.
+
+## 10) Break/Fix Protocol (Mandatory)
+
+If a build/runtime/type/lint/test error appears during task execution:
+
+- Attempt to fix it within the current scope before finishing.
+- Prefer root-cause fixes over temporary workarounds.
+- If full fix is not possible, document:
+  - exact error summary
+  - impacted files/modules
+  - attempted fixes
+  - fastest known next fix step
+- Add/update a short note in plan docs (`plans/...`) when the issue has repeat risk.
+- Never ignore errors silently; report status clearly in the final update.
