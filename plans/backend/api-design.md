@@ -1,29 +1,54 @@
 # Backend – API Design
 
-> This file defines every API endpoint the backend exposes. The agent should check this file
-> before adding a new endpoint to avoid duplication and to follow the agreed conventions.
+## API Style
 
----
+- REST via Next.js API routes.
+- Versioning target: `/api/v1/*` for stable endpoints.
 
-## What to put in this file
+## Response Envelope
 
-In this file, document the full API surface so both the frontend and backend agents share the same
-contract. Include:
+```json
+{
+  "data": {},
+  "error": null,
+  "meta": {}
+}
+```
 
-- **API style** – whether the API is REST, GraphQL, tRPC, or a mix. For REST, document the base
-  path versioning strategy (e.g., `/api/v1/`). For GraphQL, note the schema-first vs code-first
-  approach.
-- **Endpoint catalogue** – for each endpoint list: HTTP method, path, request body/params
-  (field names and types), success response shape, and possible error codes. Group endpoints by
-  resource (e.g., Vehicles, Users, Dealers, Enquiries). Use a table or YAML block — whichever
-  makes it easier for the agent to parse.
-- **Common response envelope** – document the standard JSON wrapper used for all responses
-  (e.g., `{ success, data, error, meta }`) so the agent never invents its own format.
-- **Pagination conventions** – cursor-based vs offset-based, which query params to use
-  (`page`, `limit`, `cursor`), and the shape of the pagination metadata in the response.
-- **Validation rules** – which validation library is used (Zod, Joi, class-validator, Pydantic,
-  etc.), where schema files live, and the rules for required vs optional fields.
-- **Rate limiting and throttling** – which endpoints are rate-limited, the limits, and how the
-  `429` response is structured.
-- **Webhooks or event streams** – if the backend emits events to external systems or a message
-  queue, document the event names, payload shapes, and delivery guarantees here.
+On failure:
+
+```json
+{
+  "data": null,
+  "error": { "message": "...", "code": "..." },
+  "meta": {}
+}
+```
+
+## Core Resource Groups
+
+- `auth`: login, forgot password, OTP verification, reset password
+- `sales/leads`: list, details, create, update status, notes, import
+- `sales/profile`: profile update, password update, notifications, performance
+- `admin/dashboard`: summary, source chart, top performers, top referrers
+- `admin/team`: list, detail, create, remove/reassign, reset password
+- `admin/leads`: create+assign, bulk import+assignment strategy
+- `admin/reports`: overview/source/funnel datasets
+- `admin/referrers`: list and detail
+- `admin/settings`: business info, lead sources, cars catalogue, export/privacy
+
+## Validation and Status Codes
+
+- Use Zod at route boundary.
+- `200/201`: success
+- `400`: validation error
+- `401`: unauthenticated
+- `403`: forbidden
+- `404`: missing resource
+- `409`: conflict/duplicate
+- `500`: internal error
+
+## Pagination Convention
+
+- Query params: `page`, `limit`, optional `sortBy`, `sortOrder`.
+- `meta` includes `page`, `limit`, `total`, `totalPages`.
