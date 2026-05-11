@@ -27,6 +27,7 @@ On failure:
 
 ## Core Resource Groups
 
+- `health`: runtime health endpoint for deployment checks
 - `auth`: login, forgot password, OTP verification, reset password
 - `sales/leads`: list, details, create, update status, notes, import
 - `sales/profile`: profile update, password update, notifications, performance
@@ -52,3 +53,9 @@ On failure:
 
 - Query params: `page`, `limit`, optional `sortBy`, `sortOrder`.
 - `meta` includes `page`, `limit`, `total`, `totalPages`.
+
+## Implemented Baseline Endpoint
+
+- `GET /api/v1/health`
+  - Returns the standardized GaadiWalo envelope
+  - Includes service name, version, environment, timestamp, and uptime

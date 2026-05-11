@@ -44,6 +44,9 @@ GaadiWalo/
 ├── app/
 │   frontend/
 │   backend/
+├── apps/
+│   frontend/
+│   backend/
 ├── plans/
 └── AGENTS.md / CLAUDE.md
 <!-- AUTO_PROJECT_STRUCTURE_END -->
@@ -117,6 +120,12 @@ Rules:
 - Reject invalid payloads before service execution.
 - Validation schemas stay typed and module-scoped.
 
+### Health and Deployment Baseline
+
+- Backend exposes `GET /health` for runtime and container health checks.
+- Backend package includes a Dockerfile for containerized deployment.
+- Google Cloud deployment target uses Cloud Run via Docker image delivery.
+
 ### Frontend API Consumption Standard
 
 - Frontend uses Axios only.
@@ -133,4 +142,3 @@ Rules:
   - impacted modules
   - attempted fixes
   - fastest next action
-

@@ -3,7 +3,7 @@
 ## Stack
 
 - Node.js runtime
-- Next.js API routes as backend interface
+- Hono as backend interface
 - Supabase Postgres for data
 - Supabase Auth for authentication
 - TypeScript strict
@@ -41,3 +41,9 @@ Run from backend package folder (`apps/backend` when initialized):
 - Validate all incoming payloads with Zod.
 - Return typed safe response structures.
 - Keep explicit error handling and role checks.
+
+## Current Baseline
+
+- `apps/backend` now contains the backend package scaffold.
+- `GET /health` is the first live backend endpoint.
+- Docker and Google Cloud Run deployment assets live in `apps/backend`.

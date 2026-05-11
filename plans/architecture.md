@@ -116,6 +116,7 @@ Supporting backend layers:
 - `common/constants/` (regex, pagination, app constants)
 - `common/utils/` (shared parsing/validation/formatting helpers)
 - `common/types/` (shared typed contracts)
+- `modules/health/` (service health route/controller/service/types)
 
 ## Security and Policy Alignment
 
@@ -128,3 +129,9 @@ Supporting backend layers:
 
 Current implementation focus is the Sales flow first.
 Admin and extended authentication hardening are tracked as later milestones in project status/plans.
+
+## Deployment Baseline
+
+- `apps/backend` is container-ready with a Dockerfile.
+- Health checks target `GET /health`.
+- Initial Google Cloud deployment path is Cloud Run using the backend Docker image.
