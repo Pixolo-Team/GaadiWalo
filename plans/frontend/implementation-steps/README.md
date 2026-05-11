@@ -1,12 +1,18 @@
 # Frontend Implementation Steps
 
-This directory contains the full frontend execution plan.
+This directory contains the frontend execution plan.
 
 ## Path Adaptation
 
 - `src/...` in these docs maps to `apps/frontend/src/...` in this repository.
 
-## Execution Order
+## Current Scope (Active Now)
+
+Sales flow only.
+
+Admin and full auth hardening are separate tracks for later phases.
+
+## Sales Execution Order (Do This First)
 
 1. [main.md](./main.md)
 2. [project_setup.md](./project_setup.md)
@@ -17,10 +23,13 @@ This directory contains the full frontend execution plan.
 7. [lead_details.md](./lead_details.md)
 8. [lead_forms.md](./lead_forms.md)
 9. [sales_profile_settings.md](./sales_profile_settings.md)
-10. [admin_dashboard.md](./admin_dashboard.md)
-11. [admin_team_management.md](./admin_team_management.md)
-12. [admin_lead_management.md](./admin_lead_management.md)
-13. [admin_reports.md](./admin_reports.md)
-14. [admin_performance.md](./admin_performance.md)
-15. [admin_referrers.md](./admin_referrers.md)
-16. [admin_settings.md](./admin_settings.md)
+
+## Deferred Track (Later)
+
+1. [admin_dashboard.md](./admin_dashboard.md)
+2. [admin_team_management.md](./admin_team_management.md)
+3. [admin_lead_management.md](./admin_lead_management.md)
+4. [admin_reports.md](./admin_reports.md)
+5. [admin_performance.md](./admin_performance.md)
+6. [admin_referrers.md](./admin_referrers.md)
+7. [admin_settings.md](./admin_settings.md)

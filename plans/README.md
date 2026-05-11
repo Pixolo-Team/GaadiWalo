@@ -7,6 +7,9 @@ This folder contains all planning documents for the GaadiWalo project.
 | File                                                                                 | What it covers                                                                                                   |
 | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
 | [project-overview.md](./project-overview.md)                                         | Product vision, target users, core features                                                                      |
+| [project-spec.md](./project-spec.md)                                                 | Engineering requirements, architecture, data flow, and API standards                                             |
+| [sales-project-spec.md](./sales-project-spec.md)                                     | Sales-first milestones and phased delivery scope                                                                  |
+| [project_status.md](./project_status.md)                                             | Milestones, completed work, and immediate next actions                                                            |
 | [architecture.md](./architecture.md)                                                 | High-level system design and tech-stack decisions                                                                |
 | [frontend/overview.md](./frontend/overview.md)                                       | Frontend goals, chosen framework, folder layout                                                                  |
 | [frontend/ui-components.md](./frontend/ui-components.md)                             | UI component catalogue and design-system rules                                                                   |

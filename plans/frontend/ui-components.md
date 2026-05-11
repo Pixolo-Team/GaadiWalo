@@ -69,7 +69,7 @@ All paths below are relative to `apps/frontend/src`.
 
 ## Icons, Images, and Charts
 
-- Icons: `lucide-react` only.
+- Icons: use project icons from `apps/frontend/src/icons/neevo-icons` first; use `lucide-react` only as fallback when an icon is not available in `neevo-icons`.
 - Images: `next/image` only (no raw `img` for product UI).
 - Navigation links: `next/link`.
 - Programmatic navigation: `router.push()`.

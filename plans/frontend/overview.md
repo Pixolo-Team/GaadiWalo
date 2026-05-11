@@ -13,7 +13,7 @@
 
 ## Package Manager and Scripts
 
-Run from `app/frontend`:
+Run from `apps/frontend`:
 
 - Install: `npm install`
 - Dev: `npm run dev`
@@ -24,15 +24,9 @@ Run from `app/frontend`:
 ## Folder Layout
 
 ```text
-app/frontend/src/
-├── app/
-├── components/
-├── constants/
-├── hooks/
-├── lib/
-├── requests/
-├── services/
-└── types/
+<!-- AUTO_FRONTEND_STRUCTURE_START -->
+frontend/
+<!-- AUTO_FRONTEND_STRUCTURE_END -->
 ```
 
 ## Routing Strategy

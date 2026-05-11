@@ -33,6 +33,19 @@ Use these exact paths:
 - Additional context docs under `.github/` may be used for domain rules.
 - Additional files may add context but must not override this file.
 
+## 3.2 Minimal Task Input Mode (Default)
+
+To assign implementation work, user can provide only:
+
+- Figma URL (exact frame/node)
+- Step file path
+
+Default interpretation:
+- Agent auto-applies all repository standards from this file.
+- Agent executes only the requested step scope.
+- Agent updates tracking/docs as required by workflow rules.
+- Reference: `plans/claude-task-workflow.md`.
+
 ## 4) Frontend Rules (Mandatory)
 
 ### 4.0 Design Token Naming (`n` Scale)
@@ -293,3 +306,67 @@ If a build/runtime/type/lint/test error appears during task execution:
   - fastest known next fix step
 - Add/update a short note in plan docs (`plans/...`) when the issue has repeat risk.
 - Never ignore errors silently; report status clearly in the final update.
+
+## 11) Git Branching and Workflow (Mandatory)
+
+### Branching
+
+- Always create a feature/fix branch before starting major changes.
+- Never commit directly to `main`, `master`, or `development`.
+- Branch naming:
+  - `feature/sales-dashboard`
+  - `bugfix/component-ui-restructure`
+  - Equivalent allowed pattern: `feature/<description>` or `fix/<description>`
+
+### Git Workflow for Major Changes
+
+1. Create a new branch:
+   - `git checkout -b feature/your-feature-name`
+2. Develop and commit on the feature branch only.
+3. Validate locally before pushing:
+   - `npm run dev`
+   - `npm run lint`
+   - `npm run build`
+4. Push branch to remote:
+   - `git push -u origin feature/your-feature-name`
+5. Open PR and merge only after review/CI checks pass.
+
+## 12) Constraints and Policy Guardrails
+
+### Security and Secrets
+
+- Keep all secrets server-side; never expose secret keys in client code.
+- Use environment variables for sensitive configuration.
+- Never commit `.env.local`, `.env`, or any credentials file.
+- Validate and sanitize all external/user-provided input before processing.
+
+### Code Quality Baseline
+
+- TypeScript strict mode is mandatory.
+- Run lint checks before creating commits or PRs.
+- Avoid `any`; if unavoidable, document justification in code review notes.
+
+### Dependency Discipline
+
+- Prefer existing shadcn/ui and in-repo components before adding new UI libraries.
+- Keep dependency additions minimal, especially during MVP scope.
+- Do not introduce parallel frameworks or duplicate tooling for solved problems.
+
+## 13) Documentation References
+
+- [Plans Index](./plans/README.md) - master index for all planning documents
+- [Project Spec](./plans/project-spec.md) - engineering requirements, architecture, API standards
+- [Sales Project Spec](./plans/sales-project-spec.md) - sales-scope goals and milestone roadmap
+- [Project Overview](./plans/project-overview.md) - product purpose and MVP boundaries
+- [Architecture](./plans/architecture.md) - system design decisions and stack mapping
+- [Project Status](./plans/project_status.md) - milestones, accomplishments, and immediate next steps
+- [Frontend Overview](./plans/frontend/overview.md) - frontend structure and implementation conventions
+- [UI Components](./plans/frontend/ui-components.md) - component reuse system and design guidance
+- [API Integration](./plans/frontend/api-integration.md) - frontend-to-backend API usage rules
+- [Frontend Implementation Steps](./plans/frontend/implementation-steps/README.md) - ordered execution flow
+
+Documentation policy:
+
+- Update relevant docs after major milestones or architecture/API changes.
+- Keep docs consistent with implemented behavior; no stale specs.
+- After folder structure changes, run `scripts/sync-structure-docs.sh` to refresh structure sections in docs.

@@ -3,7 +3,7 @@
 ## Auth Strategy
 
 - Supabase Auth is the primary auth system.
-- Email/password and OTP-based reset flows as defined in frontend Step 2.
+- Email/password and OTP-based reset flows as defined in `plans/frontend/implementation-steps/authentication.md`.
 
 ## Session and Token Policy
 

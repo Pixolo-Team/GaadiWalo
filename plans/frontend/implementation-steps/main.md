@@ -1,10 +1,12 @@
-# AutoLead CRM – Frontend Development Plan
+# GaadiWalo Frontend Development Plan (Sales-First)
 
 ## Project Overview
 
-**AutoLead** is a Car Sales CRM with two user roles:
+**GaadiWalo** is a Car Sales CRM with two user roles:
 - **Sales Person** – manages their own leads, activities, and performance
 - **Admin** – manages the full team, leads, reports, and system configuration
+
+Current implementation focus is Sales only.
 
 **Tech Stack:**
 - Next.js (App Router)
@@ -17,18 +19,27 @@
 
 ---
 
-## Step-by-Step Plan
+## Active Plan (Current Phase)
+
+Sales scope execution order:
 
 | Step | Name | Description |
 |------|------|-------------|
 | [project_setup](./project_setup.md) | Project Setup | Init Next.js, configure TypeScript, Tailwind, shadcn/ui, folder structure, constants, project-wide coding rules |
-| [authentication](./authentication.md) | Authentication | Login, Forgot Password, Verify OTP, Set New Password pages |
-| [layouts_navigation](./layouts_navigation.md) | Layouts & Navigation | Bottom nav layout for Sales Person, Bottom nav layout for Admin, route guards by role |
+| [authentication](./authentication.md) | Authentication | Sales entry auth flow required for current scope |
+| [layouts_navigation](./layouts_navigation.md) | Layouts & Navigation | Sales app shell, bottom navigation, and protected sales route behavior |
 | [sales_dashboard](./sales_dashboard.md) | Sales Person – Dashboard | Home screen: today's summary, leads by phase, recent leads, quick actions |
 | [sales_leads](./sales_leads.md) | Sales Person – Leads | My Leads list, status tabs (All/New/Contacted/Interested), filter sheet, search |
 | [lead_details](./lead_details.md) | Sales Person – Lead Details | Lead detail tabs: Info, Activity log, Notes; Update Status; contact actions |
 | [lead_forms](./lead_forms.md) | Sales Person – Lead Forms | Add New Lead form, Import from Excel flow |
 | [sales_profile_settings](./sales_profile_settings.md) | Sales Person – Profile & Settings | Profile menu, Edit Profile, Change Password, Notification Preferences, My Performance report |
+
+---
+
+## Deferred Plan (After Sales Scope)
+
+| Step | Name | Description |
+|------|------|-------------|
 | [admin_dashboard](./admin_dashboard.md) | Admin – Dashboard | Summary cards, leads by source chart, sales team list, top referrers |
 | [admin_team_management](./admin_team_management.md) | Admin – Team Management | Sales Team list, Salesperson detail, Add Salesperson, Remove Salesperson modal |
 | [admin_lead_management](./admin_lead_management.md) | Admin – Lead Management | Add Lead (with assign), Import Leads (with duplicate detection + assign flow) |

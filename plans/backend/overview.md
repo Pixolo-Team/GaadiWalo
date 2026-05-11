@@ -11,12 +11,12 @@
 
 ## Working Directory
 
-- Main backend code lives under `app/backend`.
-- API route integration points may exist under `app/frontend/src/app/api` depending on route ownership.
+- Main backend code lives under `apps/backend`.
+- API route integration points may exist under `apps/frontend/src/app/api` depending on route ownership.
 
 ## Scripts
 
-Run from backend package folder (`app/backend` when initialized):
+Run from backend package folder (`apps/backend` when initialized):
 
 - Install: `npm install`
 - Dev: `npm run dev`

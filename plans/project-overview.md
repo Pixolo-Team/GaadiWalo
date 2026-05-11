@@ -54,4 +54,4 @@ Frontend execution order and requirements are defined in:
 
 - `plans/frontend/implementation-steps/README.md`
 - `plans/frontend/implementation-steps/main.md`
-- `plans/frontend/implementation-steps/Step-1-Setup.md` ... `Step-15-Admin-Settings.md`
+- `plans/frontend/implementation-steps/project_setup.md` ... `admin_settings.md`
