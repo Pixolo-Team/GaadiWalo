@@ -133,6 +133,9 @@ Each component must preserve this section order:
 - Prefer semantic Tailwind spacing and sizing utilities over arbitrary px classes
 - Use `size-*` utility when width and height are equal instead of setting `w-*` and `h-*` separately
 - Avoid fixed-width pixel locks (`w-[390px]`, `h-[960px]`) unless strictly required by product behavior
+- For page-level layouts, the first root element must be a `section`
+- Root `section` should only handle page-level essentials (`min-h`/`h` and background color); avoid putting content spacing/layout styles directly on it
+- If content needs padding, max-width/container behavior, or inner layout styling, add an inner `div` inside the `section` and apply those classes on that inner `div`
 - Primary font utility: `font-sans` (Sora); secondary font utility: `font-secondary` (DM Sans)
 - Avoid `font-[var(...)]` in component classes; use Tailwind font utilities (`font-sans`, `font-secondary`, weight utilities)
 - For icon sizing, prefer Tailwind sizing scale (`size-4`, `size-5`, `size-6`, etc.) and use arbitrary values only when no close scale value matches design intent
