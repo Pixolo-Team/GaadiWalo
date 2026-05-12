@@ -1,0 +1,82 @@
+// REACT //
+import React from "react";
+
+// TYPES //
+import { IconComponentData } from "@/types/icon";
+
+const CalendarList: IconComponentData = ({
+  primaryColor,
+  secondaryColor,
+  tertiaryColor,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="-1 -1 28 28"
+    height={28}
+    width={28}
+    {...props}
+  >
+    <g>
+      <path
+        id="Intersect"
+        stroke={primaryColor}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M1.7139032857142857 19.595828571428573c0.30819100000000005 2.6469857142857145 2.5430767142857142 4.748528571428572 5.306672428571429 4.876671428571429 1.910164285714286 0.08858571428571428 3.861464285714286 0.13464285714285715 5.979238571428572 0.13464285714285715 2.1177928571428573 0 4.069074285714286 -0.04605714285714286 5.979257142857143 -0.13464285714285715 2.7636142857142856 -0.12814285714285717 4.9985 -2.229685714285714 5.3066 -4.876671428571429 0.4280714285714286 -3.67627 0.4280714285714286 -6.806985714285714 0 -10.48333 -0.3081 -2.646911428571429 -2.5429857142857144 -4.7485100000000005 -5.3066 -4.876634285714286 -1.910164285714286 -0.08856714285714287 -3.861464285714286 -0.1346057142857143 -5.979257142857143 -0.1346057142857143 -2.117774285714286 0 -4.069074285714286 0.04603857142857143 -5.979238571428572 0.1346057142857143 -2.763595714285714 0.12812428571428572 -4.998481428571429 2.2297228571428573 -5.306672428571429 4.876634285714286 -0.4280621428571429 3.676344285714286 -0.4280602857142857 6.80706 0 10.48333Z"
+        strokeWidth={2}
+      />
+      <path
+        id="Line 3"
+        stroke={primaryColor}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m7.896478571428571 1.3928571428571428 0 5.107142857142858"
+        strokeWidth={2}
+      />
+      <path
+        id="Line 4"
+        stroke={primaryColor}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m18.103521428571426 1.3928571428571428 0 5.107142857142858"
+        strokeWidth={2}
+      />
+      <path
+        id="Vector 1955"
+        stroke={primaryColor}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M11.607142857142858 12.598745714285716h7.428571428571429"
+        strokeWidth={2}
+      />
+      <path
+        id="Vector 1956"
+        stroke={primaryColor}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M11.607142857142858 18.170174285714285h1.8571428571428572"
+        strokeWidth={2}
+      />
+      <path
+        id="Vector 1957"
+        stroke={primaryColor}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6.964285714285714 12.598745714285716h0.9285714285714286"
+        strokeWidth={2}
+      />
+      <path
+        id="Vector 1958"
+        stroke={primaryColor}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6.964285714285714 18.170174285714285h0.9285714285714286"
+        strokeWidth={2}
+      />
+    </g>
+  </svg>
+);
+
+export default CalendarList;
