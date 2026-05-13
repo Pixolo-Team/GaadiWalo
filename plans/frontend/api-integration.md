@@ -20,7 +20,9 @@
 
 ## Auth Handling
 
-- Supabase Auth session is source of truth.
+- Frontend auth state is sourced from backend auth endpoints only.
+- Frontend must never call Supabase directly.
+- Backend coordinates Supabase Auth internally and returns safe REST responses.
 - On 401/403:
   - clear local protected state
   - redirect to login

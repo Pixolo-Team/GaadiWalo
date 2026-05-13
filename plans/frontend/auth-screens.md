@@ -105,6 +105,10 @@ error: string | null
 2. On success → navigate to `/verify-otp`, passing `identifier` via route state (not URL — do not expose in query params).
 3. On failure → show inline error.
 
+Current backend scope note:
+- Password recovery is email-only in the current backend implementation phase.
+- Phone-based recovery copy may remain in UI drafts, but the API currently accepts email identifiers only.
+
 ---
 
 ### 3. Verify OTP (`/verify-otp`)
@@ -303,10 +307,10 @@ Response 401:
 
 | Concern | Decision |
 |---------|----------|
-| Access token storage | In-memory (JS variable / Zustand store). Never in `localStorage`. |
-| Refresh token storage | `httpOnly` cookie (set by backend). |
-| Token refresh strategy | Axios/Fetch interceptor: on 401, silently call `/auth/refresh`; replay original request; if refresh also fails, redirect to `/login`. |
-| Logout | Call `/auth/logout`, clear in-memory token, clear cookie via server `Set-Cookie: refreshToken=; Max-Age=0`. |
+| Access token storage | Client stores only the backend-returned auth context needed by the current flow. |
+| Refresh token storage | Not implemented in the current backend auth phase. |
+| Token refresh strategy | Deferred until refresh/logout endpoints are implemented. |
+| Logout | Deferred until backend logout support is added. |
 
 ---
 

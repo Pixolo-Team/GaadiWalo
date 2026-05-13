@@ -2,16 +2,19 @@
 
 ## API Style
 
-- REST via Next.js API routes.
-- Versioning target: `/api/v1/*` for stable endpoints.
+- REST via Hono backend endpoints.
+- Current auth routes live under `/auth/*`.
+- Versioning target remains `/api/v1/*` when route groups are formally versioned.
 
 ## Response Envelope
 
 ```json
 {
-  "data": {},
-  "error": null,
-  "meta": {}
+  "data": "<T>",
+  "status": "success",
+  "status_code": 200,
+  "message": "Human readable message",
+  "error": null
 }
 ```
 
@@ -20,10 +23,18 @@ On failure:
 ```json
 {
   "data": null,
-  "error": { "message": "...", "code": "..." },
-  "meta": {}
+  "status": "error",
+  "status_code": 400,
+  "message": "Human readable message",
+  "error": "Error detail string"
 }
 ```
+
+Rules:
+
+- Success responses must set `error: null`.
+- Error responses must set `data: null`.
+- Controllers must return the envelope through `sendResponse()`.
 
 ## Core Resource Groups
 
@@ -46,9 +57,5 @@ On failure:
 - `403`: forbidden
 - `404`: missing resource
 - `409`: conflict/duplicate
+- `429`: rate-limited request
 - `500`: internal error
-
-## Pagination Convention
-
-- Query params: `page`, `limit`, optional `sortBy`, `sortOrder`.
-- `meta` includes `page`, `limit`, `total`, `totalPages`.
