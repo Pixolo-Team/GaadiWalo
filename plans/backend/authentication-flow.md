@@ -105,7 +105,7 @@ Error:
 - `newPassword` must be at least 8 characters long.
 - `newPassword` must contain at least 1 uppercase letter.
 - `newPassword` must contain at least 1 numeric digit.
-- Identifier validation for reset flows should support the approved login/recovery identifier format used by the project.
+- Identifier validation for reset flows is email-only in the current backend phase.
 - OTP input must be validated as a fixed-length code before service execution.
 - Reset tokens must be treated as single-use recovery credentials.
 
@@ -187,6 +187,7 @@ Each auth endpoint must follow the same high-level pattern:
 #### Service responsibility
 
 - normalize and validate the identifier format used by the project
+- accept email identifiers only in the current backend phase
 - initiate the Supabase-compatible password recovery flow
 - avoid leaking unnecessary account existence details unless product requirements explicitly allow it
 - return a success/failure outcome to the controller
