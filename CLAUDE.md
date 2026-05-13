@@ -41,6 +41,7 @@ To assign implementation work, user can provide only:
 - Step file path
 
 Default interpretation:
+
 - Agent auto-applies all repository standards from this file.
 - Agent executes only the requested step scope.
 - Agent updates tracking/docs as required by workflow rules.
@@ -128,6 +129,16 @@ Each component must preserve this section order:
 - Follow mobile-first responsive design with Tailwind breakpoints (`sm`, `md`, `lg`, `xl`, `2xl`)
 - Prefer Tailwind responsive utilities over ad-hoc custom media queries
 - Use `@/*` alias imports in frontend
+- Prefer semantic Tailwind typography utilities (`text-xs`, `text-sm`, `text-base`, `text-lg`, `text-xl`, `text-2xl`, etc.) over arbitrary values like `text-[36px]`
+- Prefer semantic Tailwind spacing and sizing utilities over arbitrary px classes
+- Use `size-*` utility when width and height are equal instead of setting `w-*` and `h-*` separately
+- Avoid fixed-width pixel locks (`w-[390px]`, `h-[960px]`) unless strictly required by product behavior
+- For page-level layouts, the first root element must be a `section`
+- Root `section` should only handle page-level essentials (`min-h`/`h` and background color); avoid putting content spacing/layout styles directly on it
+- If content needs padding, max-width/container behavior, or inner layout styling, add an inner `div` inside the `section` and apply those classes on that inner `div`
+- Primary font utility: `font-sans` (Sora); secondary font utility: `font-secondary` (DM Sans)
+- Avoid `font-[var(...)]` in component classes; use Tailwind font utilities (`font-sans`, `font-secondary`, weight utilities)
+- For icon sizing, prefer Tailwind sizing scale (`size-4`, `size-5`, `size-6`, etc.) and use arbitrary values only when no close scale value matches design intent
 
 ### 4.8 Responsive QA Checklist (Mandatory)
 
