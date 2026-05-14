@@ -9,5 +9,8 @@ export const ROUTES = {
     verifyOtp: "/verify-otp",
     newPassword: "/new-password",
   },
+  sales: {
+    leads: "/leads",
+    leadDetails: (leadId: string) => `/leads/${leadId}`,
+  },
 } as const;
-
