@@ -341,3 +341,26 @@ export const salesAddLeadBudgetOptions = [
   { label: "8 - 12 Lakh", value: "8-12-lakh" },
   { label: "12+ Lakh", value: "12-plus-lakh" },
 ] as const;
+
+/**
+ * Import lead source tag options dummy data.
+ */
+export const salesImportLeadSourceTagOptions = [
+  { label: "Skip / Mixed sources", value: "skip-mixed-sources" },
+  { label: "CarWale", value: "carwale" },
+  { label: "CarDekho", value: "cardekho" },
+  { label: "Walk In", value: "walk-in" },
+  { label: "Referral", value: "referral" },
+] as const;
+
+/**
+ * Import expected columns dummy data.
+ */
+export const salesImportExpectedColumns = [
+  "Name",
+  "Phone",
+  "Email",
+  "Source",
+  "Car Brand",
+  "Car Model",
+] as const;

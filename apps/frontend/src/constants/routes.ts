@@ -12,6 +12,7 @@ export const ROUTES = {
   sales: {
     leads: "/leads",
     leadAdd: "/leads/add",
+    leadImport: "/leads/import",
     leadDetails: (leadId: string) => `/leads/${leadId}`,
   },
 } as const;

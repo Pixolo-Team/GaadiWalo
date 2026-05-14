@@ -41,7 +41,8 @@ export default function AddLeadPage() {
   const [initialNote, setInitialNote] = useState("");
 
   // Helper Functions
-  const canCreateLead = fullName.trim().length > 0 && phoneNumber.trim().length > 0;
+  const canCreateLead =
+    fullName.trim().length > 0 && phoneNumber.trim().length > 0;
 
   const handleCreateLead = (): void => {
     if (!canCreateLead) {
@@ -64,23 +65,23 @@ export default function AddLeadPage() {
   // Use Effects
 
   return (
-    <section className="h-full bg-n-100">
+    <section className="bg-n-100 h-full">
       {/* Add lead page shell */}
       <div className="flex h-full flex-col">
         {/* Add lead header */}
         <Header title="Add New Lead" />
 
         {/* Add lead scroll content */}
-        <div className="min-h-0 flex-1 overflow-y-auto pb-44">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {/* Add lead content container */}
           <div className="flex flex-col gap-6 p-6">
             {/* Informational banner */}
-            <div className="bg-blue-100 flex items-start gap-4 rounded-[14px] px-[18px] py-4">
+            <div className="flex items-start gap-4 rounded-[14px] bg-blue-100 px-[18px] py-4">
               <ContentInsightIdeaTrivia
                 primaryColor="var(--color-blue-700)"
                 className="mt-0.5 size-5 shrink-0"
               />
-              <p className="font-secondary text-blue-800 text-sm leading-normal font-medium">
+              <p className="font-secondary text-sm leading-normal font-medium text-blue-800">
                 Fill in at least Name and Phone number to create a lead.
               </p>
             </div>

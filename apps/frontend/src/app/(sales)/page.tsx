@@ -75,6 +75,7 @@ export default function Home() {
             {/* Quick actions list */}
             <div className="flex gap-2">
               <QuickActionCard
+                href={ROUTES.sales.leadImport}
                 icon={
                   <ImportInput
                     primaryColor="var(--color-n-800)"
@@ -84,6 +85,7 @@ export default function Home() {
                 label="Import Excel"
               />
               <QuickActionCard
+                href={ROUTES.sales.leadAdd}
                 icon={
                   <UserAddPlus
                     primaryColor="var(--color-n-800)"
