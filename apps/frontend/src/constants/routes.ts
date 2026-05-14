@@ -11,6 +11,5 @@ export const ROUTES = {
   },
   sales: {
     leads: "/leads",
-    leadDetails: (leadId: string) => `/leads/${leadId}`,
   },
 } as const;

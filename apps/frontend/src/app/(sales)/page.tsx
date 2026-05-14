@@ -7,7 +7,6 @@ import { PhaseTabs } from "@/components/sales/PhaseTabs";
 import { QuickActionCard } from "@/components/sales/QuickActionCard";
 import { SalesTopHeader } from "@/components/sales/SalesTopHeader";
 import { SectionHeader } from "@/components/sales/SectionHeader";
-import { ROUTES } from "@/constants/routes";
 import { salesPhaseTabs, salesRecentLeads } from "@/data/sales";
 
 /**
@@ -56,7 +55,6 @@ export default function Home() {
               {salesRecentLeads.map((leadItem) => (
                 <LeadCard
                   key={leadItem.key}
-                  detailsHref={ROUTES.sales.leadDetails(leadItem.key)}
                   name={leadItem.name}
                   phoneNumber={leadItem.phoneNumber}
                   source={leadItem.source}
