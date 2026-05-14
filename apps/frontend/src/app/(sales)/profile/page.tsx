@@ -32,6 +32,9 @@ export default function ProfilePage() {
   // Define States
 
   // Helper Functions
+  /**
+   * Resolves metric value color by tone.
+   */
   const getMetricValueColorClassName = (tone: string): string => {
     if (tone === "blue") {
       return "text-blue-600";
@@ -44,6 +47,9 @@ export default function ProfilePage() {
     return "text-n-800";
   };
 
+  /**
+   * Resolves menu icon by icon key.
+   */
   const getMenuIcon = (icon: string) => {
     if (icon === "edit-profile") {
       return <UserEditPencil primaryColor="var(--color-blue-600)" className="size-5" />;
@@ -69,6 +75,9 @@ export default function ProfilePage() {
     return <Logout3 primaryColor="var(--color-red-600)" className="size-5" />;
   };
 
+  /**
+   * Resolves icon background class by tone.
+   */
   const getMenuIconBackgroundClassName = (tone: string): string => {
     if (tone === "blue") {
       return "bg-blue-100";
@@ -151,6 +160,7 @@ export default function ProfilePage() {
                 const isEditProfileItem = menuItem.key === "edit-profile";
                 const isChangePasswordItem = menuItem.key === "change-password";
                 const isNotificationsItem = menuItem.key === "notifications";
+                const isPerformanceItem = menuItem.key === "performance";
 
                 if (isEditProfileItem) {
                   return (
@@ -217,6 +227,36 @@ export default function ProfilePage() {
                     <Link
                       key={menuItem.key}
                       href={ROUTES.sales.profileNotifications}
+                      className="bg-n-50 flex items-center gap-3.5 rounded-xl px-5 py-[15px]"
+                    >
+                      {/* Menu icon */}
+                      <span
+                        className={`flex size-9 shrink-0 items-center justify-center rounded-[10px] ${getMenuIconBackgroundClassName(menuItem.tone)}`}
+                      >
+                        {getMenuIcon(menuItem.icon)}
+                      </span>
+
+                      {/* Menu label */}
+                      <span className="font-secondary text-n-800 flex-1 text-[0.9375rem]">
+                        {menuItem.label}
+                      </span>
+
+                      {/* Menu chevron */}
+                      <span className="flex size-5 items-center justify-center">
+                        <CustomDownArrow
+                          primaryColor="var(--color-n-400)"
+                          className="size-4 -rotate-90"
+                        />
+                      </span>
+                    </Link>
+                  );
+                }
+
+                if (isPerformanceItem) {
+                  return (
+                    <Link
+                      key={menuItem.key}
+                      href={ROUTES.sales.profilePerformance}
                       className="bg-n-50 flex items-center gap-3.5 rounded-xl px-5 py-[15px]"
                     >
                       {/* Menu icon */}
