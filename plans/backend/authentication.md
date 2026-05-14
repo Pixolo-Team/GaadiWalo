@@ -1,5 +1,7 @@
 # Backend – Authentication & Authorization
 
+Detailed backend implementation flow guidance for auth lives in `plans/backend/authentication-flow.md`.
+
 ## Auth Strategy
 
 - Supabase Auth is the primary auth system.
@@ -11,20 +13,15 @@
 - Server verifies token/session on protected routes.
 - Sensitive operations require fresh auth checks where needed.
 
-## Roles
-
-- `sales`: access only own leads/profile/performance scope.
-- `admin`: full team, reporting, assignment, and configuration scope.
-
 ## Authorization Rules
 
-- Enforce role checks server-side on every protected route.
-- Never rely on client role flags for access control.
+- Enforce authorization checks server-side on every protected route.
+- Never rely on client-provided access hints for access control.
 
 ## Required Protected Behaviors
 
 - Missing/invalid auth => `401`
-- Authenticated but wrong role => `403`
+- Authenticated but unauthorized => `403`
 - Log security-relevant auth events
 
 ## Password and Reset
