@@ -28,6 +28,7 @@ export function BottomNav() {
   // Helper Functions
   const isHomeSelected = pathname === ROUTES.home;
   const isLeadsSelected = pathname.startsWith(ROUTES.sales.leads);
+  const isAddSelected = pathname === ROUTES.sales.leadAdd;
 
   // Use Effects
 
@@ -80,15 +81,23 @@ export function BottomNav() {
         </Link>
 
         {/* Add */}
-        <button
-          type="button"
-          className="text-n-500 -mt-12 flex w-14 shrink-0 flex-col items-center gap-1"
+        <Link
+          href={ROUTES.sales.leadAdd}
+          className={`-mt-12 flex w-14 shrink-0 flex-col items-center gap-1 ${
+            isAddSelected ? "text-blue-600" : "text-n-500"
+          }`}
         >
           <span className="flex size-12 items-center justify-center rounded-[32px] bg-blue-600 shadow-[0_4px_12px_rgba(26,86,219,0.3)]">
             <UserAddPlus primaryColor="white" className="size-5" />
           </span>
-          <span className="font-secondary text-[10px] font-semibold">Add</span>
-        </button>
+          <span
+            className={`font-secondary text-[10px] ${
+              isAddSelected ? "font-bold" : "font-semibold"
+            }`}
+          >
+            Add
+          </span>
+        </Link>
 
         {/* Alerts */}
         <button
