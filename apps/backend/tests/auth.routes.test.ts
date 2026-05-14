@@ -93,7 +93,7 @@ describe("auth routes", () => {
       createMockAuthService({
         forgotPasswordService: async () => ({
           data: {
-            identifier: "sales@example.com",
+            email: "sales@example.com",
           },
           error: null,
         }),
@@ -106,11 +106,83 @@ describe("auth routes", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        identifier: "sales@example.com",
+        email: "sales@example.com",
       }),
     });
 
     assert.equal(response.status, 200);
+  });
+
+  it("returns 429 when forgot password is rate limited", async () => {
+    setAuthService(
+      createMockAuthService({
+        forgotPasswordService: async () => ({
+          data: null,
+          error: Object.assign(
+            new Error("Too many attempts. Please try again later."),
+            {
+              code: "RATE_LIMITED",
+            },
+          ),
+        }),
+      }),
+    );
+
+    const response = await app.request("/auth/forgot-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: "sales@example.com",
+      }),
+    });
+
+    assert.equal(response.status, 429);
+  });
+
+  it("returns 404 when forgot password email is not registered", async () => {
+    setAuthService(
+      createMockAuthService({
+        forgotPasswordService: async () => ({
+          data: null,
+          error: Object.assign(
+            new Error(
+              "This email ID is not registered. Please use a registered email ID.",
+            ),
+            {
+              code: "IDENTIFIER_NOT_FOUND",
+            },
+          ),
+        }),
+      }),
+    );
+
+    const response = await app.request("/auth/forgot-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: "missing@example.com",
+      }),
+    });
+    const responseBody = (await response.json()) as {
+      status: string;
+      message: string;
+      error: string;
+    };
+
+    assert.equal(response.status, 404);
+    assert.equal(responseBody.status, "error");
+    assert.equal(
+      responseBody.message,
+      "This email ID is not registered. Please use a registered email ID.",
+    );
+    assert.equal(
+      responseBody.error,
+      "This email ID is not registered. Please use a registered email ID.",
+    );
   });
 
   it("returns 429 when resend OTP is rate limited", async () => {
@@ -134,7 +206,7 @@ describe("auth routes", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        identifier: "sales@example.com",
+        email: "sales@example.com",
       }),
     });
 

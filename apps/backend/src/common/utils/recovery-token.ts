@@ -2,7 +2,7 @@
 import crypto from "node:crypto";
 
 interface RecoveryTokenPayloadData {
-  identifier: string;
+  email: string;
   recoveryAccessToken: string;
   exp: number;
 }
@@ -28,19 +28,19 @@ const signTokenPayload = (payload: string, secret: string): string => {
  * Issues a signed reset token for the verified recovery context.
  */
 export const issueRecoveryToken = ({
-  identifier,
+  email,
   recoveryAccessToken,
   secret,
   ttlMinutes,
 }: {
-  identifier: string;
+  email: string;
   recoveryAccessToken: string;
   secret: string;
   ttlMinutes: number;
 }): IssuedRecoveryTokenData => {
   const expiresAtMs = Date.now() + ttlMinutes * 60 * 1000;
   const payload: RecoveryTokenPayloadData = {
-    identifier,
+    email,
     recoveryAccessToken,
     exp: expiresAtMs,
   };

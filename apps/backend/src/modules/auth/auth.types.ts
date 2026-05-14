@@ -9,6 +9,7 @@ import {
 // LIBRARIES //
 import { z as zod } from "zod";
 
+// Represents the authenticated user shape returned to the client after login.
 export interface AuthenticatedUserData {
   id: string;
   name: string;
@@ -16,11 +17,13 @@ export interface AuthenticatedUserData {
   role: string;
 }
 
+// Client payload for signing in with the business User ID and password.
 export interface LoginRequestData {
   userId: string;
   password: string;
 }
 
+// Safe session payload returned after successful authentication.
 export interface LoginResponseData {
   accessToken: string;
   refreshToken: string | null;
@@ -28,41 +31,50 @@ export interface LoginResponseData {
   user: AuthenticatedUserData;
 }
 
+// Client payload for starting the password recovery flow.
 export interface ForgotPasswordRequestData {
-  identifier: string;
+  email: string;
 }
 
+// Minimal success payload returned after recovery is initiated.
 export interface ForgotPasswordResponseData {
-  identifier: string;
+  email: string;
 }
 
+// Client payload for verifying the OTP sent during password recovery.
 export interface VerifyOtpRequestData {
-  identifier: string;
+  email: string;
   otp: string;
 }
 
+// Temporary backend-issued reset token used for the final password reset step.
 export interface VerifyOtpResponseData {
   resetToken: string;
   expiresAt: string;
 }
 
+// Client payload for requesting a fresh recovery OTP.
 export interface ResendOtpRequestData {
-  identifier: string;
+  email: string;
 }
 
+// Minimal success payload for OTP resend requests.
 export interface ResendOtpResponseData {
-  identifier: string;
+  email: string;
 }
 
+// Client payload for completing password reset with a trusted reset token.
 export interface ResetPasswordRequestData {
   resetToken: string;
   newPassword: string;
 }
 
+// Success payload returned once the password has been updated.
 export interface ResetPasswordResponseData {
-  identifier: string;
+  email: string;
 }
 
+// Shared auth error codes used by the service and controller layers.
 export type AuthServiceErrorCodeData =
   | "CONFIGURATION"
   | "INVALID_CREDENTIALS"
@@ -74,10 +86,12 @@ export type AuthServiceErrorCodeData =
   | "INACTIVE_USER"
   | "INTERNAL";
 
+// Extends the native Error object with an auth-specific code for status mapping.
 export interface AuthServiceErrorData extends Error {
   code: AuthServiceErrorCodeData;
 }
 
+// Validates login input before the request reaches service logic.
 export const loginRequestSchema = zod
   .object({
     userId: zod.string().trim().min(1),
@@ -85,15 +99,17 @@ export const loginRequestSchema = zod
   })
   .strict();
 
+// Accepts email-only recovery initiation in the current backend phase.
 export const forgotPasswordRequestSchema = zod
   .object({
-    identifier: zod.string().trim().email(),
+    email: zod.string().trim().email(),
   })
   .strict();
 
+// Enforces exact OTP shape so invalid codes are rejected before provider calls.
 export const verifyOtpRequestSchema = zod
   .object({
-    identifier: zod.string().trim().email(),
+    email: zod.string().trim().email(),
     otp: zod
       .string()
       .trim()
@@ -102,12 +118,14 @@ export const verifyOtpRequestSchema = zod
   })
   .strict();
 
+// Reuses the same email validation rules for OTP resend requests.
 export const resendOtpRequestSchema = zod
   .object({
-    identifier: zod.string().trim().email(),
+    email: zod.string().trim().email(),
   })
   .strict();
 
+// Applies the project password policy at the API boundary as an early safeguard.
 export const resetPasswordRequestSchema = zod
   .object({
     resetToken: zod.string().trim().min(1),

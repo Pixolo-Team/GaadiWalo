@@ -30,6 +30,12 @@ import { authService } from "./auth.service.js";
 // LIBRARIES //
 import type { Context } from "hono";
 
+/**
+ * Maps service-layer auth errors to safe HTTP responses.
+ *
+ * This keeps controller actions small and ensures every auth endpoint
+ * uses the same status-code and message rules.
+ */
 const mapAuthError = (
   error: Error | null,
 ): { statusCode: number; message: string; errorDetail: string } => {
@@ -41,6 +47,7 @@ const mapAuthError = (
     };
   }
 
+  // Services attach a custom auth code so controllers can translate it into HTTP status codes.
   const authError = error as Partial<AuthServiceErrorData>;
   const statusCode =
     authError.code && authError.code in AUTH_ERROR_STATUS_CODE_MAP
@@ -49,6 +56,7 @@ const mapAuthError = (
 
   return {
     statusCode,
+    // Internal failures are intentionally hidden to avoid leaking backend or Supabase details.
     message:
       statusCode === HTTP_STATUS_CODES.internalServerError
         ? INTERNAL_SERVER_ERROR_MESSAGE
@@ -60,6 +68,12 @@ const mapAuthError = (
   };
 };
 
+/**
+ * Reads the request body once and converts malformed JSON into a standard API response.
+ *
+ * Hono throws when `.json()` receives invalid JSON, so centralizing this logic avoids
+ * repeating the same try/catch block in every auth controller.
+ */
 const parseRequestBody = async (
   context: Context,
 ): Promise<{ requestBody: unknown; errorResponse: Response | null }> => {
@@ -92,6 +106,7 @@ export const loginController = async (context: Context): Promise<Response> => {
     return errorResponse;
   }
 
+  // Validation happens before the service layer so downstream logic receives typed input only.
   const requestParseResult = loginRequestSchema.safeParse(requestBody);
 
   if (!requestParseResult.success) {
@@ -107,6 +122,7 @@ export const loginController = async (context: Context): Promise<Response> => {
   const loginResult = await authService.loginService(requestParseResult.data);
 
   if (loginResult.error || !loginResult.data) {
+    // The service decides the auth outcome; the controller only translates it into HTTP.
     const mappedError = mapAuthError(loginResult.error);
 
     return sendResponse({
@@ -128,7 +144,7 @@ export const loginController = async (context: Context): Promise<Response> => {
 };
 
 /**
- * Handles POST /auth/forgot-password and starts the password recovery flow for a supported identifier.
+ * Handles POST /auth/forgot-password and starts the password recovery flow for a supported email.
  */
 export const forgotPasswordController = async (
   context: Context,
@@ -156,6 +172,7 @@ export const forgotPasswordController = async (
   );
 
   if (forgotPasswordResult.error || !forgotPasswordResult.data) {
+    // This still returns a safe, normalized error response if the service reports a failure.
     const mappedError = mapAuthError(forgotPasswordResult.error);
 
     return sendResponse({
@@ -205,6 +222,7 @@ export const verifyOtpController = async (
   );
 
   if (verifyOtpResult.error || !verifyOtpResult.data) {
+    // OTP failures are mapped centrally so expired, invalid, and internal failures stay consistent.
     const mappedError = mapAuthError(verifyOtpResult.error);
 
     return sendResponse({
@@ -226,7 +244,7 @@ export const verifyOtpController = async (
 };
 
 /**
- * Handles POST /auth/resend-otp and resends the recovery OTP for the supplied email identifier.
+ * Handles POST /auth/resend-otp and resends the recovery OTP for the supplied email.
  */
 export const resendOtpController = async (
   context: Context,
@@ -254,6 +272,7 @@ export const resendOtpController = async (
   );
 
   if (resendOtpResult.error || !resendOtpResult.data) {
+    // Reuses the same error mapping so resend behavior matches the rest of the auth module.
     const mappedError = mapAuthError(resendOtpResult.error);
 
     return sendResponse({
@@ -303,6 +322,7 @@ export const resetPasswordController = async (
   );
 
   if (resetPasswordResult.error || !resetPasswordResult.data) {
+    // Reset token errors and password-strength errors are converted to the shared API envelope here.
     const mappedError = mapAuthError(resetPasswordResult.error);
 
     return sendResponse({

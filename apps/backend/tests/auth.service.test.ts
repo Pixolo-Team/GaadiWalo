@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 // SERVICES //
 import { createAuthService } from "../src/modules/auth/auth.service.js";
+import type { AuthServiceErrorData } from "../src/modules/auth/auth.types.js";
 
 describe("auth.service", () => {
   it("returns a login payload for valid credentials", async () => {
@@ -31,7 +32,7 @@ describe("auth.service", () => {
         expiresAt: "2030-01-01T00:00:00.000Z",
       }),
       verifyRecoveryToken: () => ({
-        identifier: "sales@example.com",
+        email: "sales@example.com",
         recoveryAccessToken: "recovery-access-token",
         exp: Date.now() + 300000,
       }),
@@ -49,7 +50,7 @@ describe("auth.service", () => {
     assert.equal(loginResult.data?.user.id, "SP001");
   });
 
-  it("returns a generic success payload for an unknown forgot password identifier", async () => {
+  it("returns an identifier-not-found error for an unknown forgot password email", async () => {
     const authService = createAuthService({
       getUserByLoginIdentifier: async () => null,
       getUserByEmailIdentifier: async () => null,
@@ -72,13 +73,64 @@ describe("auth.service", () => {
     });
 
     const forgotPasswordResult = await authService.forgotPasswordService({
-      identifier: "missing@example.com",
+      email: "missing@example.com",
     });
 
-    assert.equal(forgotPasswordResult.error, null);
+    assert.equal(forgotPasswordResult.data, null);
     assert.equal(
-      forgotPasswordResult.data?.identifier,
-      "missing@example.com",
+      forgotPasswordResult.error?.message,
+      "This email ID is not registered. Please use a registered email ID.",
+    );
+    assert.equal(
+      (forgotPasswordResult.error as AuthServiceErrorData | null)?.code,
+      "IDENTIFIER_NOT_FOUND",
+    );
+  });
+
+  it("maps forgot password resend throttling to a rate-limited service error", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => ({
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+        user_id: "SP001",
+      }),
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      sendRecoveryOtp: async () => {
+        throw new Error(
+          "For security purposes, you can only request this after 30 seconds.",
+        );
+      },
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => null,
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const forgotPasswordResult = await authService.forgotPasswordService({
+      email: "sales@example.com",
+    });
+
+    assert.equal(forgotPasswordResult.data, null);
+    assert.equal(
+      forgotPasswordResult.error?.message,
+      "Too many attempts. Please try again later.",
+    );
+    assert.equal(
+      (forgotPasswordResult.error as AuthServiceErrorData | null)?.code,
+      "RATE_LIMITED",
     );
   });
 
@@ -106,7 +158,7 @@ describe("auth.service", () => {
         expiresAt: "2030-01-01T00:00:00.000Z",
       }),
       verifyRecoveryToken: () => ({
-        identifier: "sales@example.com",
+        email: "sales@example.com",
         recoveryAccessToken: "recovery-access-token",
         exp: Date.now() + 300000,
       }),
@@ -115,7 +167,7 @@ describe("auth.service", () => {
     });
 
     const verifyOtpResult = await authService.verifyOtpService({
-      identifier: "sales@example.com",
+      email: "sales@example.com",
       otp: "123456",
     });
 
@@ -141,7 +193,7 @@ describe("auth.service", () => {
         expiresAt: "2030-01-01T00:00:00.000Z",
       }),
       verifyRecoveryToken: () => ({
-        identifier: "sales@example.com",
+        email: "sales@example.com",
         recoveryAccessToken: "recovery-access-token",
         exp: Date.now() + 300000,
       }),
@@ -178,7 +230,7 @@ describe("auth.service", () => {
         expiresAt: "2030-01-01T00:00:00.000Z",
       }),
       verifyRecoveryToken: () => ({
-        identifier: "sales@example.com",
+        email: "sales@example.com",
         recoveryAccessToken: "recovery-access-token",
         exp: Date.now() + 300000,
       }),

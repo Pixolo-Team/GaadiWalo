@@ -4,7 +4,11 @@ import {
   isAuthEnvironmentConfigured,
 } from "./environment.js";
 // CONSTANTS //
-import { SUPABASE_AUTH } from "../common/constants/supabase.constants.js";
+import {
+  DEFAULT_SUPABASE_AUTH,
+  SUPABASE_AUTH,
+} from "../common/constants/supabase.constants.js";
+import type { SupabaseAuthConfigurationData } from "../common/constants/supabase.constants.js";
 
 interface SupabaseSessionData {
   access_token: string;
@@ -76,6 +80,64 @@ const assertSupabaseConfiguration = (): void => {
   }
 };
 
+const getSupabaseAuthConfigurations =
+  (): SupabaseAuthConfigurationData[] => {
+    const configurations = [SUPABASE_AUTH, DEFAULT_SUPABASE_AUTH];
+    const uniqueConfigurations = new Map<string, SupabaseAuthConfigurationData>();
+
+    for (const configurationItem of configurations) {
+      const configurationKey = JSON.stringify(configurationItem);
+
+      if (!uniqueConfigurations.has(configurationKey)) {
+        uniqueConfigurations.set(configurationKey, configurationItem);
+      }
+    }
+
+    return Array.from(uniqueConfigurations.values());
+  };
+
+const isRetryableAuthLookupError = (errorMessage: string): boolean => {
+  const normalizedErrorMessage = errorMessage.toLowerCase();
+
+  return (
+    normalizedErrorMessage.includes("could not find the table") ||
+    normalizedErrorMessage.includes("does not exist")
+  );
+};
+
+const mapUserRecord = ({
+  userRecord,
+  configuration,
+  fallbackUserId,
+  fallbackEmail,
+}: {
+  userRecord: Record<string, unknown>;
+  configuration: SupabaseAuthConfigurationData;
+  fallbackUserId?: string;
+  fallbackEmail?: string;
+}): SupabaseUserRecordData => {
+  return {
+    ...userRecord,
+    email: String(userRecord[configuration.emailColumn] ?? fallbackEmail ?? ""),
+    full_name:
+      typeof userRecord[configuration.nameColumn] === "string"
+        ? String(userRecord[configuration.nameColumn])
+        : undefined,
+    role:
+      typeof userRecord[configuration.roleColumn] === "string"
+        ? String(userRecord[configuration.roleColumn])
+        : undefined,
+    is_active:
+      typeof userRecord[configuration.activeColumn] === "boolean"
+        ? Boolean(userRecord[configuration.activeColumn])
+        : undefined,
+    user_id:
+      typeof userRecord[configuration.loginUserIdColumn] === "string"
+        ? String(userRecord[configuration.loginUserIdColumn])
+        : fallbackUserId,
+  };
+};
+
 /**
  * Fetches a user record by the configured login identifier column.
  */
@@ -84,62 +146,68 @@ export const getUserByLoginIdentifier = async (
 ): Promise<SupabaseUserRecordData | null> => {
   assertSupabaseConfiguration();
 
-  const filterColumn = SUPABASE_AUTH.loginUserIdColumn;
-  const selectColumns = [
-    SUPABASE_AUTH.loginUserIdColumn,
-    SUPABASE_AUTH.emailColumn,
-    SUPABASE_AUTH.nameColumn,
-    SUPABASE_AUTH.roleColumn,
-    SUPABASE_AUTH.activeColumn,
-    "id",
-    "auth_id",
-  ].join(",");
-  const requestUrl = new URL(
-    `${environmentConfig.supabaseUrl}/rest/v1/${SUPABASE_AUTH.usersTable}`,
-  );
+  let lastLookupError: Error | null = null;
 
-  requestUrl.searchParams.set("select", selectColumns);
-  requestUrl.searchParams.set(filterColumn, `eq.${userId}`);
-  requestUrl.searchParams.set("limit", "1");
+  for (const configurationItem of getSupabaseAuthConfigurations()) {
+    const requestUrl = new URL(
+      `${environmentConfig.supabaseUrl}/rest/v1/${configurationItem.usersTable}`,
+    );
 
-  const response = await fetch(requestUrl, {
-    method: "GET",
-    headers: buildSupabaseHeaders({
-      apiKey: environmentConfig.supabaseServiceRoleKey,
-    }),
-  });
+    requestUrl.searchParams.set(
+      "select",
+      [
+        configurationItem.loginUserIdColumn,
+        configurationItem.emailColumn,
+        configurationItem.nameColumn,
+        configurationItem.roleColumn,
+        configurationItem.activeColumn,
+        "id",
+        "auth_id",
+      ].join(","),
+    );
+    requestUrl.searchParams.set(
+      configurationItem.loginUserIdColumn,
+      `eq.${userId}`,
+    );
+    requestUrl.searchParams.set("limit", "1");
 
-  if (!response.ok) {
-    throw new Error(await getErrorMessage(response));
+    const response = await fetch(requestUrl, {
+      method: "GET",
+      headers: buildSupabaseHeaders({
+        apiKey: environmentConfig.supabaseServiceRoleKey,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorMessage = await getErrorMessage(response);
+
+      if (isRetryableAuthLookupError(errorMessage)) {
+        lastLookupError = new Error(errorMessage);
+        continue;
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    const responseBody = (await response.json()) as Record<string, unknown>[];
+    const userRecord = responseBody[0];
+
+    if (!userRecord) {
+      return null;
+    }
+
+    return mapUserRecord({
+      userRecord,
+      configuration: configurationItem,
+      fallbackUserId: userId,
+    });
   }
 
-  const responseBody = (await response.json()) as Record<string, unknown>[];
-  const userRecord = responseBody[0];
-
-  if (!userRecord) {
-    return null;
+  if (lastLookupError) {
+    throw lastLookupError;
   }
 
-  return {
-    ...userRecord,
-    email: String(userRecord[SUPABASE_AUTH.emailColumn] ?? ""),
-    full_name:
-      typeof userRecord[SUPABASE_AUTH.nameColumn] === "string"
-        ? String(userRecord[SUPABASE_AUTH.nameColumn])
-        : undefined,
-    role:
-      typeof userRecord[SUPABASE_AUTH.roleColumn] === "string"
-        ? String(userRecord[SUPABASE_AUTH.roleColumn])
-        : undefined,
-    is_active:
-      typeof userRecord[SUPABASE_AUTH.activeColumn] === "boolean"
-        ? Boolean(userRecord[SUPABASE_AUTH.activeColumn])
-        : undefined,
-    user_id:
-      typeof userRecord[SUPABASE_AUTH.loginUserIdColumn] === "string"
-        ? String(userRecord[SUPABASE_AUTH.loginUserIdColumn])
-        : userId,
-  };
+  return null;
 };
 
 /**
@@ -150,63 +218,65 @@ export const getUserByEmailIdentifier = async (
 ): Promise<SupabaseUserRecordData | null> => {
   assertSupabaseConfiguration();
 
-  const requestUrl = new URL(
-    `${environmentConfig.supabaseUrl}/rest/v1/${SUPABASE_AUTH.usersTable}`,
-  );
+  let lastLookupError: Error | null = null;
 
-  requestUrl.searchParams.set(
-    "select",
-    [
-      SUPABASE_AUTH.loginUserIdColumn,
-      SUPABASE_AUTH.emailColumn,
-      SUPABASE_AUTH.nameColumn,
-      SUPABASE_AUTH.roleColumn,
-      SUPABASE_AUTH.activeColumn,
-      "id",
-      "auth_id",
-    ].join(","),
-  );
-  requestUrl.searchParams.set(SUPABASE_AUTH.emailColumn, `eq.${email}`);
-  requestUrl.searchParams.set("limit", "1");
+  for (const configurationItem of getSupabaseAuthConfigurations()) {
+    const requestUrl = new URL(
+      `${environmentConfig.supabaseUrl}/rest/v1/${configurationItem.usersTable}`,
+    );
 
-  const response = await fetch(requestUrl, {
-    method: "GET",
-    headers: buildSupabaseHeaders({
-      apiKey: environmentConfig.supabaseServiceRoleKey,
-    }),
-  });
+    requestUrl.searchParams.set(
+      "select",
+      [
+        configurationItem.loginUserIdColumn,
+        configurationItem.emailColumn,
+        configurationItem.nameColumn,
+        configurationItem.roleColumn,
+        configurationItem.activeColumn,
+        "id",
+        "auth_id",
+      ].join(","),
+    );
+    requestUrl.searchParams.set(configurationItem.emailColumn, `eq.${email}`);
+    requestUrl.searchParams.set("limit", "1");
 
-  if (!response.ok) {
-    throw new Error(await getErrorMessage(response));
+    const response = await fetch(requestUrl, {
+      method: "GET",
+      headers: buildSupabaseHeaders({
+        apiKey: environmentConfig.supabaseServiceRoleKey,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorMessage = await getErrorMessage(response);
+
+      if (isRetryableAuthLookupError(errorMessage)) {
+        lastLookupError = new Error(errorMessage);
+        continue;
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    const responseBody = (await response.json()) as Record<string, unknown>[];
+    const userRecord = responseBody[0];
+
+    if (!userRecord) {
+      return null;
+    }
+
+    return mapUserRecord({
+      userRecord,
+      configuration: configurationItem,
+      fallbackEmail: email,
+    });
   }
 
-  const responseBody = (await response.json()) as Record<string, unknown>[];
-  const userRecord = responseBody[0];
-
-  if (!userRecord) {
-    return null;
+  if (lastLookupError) {
+    throw lastLookupError;
   }
 
-  return {
-    ...userRecord,
-    email,
-    full_name:
-      typeof userRecord[SUPABASE_AUTH.nameColumn] === "string"
-        ? String(userRecord[SUPABASE_AUTH.nameColumn])
-        : undefined,
-    role:
-      typeof userRecord[SUPABASE_AUTH.roleColumn] === "string"
-        ? String(userRecord[SUPABASE_AUTH.roleColumn])
-        : undefined,
-    is_active:
-      typeof userRecord[SUPABASE_AUTH.activeColumn] === "boolean"
-        ? Boolean(userRecord[SUPABASE_AUTH.activeColumn])
-        : undefined,
-    user_id:
-      typeof userRecord[SUPABASE_AUTH.loginUserIdColumn] === "string"
-        ? String(userRecord[SUPABASE_AUTH.loginUserIdColumn])
-        : undefined,
-  };
+  return null;
 };
 
 /**
