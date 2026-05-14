@@ -12,10 +12,16 @@ import NoEyes from "@/components/icons/neevo-icons/NoEyes";
 import { Button } from "@/components/ui/button";
 import InputBox from "@/components/common/InputBox";
 
+// API SERVICES //
+import { loginRequest } from "@/services/api/auth.api.service";
+import { useAuthContext } from "@/context/AuthContext";
+
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
+import { AUTH_STORAGE_KEYS } from "@/constants/constants";
 
-// LIBRARIES //
+// OTHERS //
+import { toast } from "sonner";
 
 /**
  * Renders the login screen UI for the auth flow.
@@ -25,6 +31,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   // Define Context
+  const { setAuthSessionService } = useAuthContext();
 
   // Define Refs
 
@@ -32,11 +39,53 @@ export default function LoginPage() {
   const [userIdentifier, setUserIdentifier] = useState<string>("");
   const [userPassword, setUserPassword] = useState<string>("");
   const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Helper Functions
+  /** Resolves whether login button should be disabled. */
+  const isLoginDisabled =
+    isSubmitting || !userIdentifier.trim() || !userPassword.trim();
+
   /** Handles the login action */
-  const handleLogin = (): void => {
-    router.push(ROUTES.home);
+  const handleLogin = async (): Promise<void> => {
+    if (isLoginDisabled) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await loginRequest(userIdentifier.trim(), userPassword);
+
+      if (!response.data || response.status_code !== 200) {
+        toast.error(response.error ?? response.message);
+        return;
+      }
+
+      setAuthSessionService(
+        { token: response.data.accessToken },
+        response.data.user,
+      );
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          AUTH_STORAGE_KEYS.refreshToken,
+          response.data.refreshToken ?? "",
+        );
+        window.localStorage.setItem(
+          AUTH_STORAGE_KEYS.expiresIn,
+          String(response.data.expiresIn ?? ""),
+        );
+      }
+
+      setUserIdentifier("");
+      setUserPassword("");
+      toast.success(response.message);
+      router.push(ROUTES.home);
+    } catch {
+      toast.error("Unable to login. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   /** Toggles the password visibility state */
@@ -127,7 +176,12 @@ export default function LoginPage() {
           </div>
 
           {/* Sign In Button */}
-          <Button type="button" variant="primary" onClick={handleLogin}>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={handleLogin}
+            disabled={isLoginDisabled}
+          >
             Sign In
           </Button>
         </div>

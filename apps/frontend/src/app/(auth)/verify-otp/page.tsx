@@ -5,14 +5,25 @@ import { useEffect, useState } from "react";
 
 // LIBRARIES //
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
+import { AUTH_STORAGE_KEYS } from "@/constants/constants";
 
 // COMPONENTS //
 import { OtpInput } from "@/components/auth/OtpInput";
 import { Header } from "@/components/common/Header";
 import { Button } from "@/components/ui/button";
+
+// SERVICES //
+import {
+  resendOtpRequest,
+  verifyOtpRequest,
+} from "@/services/api/auth.api.service";
+
+// UTILS //
+import { validateOtpValue } from "@/utils/validations";
 
 const RESEND_SECONDS_COUNT = 45;
 
@@ -31,27 +42,104 @@ export default function VerifyOtpPage() {
   const [otpValue, setOtpValue] = useState<string>("");
   const [resendSecondsCount, setResendSecondsCount] =
     useState<number>(RESEND_SECONDS_COUNT);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isResending, setIsResending] = useState<boolean>(false);
+  const [recoveryEmail] = useState<string>(() => {
+    if (typeof window === "undefined") {
+      return "";
+    }
+
+    return window.localStorage.getItem(AUTH_STORAGE_KEYS.recoveryEmail) ?? "";
+  });
 
   // Helper Functions
   // Verify action handler
   /** Handles OTP verification and moves user to new password screen. */
-  const handleVerifyOtp = (): void => {
-    if (otpValue.length < 6) {
+  const handleVerifyOtp = async (): Promise<void> => {
+    const validationMessage = validateOtpValue(otpValue);
+
+    if (validationMessage) {
+      setErrorMessage(validationMessage);
+      toast.error(validationMessage);
       return;
     }
 
-    // Redirect to new password screen after OTP verification
-    router.push(ROUTES.auth.newPassword);
+    if (!recoveryEmail) {
+      setErrorMessage("Recovery email is missing. Please restart reset flow.");
+      toast.error("Recovery email is missing. Please restart reset flow.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+    try {
+      const response = await verifyOtpRequest({
+        email: recoveryEmail,
+        otp: otpValue,
+      });
+
+      if (!response.data || response.status_code !== 200) {
+        setErrorMessage(response.message);
+        toast.error(response.error ?? response.message);
+        return;
+      }
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          AUTH_STORAGE_KEYS.resetToken,
+          response.data.resetToken,
+        );
+      }
+
+      toast.success(response.message);
+
+      // Redirect to new password screen after OTP verification
+      router.push(ROUTES.auth.newPassword);
+    } catch {
+      const fallbackErrorMessage = "Unable to verify OTP. Please try again.";
+      setErrorMessage(fallbackErrorMessage);
+      toast.error(fallbackErrorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Resend OTP handler
   /** Handles OTP resend trigger after cooldown period. */
-  const handleResendOtp = (): void => {
+  const handleResendOtp = async (): Promise<void> => {
     if (resendSecondsCount > 0) {
       return;
     }
 
-    setResendSecondsCount(RESEND_SECONDS_COUNT);
+    if (!recoveryEmail) {
+      setErrorMessage("Recovery email is missing. Please restart reset flow.");
+      toast.error("Recovery email is missing. Please restart reset flow.");
+      return;
+    }
+
+    setIsResending(true);
+    setErrorMessage("");
+    try {
+      const response = await resendOtpRequest({
+        email: recoveryEmail,
+      });
+
+      if (response.status_code !== 200) {
+        setErrorMessage(response.message);
+        toast.error(response.error ?? response.message);
+        return;
+      }
+
+      setResendSecondsCount(RESEND_SECONDS_COUNT);
+      toast.success(response.message);
+    } catch {
+      const fallbackErrorMessage = "Unable to resend OTP. Please try again.";
+      setErrorMessage(fallbackErrorMessage);
+      toast.error(fallbackErrorMessage);
+    } finally {
+      setIsResending(false);
+    }
   };
 
   // Use Effects
@@ -93,7 +181,9 @@ export default function VerifyOtpPage() {
             {/* Description */}
             <p className="font-secondary text-n-600 font-regular w-[90%] text-sm">
               Enter the 6-digit OTP sent to{" "}
-              <span className="font-bold">example@gmail.com</span>
+              <span className="font-bold">
+                {recoveryEmail || "example@gmail.com"}
+              </span>
             </p>
           </div>
         </div>
@@ -103,10 +193,22 @@ export default function VerifyOtpPage() {
 
         {/* OTP form content */}
         <div className="flex flex-col gap-6">
+          {/* API error message */}
+          {errorMessage ? (
+            <p className="font-secondary text-center text-sm text-red-600">
+              {errorMessage}
+            </p>
+          ) : null}
+
           {/* Actions */}
           <div className="flex flex-col gap-4">
             {/* Verify OTP button */}
-            <Button type="button" variant="primary" onClick={handleVerifyOtp}>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleVerifyOtp}
+              disabled={isSubmitting}
+            >
               Verify OTP
             </Button>
 
@@ -118,11 +220,14 @@ export default function VerifyOtpPage() {
               <button
                 type="button"
                 onClick={handleResendOtp}
-                className="font-secondary text-blue-600"
+                disabled={isResending}
+                className="font-secondary text-blue-600 disabled:opacity-50"
               >
                 {resendSecondsCount > 0
                   ? `Resend in 0:${String(resendSecondsCount).padStart(2, "0")}`
-                  : "Resend now"}
+                  : isResending
+                    ? "Sending..."
+                    : "Resend now"}
               </button>
             </div>
           </div>

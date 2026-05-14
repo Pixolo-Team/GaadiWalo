@@ -3,6 +3,7 @@
 // REACT //
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
@@ -12,7 +13,9 @@ import Circle from "@/components/icons/neevo-icons/Circle";
 import { Button } from "@/components/ui/button";
 
 // CONSTANTS //
+import { AUTH_STORAGE_KEYS } from "@/constants/constants";
 import { ROUTES } from "@/constants/routes";
+import { resetPasswordRequest } from "@/services/api/auth.api.service";
 
 interface PasswordValidationStateData {
   hasMinimumLength: boolean;
@@ -34,6 +37,8 @@ export default function NewPasswordPage() {
   // Define States
   const [newPasswordValue, setNewPasswordValue] = useState<string>("");
   const [confirmPasswordValue, setConfirmPasswordValue] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Helper Functions
   // Password rule validation state
@@ -55,11 +60,70 @@ export default function NewPasswordPage() {
     confirmPasswordValue.length > 0 &&
     confirmPasswordValue === newPasswordValue;
 
+  /** Validates password fields before reset API call. */
+  const validatePasswordFields = (): string | null => {
+    if (!newPasswordValue.trim()) {
+      return "New password is required.";
+    }
+
+    if (!confirmPasswordValue.trim()) {
+      return "Confirm password is required.";
+    }
+
+    if (!isPasswordValid) {
+      return "Password does not meet required rules.";
+    }
+
+    if (!isPasswordMatch) {
+      return "Passwords do not match.";
+    }
+
+    return null;
+  };
+
   /** Handles setting a new password */
-  const handleNewPassword = (): void => {
-    if (!isPasswordValid || !isPasswordMatch) {
+  const handleNewPassword = async (): Promise<void> => {
+    const validationMessage = validatePasswordFields();
+
+    if (validationMessage) {
+      setErrorMessage(validationMessage);
+      toast.error(validationMessage);
       return;
     }
+
+    const resetToken =
+      typeof window !== "undefined"
+        ? (window.localStorage.getItem(AUTH_STORAGE_KEYS.resetToken) ?? "")
+        : "";
+
+    if (!resetToken) {
+      setErrorMessage("Reset token is missing. Please verify OTP again.");
+      toast.error("Reset token is missing. Please verify OTP again.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    const response = await resetPasswordRequest({
+      newPassword: newPasswordValue,
+      resetToken,
+    });
+
+    if (!response.data || response.status_code !== 200) {
+      setErrorMessage(response.message);
+      toast.error(response.error ?? response.message);
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(AUTH_STORAGE_KEYS.resetToken);
+      window.localStorage.removeItem(AUTH_STORAGE_KEYS.recoveryEmail);
+    }
+
+    setIsSubmitting(false);
+    toast.success(response.message);
 
     // Redirect to login after password is successfully updated
     router.push(ROUTES.auth.login);
@@ -79,7 +143,7 @@ export default function NewPasswordPage() {
   // Use Effects
 
   return (
-    <section className="flex flex-1 flex-col bg-n-100">
+    <section className="bg-n-100 flex flex-1 flex-col">
       {/* Header */}
       <Header title="New Password" />
 
@@ -111,7 +175,7 @@ export default function NewPasswordPage() {
         {/* Password rules */}
         <div className="flex flex-col gap-2">
           {/* Password rules title */}
-          <p className="font-secondary text-xs font-medium text-n-700">
+          <p className="font-secondary text-n-700 text-xs font-medium">
             Password must have:
           </p>
 
@@ -155,8 +219,18 @@ export default function NewPasswordPage() {
           </div>
         </div>
 
+        {/* API error message */}
+        {errorMessage ? (
+          <p className="font-secondary text-sm text-red-600">{errorMessage}</p>
+        ) : null}
+
         {/* Set password button */}
-        <Button type="button" variant="primary" onClick={handleNewPassword}>
+        <Button
+          type="button"
+          variant="primary"
+          onClick={handleNewPassword}
+          disabled={isSubmitting}
+        >
           Set New Password
         </Button>
       </div>
