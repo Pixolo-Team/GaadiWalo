@@ -15,6 +15,8 @@ export const ROUTES = {
     leadImport: "/leads/import",
     profile: "/profile",
     profileEdit: "/profile/edit",
+    profileChangePassword: "/profile/change-password",
+    profileNotifications: "/profile/notifications",
     leadDetails: (leadId: string) => `/leads/${leadId}`,
   },
 } as const;

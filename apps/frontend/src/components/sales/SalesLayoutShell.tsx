@@ -32,7 +32,7 @@ export function SalesLayoutShell({
   // Helper Functions
   const shouldHideBottomNav =
     pathname.startsWith(`${ROUTES.sales.leads}/`) ||
-    pathname === ROUTES.sales.profileEdit;
+    pathname.startsWith(`${ROUTES.sales.profile}/`);
 
   // Use Effects
 

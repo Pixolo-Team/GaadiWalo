@@ -6,7 +6,7 @@ import { useState } from "react";
 // COMPONENTS //
 import Dropdown from "@/components/common/Dropdown";
 import { Header } from "@/components/common/Header";
-import Paperclip1 from "@/components/icons/neevo-icons/Paperclip1";
+import AttachFileAdd from "@/components/icons/neevo-icons/AttachFileAdd";
 import { Button } from "@/components/ui/button";
 import InputBox from "@/components/common/InputBox";
 
@@ -64,7 +64,10 @@ export default function EditProfilePage() {
                 variant="secondary"
                 className="h-auto w-auto gap-2 rounded-[7px] border-n-300 bg-n-100 px-[13px] py-[9px] text-xs"
               >
-                <Paperclip1 primaryColor="var(--color-n-700)" className="size-4" />
+                <AttachFileAdd
+                  primaryColor="var(--color-n-700)"
+                  className="size-4"
+                />
                 Change Photo
               </Button>
             </div>

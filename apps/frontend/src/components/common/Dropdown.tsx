@@ -61,7 +61,7 @@ export default function Dropdown({
   // Use Effects
 
   return (
-    <div className="flex h-full flex-col gap-1.5">
+    <div className="flex h-full w-full flex-col gap-1.5">
       {/* Dropdown label */}
       {label ? (
         <div className="relative flex">
@@ -102,13 +102,13 @@ export default function Dropdown({
           </SelectTrigger>
 
           {/* Dropdown options */}
-          <SelectContent className="rounded-lg border border-n-200 bg-n-50 p-1 shadow-sm">
+          <SelectContent className="border-n-200 bg-n-50 rounded-lg border p-1 shadow-sm">
             {options.map((optionItem) => (
               /* Dropdown option */
               <SelectItem
                 key={optionItem.value}
                 value={optionItem.value}
-                className="min-h-10 rounded-md px-3 py-2 font-secondary text-base text-n-950 focus:bg-n-100"
+                className="font-secondary text-n-950 focus:bg-n-100 min-h-10 rounded-md px-3 py-2 text-base"
               >
                 {optionItem.label}
               </SelectItem>

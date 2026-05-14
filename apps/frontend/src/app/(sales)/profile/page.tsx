@@ -136,7 +136,7 @@ export default function ProfilePage() {
                     {metricItem.label}
                   </p>
                   <p
-                    className={`font-primary text-3xl font-bold leading-none ${getMetricValueColorClassName(metricItem.tone)}`}
+                    className={`font-primary text-2xl font-bold leading-none ${getMetricValueColorClassName(metricItem.tone)}`}
                   >
                     {metricItem.value}
                   </p>
@@ -149,12 +149,74 @@ export default function ProfilePage() {
             <div className="flex flex-col gap-3">
               {salesProfileMenuItems.map((menuItem) => {
                 const isEditProfileItem = menuItem.key === "edit-profile";
+                const isChangePasswordItem = menuItem.key === "change-password";
+                const isNotificationsItem = menuItem.key === "notifications";
 
                 if (isEditProfileItem) {
                   return (
                     <Link
                       key={menuItem.key}
                       href={ROUTES.sales.profileEdit}
+                      className="bg-n-50 flex items-center gap-3.5 rounded-xl px-5 py-[15px]"
+                    >
+                      {/* Menu icon */}
+                      <span
+                        className={`flex size-9 shrink-0 items-center justify-center rounded-[10px] ${getMenuIconBackgroundClassName(menuItem.tone)}`}
+                      >
+                        {getMenuIcon(menuItem.icon)}
+                      </span>
+
+                      {/* Menu label */}
+                      <span className="font-secondary text-n-800 flex-1 text-[0.9375rem]">
+                        {menuItem.label}
+                      </span>
+
+                      {/* Menu chevron */}
+                      <span className="flex size-5 items-center justify-center">
+                        <CustomDownArrow
+                          primaryColor="var(--color-n-400)"
+                          className="size-4 -rotate-90"
+                        />
+                      </span>
+                    </Link>
+                  );
+                }
+
+                if (isChangePasswordItem) {
+                  return (
+                    <Link
+                      key={menuItem.key}
+                      href={ROUTES.sales.profileChangePassword}
+                      className="bg-n-50 flex items-center gap-3.5 rounded-xl px-5 py-[15px]"
+                    >
+                      {/* Menu icon */}
+                      <span
+                        className={`flex size-9 shrink-0 items-center justify-center rounded-[10px] ${getMenuIconBackgroundClassName(menuItem.tone)}`}
+                      >
+                        {getMenuIcon(menuItem.icon)}
+                      </span>
+
+                      {/* Menu label */}
+                      <span className="font-secondary text-n-800 flex-1 text-[0.9375rem]">
+                        {menuItem.label}
+                      </span>
+
+                      {/* Menu chevron */}
+                      <span className="flex size-5 items-center justify-center">
+                        <CustomDownArrow
+                          primaryColor="var(--color-n-400)"
+                          className="size-4 -rotate-90"
+                        />
+                      </span>
+                    </Link>
+                  );
+                }
+
+                if (isNotificationsItem) {
+                  return (
+                    <Link
+                      key={menuItem.key}
+                      href={ROUTES.sales.profileNotifications}
                       className="bg-n-50 flex items-center gap-3.5 rounded-xl px-5 py-[15px]"
                     >
                       {/* Menu icon */}

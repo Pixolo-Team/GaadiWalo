@@ -430,3 +430,86 @@ export const salesProfileLanguageOptions = [
   { label: "Hindi", value: "hindi" },
   { label: "Marathi", value: "marathi" },
 ] as const;
+
+/**
+ * Sales notification preference group dummy data.
+ */
+export const salesNotificationPreferenceGroups = [
+  {
+    items: [
+      {
+        description: "When a lead hasn't been contacted in 3+ days",
+        enabled: true,
+        key: "overdue-follow-ups",
+        title: "Overdue follow-ups",
+      },
+      {
+        description: "1 hour before a scheduled test drive",
+        enabled: true,
+        key: "test-drive-reminders",
+        title: "Test drive reminders",
+      },
+      {
+        description: "When admin assigns a lead to you",
+        enabled: true,
+        key: "new-lead-assigned",
+        title: "New lead assigned",
+      },
+    ],
+    key: "follow-up-reminders",
+    title: "FOLLOW-UP REMINDERS",
+  },
+  {
+    items: [
+      {
+        description: "When a lead moves to a new phase",
+        enabled: true,
+        key: "status-change-alerts",
+        title: "Status change alerts",
+      },
+      {
+        description: "End-of-day win/loss notification",
+        enabled: false,
+        key: "won-lost-summary",
+        title: "Won / Lost summary",
+      },
+    ],
+    key: "lead-updates",
+    title: "LEAD UPDATES",
+  },
+  {
+    items: [
+      {
+        description: "",
+        enabled: true,
+        key: "push-notification",
+        title: "Push notification",
+      },
+      {
+        description: "",
+        enabled: false,
+        key: "sms",
+        title: "SMS",
+      },
+      {
+        description: "",
+        enabled: false,
+        key: "whatsapp",
+        title: "WhatsApp",
+      },
+    ],
+    key: "how-to-notify",
+    title: "HOW TO NOTIFY",
+  },
+] as const;
+
+/**
+ * Sales notification quiet hours options dummy data.
+ */
+export const salesNotificationQuietHoursTimeOptions = [
+  { label: "10:00 PM", value: "10-pm" },
+  { label: "11:00 PM", value: "11-pm" },
+  { label: "12:00 AM", value: "12-am" },
+  { label: "8:00 AM", value: "8-am" },
+  { label: "9:00 AM", value: "9-am" },
+] as const;
