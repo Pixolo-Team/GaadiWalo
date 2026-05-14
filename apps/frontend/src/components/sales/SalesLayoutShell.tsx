@@ -30,7 +30,9 @@ export function SalesLayoutShell({
   // Define States
 
   // Helper Functions
-  const shouldHideBottomNav = pathname.startsWith(`${ROUTES.sales.leads}/`);
+  const shouldHideBottomNav =
+    pathname.startsWith(`${ROUTES.sales.leads}/`) ||
+    pathname === ROUTES.sales.profileEdit;
 
   // Use Effects
 

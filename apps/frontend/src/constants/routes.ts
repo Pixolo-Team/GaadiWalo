@@ -13,6 +13,8 @@ export const ROUTES = {
     leads: "/leads",
     leadAdd: "/leads/add",
     leadImport: "/leads/import",
+    profile: "/profile",
+    profileEdit: "/profile/edit",
     leadDetails: (leadId: string) => `/leads/${leadId}`,
   },
 } as const;

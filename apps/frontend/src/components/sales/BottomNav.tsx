@@ -29,6 +29,9 @@ export function BottomNav() {
   const isHomeSelected = pathname === ROUTES.home;
   const isLeadsSelected = pathname.startsWith(ROUTES.sales.leads);
   const isAddSelected = pathname === ROUTES.sales.leadAdd;
+  const isProfileSelected =
+    pathname === ROUTES.sales.profile ||
+    pathname.startsWith(`${ROUTES.sales.profile}/`);
 
   // Use Effects
 
@@ -114,18 +117,26 @@ export function BottomNav() {
         </button>
 
         {/* Profile */}
-        <button
-          type="button"
-          className="text-n-500 flex min-w-0 flex-1 flex-col items-center gap-1"
+        <Link
+          href={ROUTES.sales.profile}
+          className={`flex min-w-0 flex-1 flex-col items-center gap-1 ${
+            isProfileSelected ? "text-blue-600" : "text-n-500"
+          }`}
         >
           <UserCircleSingle
-            primaryColor="var(--color-n-500)"
+            primaryColor={
+              isProfileSelected ? "var(--color-blue-600)" : "var(--color-n-500)"
+            }
             className="size-7"
           />
-          <span className="font-secondary text-[10px] font-semibold">
+          <span
+            className={`font-secondary text-[10px] ${
+              isProfileSelected ? "font-bold" : "font-semibold"
+            }`}
+          >
             Profile
           </span>
-        </button>
+        </Link>
       </div>
     </nav>
   );
