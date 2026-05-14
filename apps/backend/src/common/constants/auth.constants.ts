@@ -18,7 +18,7 @@ export const INVALID_RESET_PASSWORD_REQUEST_MESSAGE =
 
 export const LOGIN_SUCCESS_MESSAGE = "User authenticated successfully.";
 export const FORGOT_PASSWORD_SUCCESS_MESSAGE =
-  "If the account exists, password recovery instructions have been sent.";
+  "Password recovery instructions have been sent.";
 export const VERIFY_OTP_SUCCESS_MESSAGE = "OTP verified successfully.";
 export const RESEND_OTP_SUCCESS_MESSAGE =
   "If the account exists, a new OTP has been sent.";
@@ -29,7 +29,7 @@ export const INVALID_CREDENTIALS_MESSAGE = "Invalid User ID or password.";
 export const AUTH_CONFIGURATION_ERROR_MESSAGE =
   "Authentication service is not configured.";
 export const AUTH_IDENTIFIER_NOT_FOUND_MESSAGE =
-  "No account found with this email address.";
+  "This email ID is not registered. Please use a registered email ID.";
 export const AUTH_INVALID_OTP_MESSAGE = "Invalid or expired OTP.";
 export const AUTH_INVALID_RESET_TOKEN_MESSAGE =
   "Reset token is invalid or expired.";

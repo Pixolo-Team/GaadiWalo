@@ -11,24 +11,25 @@ import {
 // LIBRARIES //
 import { Hono } from "hono";
 
+// Defines all authentication endpoints under the shared auth base path.
 export const authRoutes = new Hono();
 
-// Maps POST /auth/login to loginController.
+// Keeps route files thin so auth business logic stays inside the controller and service layers.
 authRoutes.post(`${AUTH_ROUTE_BASE_PATH}/login`, loginController);
 
-// Maps POST /auth/forgot-password to forgotPasswordController.
+// Starts the password recovery flow without exposing Supabase details to callers.
 authRoutes.post(
   `${AUTH_ROUTE_BASE_PATH}/forgot-password`,
   forgotPasswordController,
 );
 
-// Maps POST /auth/verify-otp to verifyOtpController.
+// Verifies the recovery OTP before the backend issues its own reset token.
 authRoutes.post(`${AUTH_ROUTE_BASE_PATH}/verify-otp`, verifyOtpController);
 
-// Maps POST /auth/resend-otp to resendOtpController.
+// Allows the client to request a fresh OTP when the previous one is expired or lost.
 authRoutes.post(`${AUTH_ROUTE_BASE_PATH}/resend-otp`, resendOtpController);
 
-// Maps POST /auth/reset-password to resetPasswordController.
+// Completes password reset by exchanging a backend-issued token for a password update.
 authRoutes.post(
   `${AUTH_ROUTE_BASE_PATH}/reset-password`,
   resetPasswordController,
