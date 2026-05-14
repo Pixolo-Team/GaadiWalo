@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
-import { AUTH_STORAGE_KEYS } from "@/constants/constants";
+import { CONSTANTS } from "@/constants/constants";
 
 // COMPONENTS //
 import { OtpInput } from "@/components/auth/OtpInput";
@@ -46,11 +46,7 @@ export default function VerifyOtpPage() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isResending, setIsResending] = useState<boolean>(false);
   const [recoveryEmail] = useState<string>(() => {
-    if (typeof window === "undefined") {
-      return "";
-    }
-
-    return window.localStorage.getItem(AUTH_STORAGE_KEYS.recoveryEmail) ?? "";
+    return window.localStorage.getItem(CONSTANTS.RECOVERY_EMAIL) ?? "";
   });
 
   // Helper Functions
@@ -85,12 +81,7 @@ export default function VerifyOtpPage() {
         return;
       }
 
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(
-          AUTH_STORAGE_KEYS.resetToken,
-          response.data.resetToken,
-        );
-      }
+      window.localStorage.setItem(CONSTANTS.RESET_TOKEN, response.data.resetToken);
 
       toast.success(response.message);
 

@@ -1,7 +1,7 @@
 /**
- * Defines authenticated user payload.
+ * Defines user payload.
  */
-export interface AuthenticatedUserData {
+export interface UserData {
   email: string;
   id: string;
   name: string;
@@ -15,7 +15,7 @@ export interface LoginResponseData {
   accessToken: string;
   expiresIn: number | null;
   refreshToken: string | null;
-  user: AuthenticatedUserData;
+  user: UserData;
 }
 
 /**

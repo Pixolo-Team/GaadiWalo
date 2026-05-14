@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
-import { AUTH_STORAGE_KEYS } from "@/constants/constants";
+import { CONSTANTS } from "@/constants/constants";
 
 // COMPONENTS //
 import InputBox from "@/components/common/InputBox";
@@ -69,12 +69,7 @@ export default function ForgotPasswordPage() {
         return;
       }
 
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(
-          AUTH_STORAGE_KEYS.recoveryEmail,
-          response.data.email,
-        );
-      }
+      window.localStorage.setItem(CONSTANTS.RECOVERY_EMAIL, response.data.email);
 
       toast.success(response.message);
       router.push(ROUTES.auth.verifyOtp);

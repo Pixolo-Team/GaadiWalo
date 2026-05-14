@@ -18,7 +18,7 @@ export default function HomePage() {
   const router = useRouter();
 
   // Define Context
-  const { isLoading, session, user } = useAuthContext();
+  const { session, user } = useAuthContext();
 
   // Define Refs
 
@@ -28,22 +28,18 @@ export default function HomePage() {
 
   // Use Effects
   useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    // Protect sales home route when auth session is missing.
     if (!session?.token) {
+      // Protect sales home route when auth session is missing.
       router.replace(ROUTES.auth.login);
     }
-  }, [isLoading, router, session?.token]);
+  }, [router, session?.token]);
 
-  if (isLoading || !session?.token) {
+  if (!session?.token) {
     return null;
   }
 
   return (
-    <section className="flex min-h-screen items-center justify-center bg-n-100">
+    <section className="bg-n-100 flex min-h-screen items-center justify-center">
       {/* Home content */}
       <div className="bg-n-50 border-n-200 rounded-2xl border px-6 py-5 text-center">
         {/* Title */}

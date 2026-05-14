@@ -13,7 +13,7 @@ import Circle from "@/components/icons/neevo-icons/Circle";
 import { Button } from "@/components/ui/button";
 
 // CONSTANTS //
-import { AUTH_STORAGE_KEYS } from "@/constants/constants";
+import { CONSTANTS } from "@/constants/constants";
 import { ROUTES } from "@/constants/routes";
 import { resetPasswordRequest } from "@/services/api/auth.api.service";
 
@@ -91,10 +91,7 @@ export default function NewPasswordPage() {
       return;
     }
 
-    const resetToken =
-      typeof window !== "undefined"
-        ? (window.localStorage.getItem(AUTH_STORAGE_KEYS.resetToken) ?? "")
-        : "";
+    const resetToken = window.localStorage.getItem(CONSTANTS.RESET_TOKEN) ?? "";
 
     if (!resetToken) {
       setErrorMessage("Reset token is missing. Please verify OTP again.");
@@ -117,10 +114,8 @@ export default function NewPasswordPage() {
       return;
     }
 
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(AUTH_STORAGE_KEYS.resetToken);
-      window.localStorage.removeItem(AUTH_STORAGE_KEYS.recoveryEmail);
-    }
+    window.localStorage.removeItem(CONSTANTS.RESET_TOKEN);
+    window.localStorage.removeItem(CONSTANTS.RECOVERY_EMAIL);
 
     setIsSubmitting(false);
     toast.success(response.message);

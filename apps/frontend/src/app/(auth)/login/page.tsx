@@ -17,8 +17,8 @@ import { loginRequest } from "@/services/api/auth.api.service";
 import { useAuthContext } from "@/context/AuthContext";
 
 // CONSTANTS //
+import { CONSTANTS } from "@/constants/constants";
 import { ROUTES } from "@/constants/routes";
-import { AUTH_STORAGE_KEYS } from "@/constants/constants";
 
 // OTHERS //
 import { toast } from "sonner";
@@ -66,16 +66,14 @@ export default function LoginPage() {
         response.data.user,
       );
 
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(
-          AUTH_STORAGE_KEYS.refreshToken,
-          response.data.refreshToken ?? "",
-        );
-        window.localStorage.setItem(
-          AUTH_STORAGE_KEYS.expiresIn,
-          String(response.data.expiresIn ?? ""),
-        );
-      }
+      window.localStorage.setItem(
+        CONSTANTS.REFRESH_TOKEN,
+        response.data.refreshToken ?? "",
+      );
+      window.localStorage.setItem(
+        CONSTANTS.EXPIRES_IN,
+        String(response.data.expiresIn ?? ""),
+      );
 
       setUserIdentifier("");
       setUserPassword("");

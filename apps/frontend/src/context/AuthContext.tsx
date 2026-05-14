@@ -11,10 +11,10 @@ import {
 import type { ReactNode } from "react";
 
 // TYPES //
-import type { AuthenticatedUserData } from "@/types/auth";
+import type { UserData } from "@/types/auth";
 
 // CONSTANTS //
-import { AUTH_STORAGE_KEYS } from "@/constants/constants";
+import { CONSTANTS } from "@/constants/constants";
 
 /** App-level auth session stored by frontend */
 export type AppSessionData = {
@@ -23,11 +23,11 @@ export type AppSessionData = {
 
 type AuthContextData = {
   session: AppSessionData | null;
-  user: AuthenticatedUserData | null;
+  user: UserData | null;
   isLoading: boolean;
   setAuthSessionService: (
     sessionData: AppSessionData | null,
-    userData: AuthenticatedUserData | null,
+    userData: UserData | null,
   ) => void;
   clearAuthSessionService: () => void;
 };
@@ -36,29 +36,6 @@ const AuthContext = createContext<AuthContextData | null>(null);
 
 type AuthProviderPropsData = {
   children: ReactNode;
-};
-
-/**
- * Validates stored token before restoring session.
- */
-const isValidStoredTokenService = (
-  tokenData: string | null,
-): tokenData is string => {
-  if (!tokenData) {
-    return false;
-  }
-
-  const normalizedToken = tokenData.trim();
-
-  if (!normalizedToken) {
-    return false;
-  }
-
-  if (normalizedToken === "undefined" || normalizedToken === "null") {
-    return false;
-  }
-
-  return true;
 };
 
 /**
@@ -72,66 +49,49 @@ export function AuthProvider({ children }: AuthProviderPropsData) {
   // Define Refs
 
   // Define States
-  const [session, setSession] = useState<AppSessionData | null>(() => {
-    if (typeof window === "undefined") {
-      return null;
-    }
-
-    const storedAccessTokenData = window.localStorage.getItem(
-      AUTH_STORAGE_KEYS.accessToken,
-    );
-
-    if (!isValidStoredTokenService(storedAccessTokenData)) {
-      window.localStorage.removeItem(AUTH_STORAGE_KEYS.accessToken);
-      return null;
-    }
-
-    return { token: storedAccessTokenData };
-  });
-  const [user, setUser] = useState<AuthenticatedUserData | null>(() => {
-    if (typeof window === "undefined") {
-      return null;
-    }
-
-    const storedUserData = window.localStorage.getItem(AUTH_STORAGE_KEYS.user);
-
-    if (!storedUserData) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(storedUserData) as AuthenticatedUserData;
-    } catch {
-      return null;
-    }
-  });
-  const [isLoading] = useState<boolean>(false);
+  const [session, setSession] = useState<AppSessionData | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Helper Functions
 
   /**
    * Persists and updates auth state in one place.
    */
+  const parseStoredAuthDataService = <T,>(
+    storedValueData: string | null,
+  ): T | null => {
+    if (!storedValueData) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(storedValueData) as T;
+    } catch {
+      return null;
+    }
+  };
+
   const setAuthSessionService = useCallback(
-    (
-      sessionData: AppSessionData | null,
-      userData: AuthenticatedUserData | null,
-    ): void => {
+    (sessionData: AppSessionData | null, userData: UserData | null): void => {
       setSession(sessionData);
       setUser(userData);
 
+      // If either session or user data is missing, clear all auth state.
       if (!sessionData || !userData) {
-        // If either value is missing, clear full auth footprint.
-        window.localStorage.removeItem(AUTH_STORAGE_KEYS.accessToken);
-        window.localStorage.removeItem(AUTH_STORAGE_KEYS.user);
-        window.localStorage.removeItem(AUTH_STORAGE_KEYS.refreshToken);
-        window.localStorage.removeItem(AUTH_STORAGE_KEYS.expiresIn);
+        window.localStorage.removeItem(CONSTANTS.ACCESS_TOKEN);
+        window.localStorage.removeItem(CONSTANTS.AUTH_USER);
         return;
       }
 
-      // Persist session token and user payload for future visits.
-      window.localStorage.setItem(AUTH_STORAGE_KEYS.accessToken, sessionData.token);
-      window.localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(userData));
+      // Store access token in Local Storage
+      window.localStorage.setItem(CONSTANTS.ACCESS_TOKEN, sessionData.token);
+
+      // Store user data in Local Storage
+      window.localStorage.setItem(
+        CONSTANTS.AUTH_USER,
+        JSON.stringify(userData),
+      );
     },
     [],
   );
@@ -142,6 +102,24 @@ export function AuthProvider({ children }: AuthProviderPropsData) {
   const clearAuthSessionService = useCallback((): void => {
     setAuthSessionService(null, null);
   }, [setAuthSessionService]);
+
+  /** Restores auth state from local storage on first load */
+  const restoreAuthSessionService = useCallback((): void => {
+    const storedAccessToken = window.localStorage.getItem(
+      CONSTANTS.ACCESS_TOKEN,
+    );
+    const storedUserData = window.localStorage.getItem(CONSTANTS.AUTH_USER);
+
+    if (!storedAccessToken || !storedUserData) {
+      clearAuthSessionService();
+      setIsLoading(false);
+      return;
+    }
+
+    setSession({ token: storedAccessToken });
+    setUser(parseStoredAuthDataService<UserData>(storedUserData));
+    setIsLoading(false);
+  }, [clearAuthSessionService]);
 
   const authContextValue = useMemo(() => {
     return {
