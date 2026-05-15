@@ -4,6 +4,9 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+// TYPES //
+import { ChangePasswordInputData } from "@/types/auth";
+
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
 import InputBox from "@/components/common/InputBox";
@@ -20,10 +23,8 @@ interface PasswordValidationStateData {
   hasNumberCharacter: boolean;
 }
 
-/**
- * Renders the new password setup screen UI with live password rule checks.
- */
-export default function NewPasswordPage() {
+/** Change Password Page Component */
+export default function ChangePasswordPage() {
   // Define Navigation
   const router = useRouter();
 
@@ -32,18 +33,21 @@ export default function NewPasswordPage() {
   // Define Refs
 
   // Define States
-  const [newPasswordValue, setNewPasswordValue] = useState<string>("");
-  const [confirmPasswordValue, setConfirmPasswordValue] = useState<string>("");
+  const [passwordInputField, setPasswordInputField] =
+    useState<ChangePasswordInputData>({
+      newPassword: "",
+      confirmPassword: "",
+    });
 
   // Helper Functions
-  // Password rule validation state
+  /** Returns the password rule validation state */
   const passwordValidationState = useMemo<PasswordValidationStateData>(() => {
     return {
-      hasMinimumLength: newPasswordValue.length >= 8,
-      hasUppercaseCharacter: /[A-Z]/.test(newPasswordValue),
-      hasNumberCharacter: /[0-9]/.test(newPasswordValue),
+      hasMinimumLength: passwordInputField.newPassword.length >= 8,
+      hasUppercaseCharacter: /[A-Z]/.test(passwordInputField.newPassword),
+      hasNumberCharacter: /[0-9]/.test(passwordInputField.newPassword),
     };
-  }, [newPasswordValue]);
+  }, [passwordInputField.newPassword]);
 
   // Aggregate password validity flags
   const isPasswordValid =
@@ -52,11 +56,11 @@ export default function NewPasswordPage() {
     passwordValidationState.hasNumberCharacter;
 
   const isPasswordMatch =
-    confirmPasswordValue.length > 0 &&
-    confirmPasswordValue === newPasswordValue;
+    passwordInputField.confirmPassword.length > 0 &&
+    passwordInputField.confirmPassword === passwordInputField.newPassword;
 
   /** Handles setting a new password */
-  const handleNewPassword = (): void => {
+  const handleChangePassword = (): void => {
     if (!isPasswordValid || !isPasswordMatch) {
       return;
     }
@@ -79,9 +83,9 @@ export default function NewPasswordPage() {
   // Use Effects
 
   return (
-    <section className="flex flex-1 flex-col bg-n-100">
+    <section className="bg-n-100 flex flex-1 flex-col">
       {/* Header */}
-      <Header title="New Password" />
+      <Header title="Change Password" />
 
       {/* Content */}
       <div className="flex flex-col gap-6 p-6">
@@ -93,8 +97,13 @@ export default function NewPasswordPage() {
             label="NEW PASSWORD"
             type="password"
             placeholder="At least 8 characters"
-            value={newPasswordValue}
-            onChange={setNewPasswordValue}
+            value={passwordInputField.newPassword}
+            onChange={(value) =>
+              setPasswordInputField({
+                ...passwordInputField,
+                newPassword: value,
+              })
+            }
           />
 
           {/* Confirm password input */}
@@ -103,15 +112,20 @@ export default function NewPasswordPage() {
             label="CONFIRM PASSWORD"
             type="password"
             placeholder="Re-enter new password"
-            value={confirmPasswordValue}
-            onChange={setConfirmPasswordValue}
+            value={passwordInputField.confirmPassword}
+            onChange={(value) =>
+              setPasswordInputField({
+                ...passwordInputField,
+                confirmPassword: value,
+              })
+            }
           />
         </div>
 
         {/* Password rules */}
         <div className="flex flex-col gap-2">
           {/* Password rules title */}
-          <p className="font-secondary text-xs font-medium text-n-700">
+          <p className="font-secondary text-n-700 text-xs font-medium">
             Password must have:
           </p>
 
@@ -156,8 +170,13 @@ export default function NewPasswordPage() {
         </div>
 
         {/* Set password button */}
-        <Button type="button" variant="primary" onClick={handleNewPassword}>
-          Set New Password
+        <Button
+          type="button"
+          variant="primary"
+          onClick={handleChangePassword}
+          disabled={!isPasswordValid || !isPasswordMatch}
+        >
+          Change Password
         </Button>
       </div>
     </section>

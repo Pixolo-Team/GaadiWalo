@@ -2,12 +2,7 @@
 
 // REACT //
 import { useState } from "react";
-
-// LIBRARIES //
 import { useRouter } from "next/navigation";
-
-// CONSTANTS //
-import { ROUTES } from "@/constants/routes";
 
 // COMPONENTS //
 import InputBox from "@/components/common/InputBox";
@@ -15,9 +10,12 @@ import { Header } from "@/components/common/Header";
 import InformationCircle from "@/components/icons/neevo-icons/InformationCircle";
 import { Button } from "@/components/ui/button";
 
-/**
- * Renders the reset password request screen UI.
- */
+// CONSTANTS //
+import { ROUTES } from "@/constants/routes";
+
+// LIBRARIES //
+
+/** Reset Password Page Component */
 export default function ForgotPasswordPage() {
   // Define Navigation
   const router = useRouter();
@@ -27,7 +25,7 @@ export default function ForgotPasswordPage() {
   // Define Refs
 
   // Define States
-  const [inputValue, setInputValue] = useState<string>("");
+  const [emailInput, setEmailInput] = useState<string>("");
 
   // Helper Functions
   /** Handles the reset password action */
@@ -38,7 +36,7 @@ export default function ForgotPasswordPage() {
   // Use Effects
 
   return (
-    <section className="flex flex-1 flex-col bg-n-100">
+    <section className="bg-n-100 flex flex-1 flex-col">
       {/* Header  */}
       <Header title="Reset Password" />
 
@@ -53,7 +51,7 @@ export default function ForgotPasswordPage() {
           />
 
           {/* Text */}
-          <p className="font-secondary text-sm font-medium leading-normal text-blue-800">
+          <p className="font-secondary text-sm leading-normal font-medium text-blue-800">
             Enter your registered email or phone number. We&apos;ll send a reset
             link or OTP to verify your identity.
           </p>
@@ -67,8 +65,8 @@ export default function ForgotPasswordPage() {
             label="EMAIL OR PHONE"
             type="text"
             placeholder="e.g. rahul@company.com"
-            value={inputValue}
-            onChange={setInputValue}
+            value={emailInput}
+            onChange={setEmailInput}
           />
 
           {/* Send OTP button */}

@@ -25,6 +25,7 @@ export function Header({ showBack = true, title }: HeaderPropsData) {
   // Define States
 
   // Helper Functions
+  /** Function to handle back navigation */
   const handleBackNavigation = (): void => {
     router.back();
   };
@@ -41,6 +42,7 @@ export function Header({ showBack = true, title }: HeaderPropsData) {
           onClick={handleBackNavigation}
           className="border-n-200 bg-n-50 flex size-9 items-center justify-center rounded-full border"
         >
+          {/* Left Arrow Icon */}
           <LineArrowLeft1
             primaryColor="var(--color-n-700)"
             className="size-4"

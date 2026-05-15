@@ -2,23 +2,19 @@
 
 // REACT //
 import { useEffect, useState } from "react";
-
-// LIBRARIES //
 import { useRouter } from "next/navigation";
-
-// CONSTANTS //
-import { ROUTES } from "@/constants/routes";
 
 // COMPONENTS //
 import { OtpInput } from "@/components/auth/OtpInput";
 import { Header } from "@/components/common/Header";
 import { Button } from "@/components/ui/button";
 
+// CONSTANTS //
+import { ROUTES } from "@/constants/routes";
+
 const RESEND_SECONDS_COUNT = 45;
 
-/**
- * Renders the OTP verification screen UI with countdown and resend state.
- */
+/** Verify OTP Page Component */
 export default function VerifyOtpPage() {
   // Define Navigation
   const router = useRouter();
@@ -33,7 +29,6 @@ export default function VerifyOtpPage() {
     useState<number>(RESEND_SECONDS_COUNT);
 
   // Helper Functions
-  // Verify action handler
   /** Handles OTP verification and moves user to new password screen. */
   const handleVerifyOtp = (): void => {
     if (otpValue.length < 6) {
@@ -44,13 +39,13 @@ export default function VerifyOtpPage() {
     router.push(ROUTES.auth.newPassword);
   };
 
-  // Resend OTP handler
   /** Handles OTP resend trigger after cooldown period. */
   const handleResendOtp = (): void => {
     if (resendSecondsCount > 0) {
       return;
     }
 
+    // Reset resend cooldown timer
     setResendSecondsCount(RESEND_SECONDS_COUNT);
   };
 

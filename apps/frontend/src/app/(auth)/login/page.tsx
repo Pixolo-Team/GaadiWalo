@@ -4,6 +4,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+// TYPES //
+import { LoginUserFieldInputData } from "@/types/auth";
+
 // COMPONENTS //
 import Image from "next/image";
 import Link from "next/link";
@@ -15,11 +18,7 @@ import InputBox from "@/components/common/InputBox";
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
 
-// LIBRARIES //
-
-/**
- * Renders the login screen UI for the auth flow.
- */
+/** Login Page Component */
 export default function LoginPage() {
   // Define Navigation
   const router = useRouter();
@@ -29,8 +28,12 @@ export default function LoginPage() {
   // Define Refs
 
   // Define States
-  const [userIdentifier, setUserIdentifier] = useState<string>("");
-  const [userPassword, setUserPassword] = useState<string>("");
+  const [userFieldInput, setUserFieldInput] = useState<LoginUserFieldInputData>(
+    {
+      userId: "",
+      password: "",
+    },
+  );
   const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
 
   // Helper Functions
@@ -83,8 +86,10 @@ export default function LoginPage() {
               label="USER ID"
               type="text"
               placeholder="Enter user ID"
-              value={userIdentifier}
-              onChange={setUserIdentifier}
+              value={userFieldInput.userId}
+              onChange={(value) =>
+                setUserFieldInput({ ...userFieldInput, userId: value })
+              }
             />
 
             {/* Password Input */}
@@ -93,8 +98,10 @@ export default function LoginPage() {
               label="PASSWORD"
               type={isPasswordVisible ? "text" : "password"}
               placeholder="Enter password"
-              value={userPassword}
-              onChange={setUserPassword}
+              value={userFieldInput.password}
+              onChange={(value) =>
+                setUserFieldInput({ ...userFieldInput, password: value })
+              }
               iconRight={
                 <button
                   type="button"
