@@ -3,7 +3,7 @@
  */
 export const CONSTANTS = {
   API_URL:
-    process.env.NEXT_PUBLIC_API_BASE_URL ??
+    process.env.PUBLIC_API_URL ??
     "https://previgilant-dixie-disposingly.ngrok-free.dev",
   ACCESS_TOKEN: "access_token",
   AUTH_USER: "auth_user_data",
