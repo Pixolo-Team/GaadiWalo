@@ -35,7 +35,7 @@ export function SalesLayoutShell({
   // Use Effects
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-md flex-col bg-n-100">
+    <div className="bg-n-100 mx-auto flex h-full w-full max-w-md flex-col">
       {/* Sales page content */}
       <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
 

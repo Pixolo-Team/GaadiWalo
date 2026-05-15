@@ -77,18 +77,10 @@ export function LeadCard({
   // Use Effects
 
   return (
-    <article
+    <div
+      aria-label={`Open details for ${name}`}
       className={`bg-n-50 relative flex flex-col gap-3 rounded-[20px] border-l-4 px-5 py-4 ${borderToneClassName}`}
     >
-      {/* Lead details link */}
-      {detailsHref ? (
-        <Link
-          href={detailsHref}
-          aria-label={`Open details for ${name}`}
-          className="absolute inset-0 z-0 rounded-[20px]"
-        />
-      ) : null}
-
       {/* Top row */}
       <div className="pointer-events-none relative z-10 flex items-start justify-between gap-3">
         {/* Lead identity */}
@@ -157,6 +149,6 @@ export function LeadCard({
           />
         </Link>
       </div>
-    </article>
+    </div>
   );
 }

@@ -32,7 +32,7 @@ export function BottomNav() {
   // Use Effects
 
   return (
-    <nav className="border-n-200 bg-n-50 mt-auto w-full overflow-visible border-t-2 px-6 pt-3 pb-4">
+    <div className="border-n-200 bg-n-50 relative z-40 mt-auto w-full overflow-visible border-t-2 px-6 pt-3 pb-4">
       {/* Bottom navigation items */}
       <div className="flex items-end justify-between gap-1">
         {/* Home */}
@@ -82,7 +82,7 @@ export function BottomNav() {
         {/* Add */}
         <button
           type="button"
-          className="text-n-500 -mt-12 flex w-14 shrink-0 flex-col items-center gap-1"
+          className="text-n-500 relative z-50 -mt-12 flex w-14 shrink-0 flex-col items-center gap-1"
         >
           <span className="flex size-12 items-center justify-center rounded-[32px] bg-blue-600 shadow-[0_4px_12px_rgba(26,86,219,0.3)]">
             <UserAddPlus primaryColor="white" className="size-5" />
@@ -118,6 +118,6 @@ export function BottomNav() {
           </span>
         </button>
       </div>
-    </nav>
+    </div>
   );
 }
