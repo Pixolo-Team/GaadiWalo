@@ -102,7 +102,10 @@ export default function Dropdown({
           </SelectTrigger>
 
           {/* Dropdown options */}
-          <SelectContent className="rounded-lg border border-n-200 bg-n-50 p-1 shadow-sm">
+          <SelectContent
+            disablePortal
+            className="rounded-lg border border-n-200 bg-n-50 p-1 shadow-sm"
+          >
             {options.map((optionItem) => (
               /* Dropdown option */
               <SelectItem

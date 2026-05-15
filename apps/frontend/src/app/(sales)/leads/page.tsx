@@ -124,7 +124,7 @@ export default function LeadsPage() {
                 {salesLeads.map((leadItem) => (
                   <LeadCard
                     key={leadItem.key}
-                    detailsHref={ROUTES.sales.leadDetails(leadItem.key)}
+                    href={ROUTES.sales.leadDetails(leadItem.key)}
                     name={leadItem.name}
                     phoneNumber={leadItem.phoneNumber}
                     source={leadItem.source}

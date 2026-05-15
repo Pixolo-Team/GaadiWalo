@@ -147,3 +147,47 @@ export const salesSummaryMetrics = [
   { key: "new-leads", label: "New Leads", value: "03" },
   { key: "won-today", label: "Won Today", value: "01" },
 ] as const;
+
+/**
+ * Sales status filter option dummy data.
+ */
+export const salesStatusFilterOptions = [
+  "All",
+  "New",
+  "Contacted",
+  "Interested",
+  "Test Drive",
+  "Vehicle NA",
+  "Won",
+  "Lost",
+] as const;
+
+/**
+ * Sales source filter option dummy data.
+ */
+export const salesSourceFilterOptions = [
+  "All",
+  "CarWale",
+  "CarDekho",
+  "Walk In",
+  "Referral",
+] as const;
+
+/**
+ * Sales branch option dummy data.
+ */
+export const salesBranchOptions = [
+  { label: "All Showrooms", value: "all-showrooms" },
+  { label: "Thane", value: "thane" },
+  { label: "Mumbai", value: "mumbai" },
+] as const;
+
+/**
+ * Sales car brand option dummy data.
+ */
+export const salesCarBrandOptions = [
+  { label: "All Brands", value: "all-brands" },
+  { label: "Maruti Suzuki", value: "maruti-suzuki" },
+  { label: "Hyundai", value: "hyundai" },
+  { label: "Tata", value: "tata" },
+] as const;
