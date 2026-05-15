@@ -154,12 +154,18 @@ interface SalesLeadsServiceDependenciesData {
   ) => Promise<SupabaseUserRecordData | null>;
   getLeadByPhone: (phone: string) => Promise<SalesLeadRecordData | null>;
   getLeadSourceIdByName: (sourceName: string) => Promise<string | null>;
+  getLeadSourceNameById: (sourceId: string) => Promise<string | null>;
   getStatusIdByName: (statusName: string) => Promise<string | null>;
+  getStatusNameById: (statusId: string) => Promise<string | null>;
+  getLostReasonIdByName: (lostReasonName: string) => Promise<string | null>;
+  getLostReasonNameById: (lostReasonId: string) => Promise<string | null>;
   getCarBrandIdByName: (brandName: string) => Promise<string | null>;
+  getCarBrandNameById: (brandId: string) => Promise<string | null>;
   getCarModelIdByName: (
     modelName: string,
     carBrandId: string | null,
   ) => Promise<string | null>;
+  getCarModelNameById: (modelId: string) => Promise<string | null>;
   updateLeadRecord: (
     leadId: string,
     payload: UpdateLeadRecordInputData,
@@ -517,6 +523,18 @@ const createDefaultSalesLeadsServiceDependencies =
 
         return responseBody[0]?.id ?? null;
       },
+      getLeadSourceNameById: async (sourceId) => {
+        const requestUrl = createSupabaseTableUrl("lead_sources");
+        requestUrl.searchParams.set("select", "id,name");
+        requestUrl.searchParams.set("id", `eq.${sourceId}`);
+        requestUrl.searchParams.set("limit", "1");
+
+        const responseBody = await executeReadRequest<NamedEntityRecordData[]>(
+          requestUrl,
+        );
+
+        return responseBody[0]?.name ?? null;
+      },
       getStatusIdByName: async (statusName) => {
         const requestUrl = createSupabaseTableUrl("statuses");
         requestUrl.searchParams.set("select", "id,name");
@@ -529,6 +547,42 @@ const createDefaultSalesLeadsServiceDependencies =
 
         return responseBody[0]?.id ?? null;
       },
+      getStatusNameById: async (statusId) => {
+        const requestUrl = createSupabaseTableUrl("statuses");
+        requestUrl.searchParams.set("select", "id,name");
+        requestUrl.searchParams.set("id", `eq.${statusId}`);
+        requestUrl.searchParams.set("limit", "1");
+
+        const responseBody = await executeReadRequest<NamedEntityRecordData[]>(
+          requestUrl,
+        );
+
+        return responseBody[0]?.name ?? null;
+      },
+      getLostReasonIdByName: async (lostReasonName) => {
+        const requestUrl = createSupabaseTableUrl("lost_reasons");
+        requestUrl.searchParams.set("select", "id,name");
+        requestUrl.searchParams.set("name", `ilike.${lostReasonName}`);
+        requestUrl.searchParams.set("limit", "1");
+
+        const responseBody = await executeReadRequest<NamedEntityRecordData[]>(
+          requestUrl,
+        );
+
+        return responseBody[0]?.id ?? null;
+      },
+      getLostReasonNameById: async (lostReasonId) => {
+        const requestUrl = createSupabaseTableUrl("lost_reasons");
+        requestUrl.searchParams.set("select", "id,name");
+        requestUrl.searchParams.set("id", `eq.${lostReasonId}`);
+        requestUrl.searchParams.set("limit", "1");
+
+        const responseBody = await executeReadRequest<NamedEntityRecordData[]>(
+          requestUrl,
+        );
+
+        return responseBody[0]?.name ?? null;
+      },
       getCarBrandIdByName: async (brandName) => {
         const requestUrl = createSupabaseTableUrl("car_brands");
         requestUrl.searchParams.set("select", "id,name");
@@ -540,6 +594,18 @@ const createDefaultSalesLeadsServiceDependencies =
         );
 
         return responseBody[0]?.id ?? null;
+      },
+      getCarBrandNameById: async (brandId) => {
+        const requestUrl = createSupabaseTableUrl("car_brands");
+        requestUrl.searchParams.set("select", "id,name");
+        requestUrl.searchParams.set("id", `eq.${brandId}`);
+        requestUrl.searchParams.set("limit", "1");
+
+        const responseBody = await executeReadRequest<NamedEntityRecordData[]>(
+          requestUrl,
+        );
+
+        return responseBody[0]?.name ?? null;
       },
       getCarModelIdByName: async (modelName, carBrandId) => {
         const requestUrl = createSupabaseTableUrl("car_models");
@@ -557,6 +623,18 @@ const createDefaultSalesLeadsServiceDependencies =
         );
 
         return responseBody[0]?.id ?? null;
+      },
+      getCarModelNameById: async (modelId) => {
+        const requestUrl = createSupabaseTableUrl("car_models");
+        requestUrl.searchParams.set("select", "id,name");
+        requestUrl.searchParams.set("id", `eq.${modelId}`);
+        requestUrl.searchParams.set("limit", "1");
+
+        const responseBody = await executeReadRequest<NamedEntityRecordData[]>(
+          requestUrl,
+        );
+
+        return responseBody[0]?.name ?? null;
       },
       updateLeadRecord: async (leadId, payload) => {
         const requestUrl = createSupabaseTableUrl("leads");
@@ -736,7 +814,15 @@ export const createSalesLeadsService = (
       leadUserRecords.find((leadUserRecordItem) => leadUserRecordItem.is_primary) ??
       leadUserRecords[0] ??
       null;
-    const [assignedToUserRecord, createdByUserRecord] = await Promise.all([
+    const [
+      assignedToUserRecord,
+      createdByUserRecord,
+      resolvedLeadSourceName,
+      resolvedStatusName,
+      resolvedLostReasonName,
+      resolvedCarBrandName,
+      resolvedCarModelName,
+    ] = await Promise.all([
       primaryLeadUserRecord?.user_id
         ? dependencies.getUserByRecordIdentifier(primaryLeadUserRecord.user_id)
         : Promise.resolve(null),
@@ -744,6 +830,21 @@ export const createSalesLeadsService = (
         ? dependencies.getUserByRecordIdentifier(
             (leadRecord.creator_user_id ?? leadRecord.created_by) as string,
           )
+        : Promise.resolve(null),
+      typeof leadRecord.lead_source_id === "string"
+        ? dependencies.getLeadSourceNameById(leadRecord.lead_source_id)
+        : Promise.resolve(null),
+      typeof leadRecord.status_id === "string"
+        ? dependencies.getStatusNameById(leadRecord.status_id)
+        : Promise.resolve(null),
+      typeof leadRecord.lost_reason_id === "string"
+        ? dependencies.getLostReasonNameById(leadRecord.lost_reason_id)
+        : Promise.resolve(null),
+      typeof leadRecord.car_brand_id === "string"
+        ? dependencies.getCarBrandNameById(leadRecord.car_brand_id)
+        : Promise.resolve(null),
+      typeof leadRecord.car_model_id === "string"
+        ? dependencies.getCarModelNameById(leadRecord.car_model_id)
         : Promise.resolve(null),
     ]);
 
@@ -753,12 +854,17 @@ export const createSalesLeadsService = (
       phone: leadRecord.phone,
       email: leadRecord.email,
       source:
-        getOptionalString(leadRecord, ["source", "lead_source_id"]) ?? "",
+        resolvedLeadSourceName ??
+        getOptionalString(leadRecord, ["source", "lead_source_id"]) ??
+        "",
       status:
-        (getOptionalString(leadRecord, ["status", "status_id"]) as LeadStatusData | null) ??
+        ((resolvedStatusName ??
+          getOptionalString(leadRecord, ["status", "status_id"])) as LeadStatusData | null) ??
         "NEW",
       lostReason:
-        getOptionalString(leadRecord, ["lost_reason", "lostReason"]) ?? null,
+        resolvedLostReasonName ??
+        getOptionalString(leadRecord, ["lost_reason", "lostReason"]) ??
+        null,
       referrerName:
         getOptionalString(leadRecord, ["referrer_name", "referrerName"]) ??
         null,
@@ -766,9 +872,13 @@ export const createSalesLeadsService = (
         getOptionalString(leadRecord, ["referrer_phone", "referrerPhone"]) ??
         null,
       carBrand:
-        getOptionalString(leadRecord, ["car_brand_id", "car_brand"]) ?? null,
+        resolvedCarBrandName ??
+        getOptionalString(leadRecord, ["car_brand_id", "car_brand"]) ??
+        null,
       carModel:
-        getOptionalString(leadRecord, ["car_model_id", "car_model"]) ?? null,
+        resolvedCarModelName ??
+        getOptionalString(leadRecord, ["car_model_id", "car_model"]) ??
+        null,
       variantName:
         getOptionalString(leadRecord, ["variant_name", "variantName"]) ?? null,
       colorPreference:
@@ -832,23 +942,35 @@ export const createSalesLeadsService = (
     leadId: string,
   ): Promise<LeadActivityData[]> => {
     const activityRecords = await dependencies.getLeadActivityRecords(leadId);
+    return Promise.all(
+      activityRecords.map(async (activityRecordItem) => {
+        const [previousStatusName, nextStatusName] = await Promise.all([
+          typeof activityRecordItem.from_status_id === "string"
+            ? dependencies.getStatusNameById(activityRecordItem.from_status_id)
+            : Promise.resolve(null),
+          typeof activityRecordItem.to_status_id === "string"
+            ? dependencies.getStatusNameById(activityRecordItem.to_status_id)
+            : Promise.resolve(null),
+        ]);
 
-    return activityRecords.map((activityRecordItem) => ({
-      id: `${activityRecordItem.lead_id}:${activityRecordItem.updated_at ?? "unknown"}`,
-      leadId: activityRecordItem.lead_id,
-      type: "status_change",
-      description: createStatusChangeDescription({
-        previousStatus: (activityRecordItem.from_status_id ??
-          "UNKNOWN") as LeadStatusData,
-        nextStatus: activityRecordItem.to_status_id as LeadStatusData,
+        return {
+          id: `${activityRecordItem.lead_id}:${activityRecordItem.updated_at ?? "unknown"}`,
+          leadId: activityRecordItem.lead_id,
+          type: "status_change" as const,
+          description: createStatusChangeDescription({
+            previousStatus: (previousStatusName ?? "UNKNOWN") as LeadStatusData,
+            nextStatus: (nextStatusName ??
+              activityRecordItem.to_status_id) as LeadStatusData,
+          }),
+          metaJson: {
+            fromStatusId: activityRecordItem.from_status_id,
+            toStatusId: activityRecordItem.to_status_id,
+            userId: activityRecordItem.user_id,
+          },
+          createdAt: activityRecordItem.updated_at,
+        };
       }),
-      metaJson: {
-        fromStatusId: activityRecordItem.from_status_id,
-        toStatusId: activityRecordItem.to_status_id,
-        userId: activityRecordItem.user_id,
-      },
-      createdAt: activityRecordItem.updated_at,
-    }));
+    );
   };
 
   /**
@@ -967,6 +1089,10 @@ export const createSalesLeadsService = (
       try {
         const leadRecord = await ensureLeadAccess({ authenticatedUser, leadId });
         const statusId = await dependencies.getStatusIdByName(payload.status);
+        const lostReasonId =
+          payload.status === "LOST" && payload.lostReason
+            ? await dependencies.getLostReasonIdByName(payload.lostReason)
+            : null;
 
         if (!statusId) {
           return {
@@ -974,6 +1100,16 @@ export const createSalesLeadsService = (
             error: createSalesLeadServiceError(
               "NOT_FOUND",
               `Lead status not found: ${payload.status}.`,
+            ),
+          };
+        }
+
+        if (payload.status === "LOST" && payload.lostReason && !lostReasonId) {
+          return {
+            data: null,
+            error: createSalesLeadServiceError(
+              "NOT_FOUND",
+              `Lost reason not found: ${payload.lostReason}.`,
             ),
           };
         }
@@ -986,7 +1122,7 @@ export const createSalesLeadsService = (
 
         const updatedLeadRecord = await dependencies.updateLeadRecord(leadId, {
           status_id: statusId,
-          lost_reason: payload.status === "LOST" ? payload.lostReason : null,
+          lost_reason_id: payload.status === "LOST" ? lostReasonId : null,
         });
 
         await dependencies.createLeadActivityRecord({

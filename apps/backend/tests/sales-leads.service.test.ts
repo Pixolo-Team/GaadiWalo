@@ -20,13 +20,15 @@ const baseLeadRecord = {
   email: "rahul@example.com",
   source: "CarWale",
   status: "NEW" as const,
+  lead_source_id: "source-1",
+  status_id: "status-new",
   creator_user_id: "user-row-1",
   created_at: "2026-05-15T10:00:00.000Z",
   updated_at: "2026-05-15T10:00:00.000Z",
   referrer_name: null,
   referrer_phone: null,
-  car_brand: "Hyundai",
-  car_model: "i10",
+  car_brand_id: "brand-1",
+  car_model_id: "model-1",
   variant_name: "Sportz",
   color_preference: "Red",
   budget: "6-8 Lakh",
@@ -56,33 +58,45 @@ const createDependencies = () => {
     getLeadByPhone: async () => null,
     getLeadSourceIdByName: async (sourceName: string) =>
       sourceName === "CarWale" ? "source-1" : null,
+    getLeadSourceNameById: async (sourceId: string) =>
+      sourceId === "source-1" ? "CarWale" : null,
     getStatusIdByName: async (statusName: string) =>
-      statusName === "NEW" || statusName === "CONTACTED" ? "status-1" : null,
+      statusName === "NEW"
+        ? "status-new"
+        : statusName === "CONTACTED"
+          ? "status-contacted"
+          : statusName === "LOST"
+            ? "status-lost"
+          : null,
+    getStatusNameById: async (statusId: string) =>
+      statusId === "status-new"
+        ? "NEW"
+        : statusId === "status-contacted"
+          ? "CONTACTED"
+          : statusId === "status-lost"
+            ? "LOST"
+          : null,
+    getLostReasonIdByName: async (lostReasonName: string) =>
+      lostReasonName === "Budget issue" ? "lost-reason-1" : null,
+    getLostReasonNameById: async (lostReasonId: string) =>
+      lostReasonId === "lost-reason-1" ? "Budget issue" : null,
     getCarBrandIdByName: async (brandName: string) =>
       brandName === "Hyundai" ? "brand-1" : null,
+    getCarBrandNameById: async (brandId: string) =>
+      brandId === "brand-1" ? "Hyundai" : null,
     getCarModelIdByName: async (modelName: string, carBrandId: string | null) =>
       modelName === "i10" && carBrandId === "brand-1" ? "model-1" : null,
+    getCarModelNameById: async (modelId: string) =>
+      modelId === "model-1" ? "i10" : null,
     updateLeadRecord: async (_leadId: string, payload: object) => ({
       ...baseLeadRecord,
       ...payload,
-      status:
-        typeof (payload as { status?: unknown }).status === "string"
-          ? ((payload as { status: unknown }).status as
-              | "NEW"
-              | "CONTACTED"
-              | "INTERESTED"
-              | "TEST_DRIVE"
-              | "NEGOTIATION"
-              | "WON"
-              | "LOST"
-              | "VEHICLE_NA")
-          : baseLeadRecord.status,
     }),
     createLeadRecord: async (payload: object) => ({
       ...baseLeadRecord,
       ...payload,
       id: "lead-created",
-      status: "NEW" as const,
+      status_id: "status-new",
     }),
     createLeadNoteRecord: async (payload: object) => ({
       lead_id: String((payload as { lead_id?: unknown }).lead_id),
@@ -119,6 +133,10 @@ describe("sales-leads.service", () => {
     assert.equal(leadDetailsResult.error, null);
     assert.equal(leadDetailsResult.data?.id, "lead-1");
     assert.equal(leadDetailsResult.data?.assignedTo?.id, "SP001");
+    assert.equal(leadDetailsResult.data?.source, "CarWale");
+    assert.equal(leadDetailsResult.data?.status, "NEW");
+    assert.equal(leadDetailsResult.data?.carBrand, "Hyundai");
+    assert.equal(leadDetailsResult.data?.carModel, "i10");
   });
 
   it("returns a forbidden error when the lead is owned by another user", async () => {
@@ -204,5 +222,164 @@ describe("sales-leads.service", () => {
     assert.equal(createLeadNoteResult.error, null);
     assert.equal(createLeadNoteResult.data?.leadId, "lead-1");
     assert.equal(createLeadNoteResult.data?.author?.id, "SP001");
+  });
+
+  it("maps status activity ids into readable status names", async () => {
+    const salesLeadsService = createSalesLeadsService({
+      ...createDependencies(),
+      getLeadActivityRecords: async () => [
+        {
+          lead_id: "lead-1",
+          from_status_id: "status-new",
+          to_status_id: "status-contacted",
+          user_id: "user-row-1",
+          updated_at: "2026-05-15T10:30:00.000Z",
+        },
+      ],
+    });
+
+    const leadActivitiesResult = await salesLeadsService.getLeadActivitiesService(
+      authenticatedSalesUser,
+      "lead-1",
+    );
+
+    assert.equal(leadActivitiesResult.error, null);
+    assert.equal(
+      leadActivitiesResult.data?.[0]?.description,
+      "Lead status changed from NEW to CONTACTED.",
+    );
+  });
+
+  it("stores lost_reason_id when updating a lost lead status", async () => {
+    let updatedPayload: object | null = null;
+    const salesLeadsService = createSalesLeadsService({
+      ...createDependencies(),
+      updateLeadRecord: async (_leadId: string, payload: object) => {
+        updatedPayload = payload;
+
+        return {
+          ...baseLeadRecord,
+          ...payload,
+          status_id: "status-lost",
+          lost_reason_id: "lost-reason-1",
+        };
+      },
+    });
+
+    const updateLeadStatusResult = await salesLeadsService.updateLeadStatusService(
+      authenticatedSalesUser,
+      "lead-1",
+      {
+        status: "LOST",
+        lostReason: "Budget issue",
+      },
+    );
+
+    assert.equal(updateLeadStatusResult.error, null);
+    assert.deepEqual(updatedPayload, {
+      status_id: "status-lost",
+      lost_reason_id: "lost-reason-1",
+    });
+    assert.equal(updateLeadStatusResult.data?.lostReason, "Budget issue");
+  });
+
+  it("creates a lead and uses the generated lead id for the initial note", async () => {
+    const createdNotePayloads: Array<{
+      lead_id: string;
+      user_id: string;
+      note_text: string;
+    }> = [];
+    const salesLeadsService = createSalesLeadsService({
+      ...createDependencies(),
+      createLeadNoteRecord: async (payload: {
+        lead_id: string;
+        user_id: string;
+        note_text: string;
+      }) => {
+        createdNotePayloads.push(payload);
+
+        return {
+          lead_id: payload.lead_id,
+          user_id: payload.user_id,
+          note_text: payload.note_text,
+          created_at: "2026-05-15T10:30:00.000Z",
+        };
+      },
+    });
+
+    const createLeadResult = await salesLeadsService.createLeadService(
+      authenticatedSalesUser,
+      {
+        fullName: "Rahul Sharma",
+        phone: "9999999999",
+        email: "rahul@example.com",
+        source: "CarWale",
+        referrerName: null,
+        referrerPhone: null,
+        carBrand: "Hyundai",
+        carModel: "i10",
+        variantName: "Sportz",
+        colorPreference: "Red",
+        budget: "6-8 Lakh",
+        isUsed: true,
+        initialNote: "Customer asked for a callback after 6 PM.",
+      },
+    );
+
+    assert.equal(createLeadResult.error, null);
+    assert.equal(createLeadResult.data?.lead.id, "lead-created");
+    assert.equal(createLeadResult.data?.note?.leadId, "lead-created");
+    assert.equal(
+      createLeadResult.data?.note?.content,
+      "Customer asked for a callback after 6 PM.",
+    );
+    assert.deepEqual(createdNotePayloads, [
+      {
+        lead_id: "lead-created",
+        user_id: "user-row-1",
+        note_text: "Customer asked for a callback after 6 PM.",
+      },
+    ]);
+  });
+
+  it("creates a lead without inserting a note when initialNote is omitted", async () => {
+    let createdNoteCount = 0;
+    const salesLeadsService = createSalesLeadsService({
+      ...createDependencies(),
+      createLeadNoteRecord: async (payload: object) => {
+        createdNoteCount += 1;
+
+        return {
+          lead_id: String((payload as { lead_id?: unknown }).lead_id),
+          user_id: String((payload as { user_id?: unknown }).user_id),
+          note_text: String((payload as { note_text?: unknown }).note_text),
+          created_at: "2026-05-15T10:30:00.000Z",
+        };
+      },
+    });
+
+    const createLeadResult = await salesLeadsService.createLeadService(
+      authenticatedSalesUser,
+      {
+        fullName: "Rahul Sharma",
+        phone: "9999999998",
+        email: "rahul@example.com",
+        source: "CarWale",
+        referrerName: null,
+        referrerPhone: null,
+        carBrand: "Hyundai",
+        carModel: "i10",
+        variantName: "Sportz",
+        colorPreference: "Red",
+        budget: "6-8 Lakh",
+        isUsed: true,
+        initialNote: null,
+      },
+    );
+
+    assert.equal(createLeadResult.error, null);
+    assert.equal(createLeadResult.data?.lead.id, "lead-created");
+    assert.equal(createLeadResult.data?.note, null);
+    assert.equal(createdNoteCount, 0);
   });
 });
