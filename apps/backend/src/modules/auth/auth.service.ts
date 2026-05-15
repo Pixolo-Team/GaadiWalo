@@ -93,7 +93,9 @@ interface AuthServiceDependenciesData {
   getResetTokenTtlMinutes: () => number;
 }
 
-// Creates a standard Error object with an auth-specific code for controller-level status mapping.
+/**
+ * Creates a typed auth error that controllers can translate into a consistent API response.
+ */
 const createAuthServiceError = (
   code: AuthServiceErrorCodeData,
   message: string,
@@ -103,12 +105,16 @@ const createAuthServiceError = (
   return authError;
 };
 
-// Email comparisons and recovery flows should always use a normalized value.
+/**
+ * Normalizes email input so lookups and recovery flows use a consistent value.
+ */
 const normalizeEmail = (email: string): string => {
   return email.trim().toLowerCase();
 };
 
-// Returns a safe email payload shape without exposing any additional account details.
+/**
+ * Builds the minimal email-only payload used by recovery success responses.
+ */
 const createEmailResponse = (
   email: string,
 ): { email: string } => {
@@ -117,7 +123,9 @@ const createEmailResponse = (
   };
 };
 
-// Converts Supabase error text into project-specific auth errors that controllers understand.
+/**
+ * Maps Supabase auth failures to the project-specific auth errors used across the module.
+ */
 const mapSupabaseError = (error: Error): AuthServiceErrorData => {
   const errorMessage = error.message.toLowerCase();
 
@@ -151,7 +159,9 @@ const mapSupabaseError = (error: Error): AuthServiceErrorData => {
   return createAuthServiceError("INTERNAL", error.message);
 };
 
-// Password reset can fail for token-specific reasons that deserve a clearer client response.
+/**
+ * Converts reset-password failures into clearer token-aware auth errors when possible.
+ */
 const mapResetPasswordError = (error: Error): AuthServiceErrorData => {
   const errorMessage = error.message.toLowerCase();
 
@@ -169,7 +179,9 @@ const mapResetPasswordError = (error: Error): AuthServiceErrorData => {
   return mapSupabaseError(error);
 };
 
-// Mirrors the password policy in code so weak passwords are rejected before calling Supabase.
+/**
+ * Validates password strength before the reset flow reaches Supabase.
+ */
 const ensurePasswordStrength = (newPassword: string): AuthServiceErrorData | null => {
   const isValidPassword =
     newPassword.length >= 8 &&
@@ -183,7 +195,9 @@ const ensurePasswordStrength = (newPassword: string): AuthServiceErrorData | nul
   return null;
 };
 
-// Binds the production implementations used by the live auth service.
+/**
+ * Provides the default production dependencies used by the live auth service.
+ */
 const createDefaultAuthServiceDependencies = (): AuthServiceDependenciesData => {
   return {
     getUserByLoginIdentifier,
@@ -227,7 +241,9 @@ export interface AuthServiceData {
 export const createAuthService = (
   dependencies: AuthServiceDependenciesData = createDefaultAuthServiceDependencies(),
 ): AuthServiceData => {
-  // Fails early when required auth secrets or configuration values are missing.
+  /**
+   * Verifies the auth module has the required environment configuration before service work starts.
+   */
   const ensureConfigured = (): AuthServiceErrorData | null => {
     if (!dependencies.isAuthEnvironmentConfigured()) {
       return createAuthServiceError(
@@ -239,7 +255,9 @@ export const createAuthService = (
     return null;
   };
 
-  // Recovery endpoints operate on email, so they first confirm the account exists and is active.
+  /**
+   * Loads a user by email and ensures the account is active before recovery actions continue.
+   */
   const resolveActiveUserByEmail = async (
     email: string,
   ): Promise<SupabaseUserRecordData> => {
@@ -259,7 +277,9 @@ export const createAuthService = (
     return userRecord;
   };
 
-  // Forgot-password style flows intentionally hide whether an email belongs to an account.
+  /**
+   * Identifies lookup errors that should be hidden to avoid exposing account existence.
+   */
   const shouldHideEmailLookupError = (
     error: AuthServiceErrorData,
   ): boolean => {
@@ -269,6 +289,9 @@ export const createAuthService = (
   };
 
   return {
+    /**
+     * Authenticates a User ID and password, then returns the session details needed by the client.
+     */
     loginService: async (payload) => {
       try {
         const configurationError = ensureConfigured();
@@ -334,6 +357,9 @@ export const createAuthService = (
         };
       }
     },
+    /**
+     * Starts the password recovery flow by validating the email and requesting an OTP.
+     */
     forgotPasswordService: async (payload) => {
       try {
         const configurationError = ensureConfigured();
@@ -368,6 +394,9 @@ export const createAuthService = (
         };
       }
     },
+    /**
+     * Verifies the recovery OTP and exchanges it for a backend-issued reset token.
+     */
     verifyOtpService: async (payload) => {
       try {
         const configurationError = ensureConfigured();
@@ -412,6 +441,9 @@ export const createAuthService = (
         };
       }
     },
+    /**
+     * Sends a fresh recovery OTP while keeping account existence hidden where required.
+     */
     resendOtpService: async (payload) => {
       try {
         const configurationError = ensureConfigured();
@@ -455,6 +487,9 @@ export const createAuthService = (
         };
       }
     },
+    /**
+     * Validates the reset token and updates the user's password through Supabase.
+     */
     resetPasswordService: async (payload) => {
       try {
         const configurationError = ensureConfigured();
