@@ -48,10 +48,10 @@ export default function ForgotPasswordPage() {
   /** Handles reset-password submission. */
   const handleResetPassword = (): void => {
     const emailValue = inputValue.trim();
-    const isValid = validateRecoveryEmail(emailValue);
+    const validationMessage = validateRecoveryEmail(emailValue);
 
-    if (!isValid) {
-      toast.error("Please enter a valid email address or phone number.");
+    if (validationMessage) {
+      toast.error(validationMessage);
       return;
     }
 
