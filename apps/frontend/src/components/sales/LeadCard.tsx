@@ -1,29 +1,32 @@
-// LIBRARIES //
+// COMPONENTS //
 import Image from "next/image";
 import Link from "next/link";
-
-// COMPONENTS //
 import WhatsappLogo from "@/components/icons/neevo-icons/WhatsappLogo";
 import { LeadContactActions } from "@/components/sales/LeadContactActions";
 import { Badge } from "@/components/ui/badge";
 
+// CONSTANTS //
+import { ROUTES } from "@/constants/routes";
+import {
+  salesLeadToneClassNameData,
+  type SalesLeadStatusToneData,
+} from "@/data/sales";
+
 interface LeadCardPropsData {
-  detailsHref?: string;
+  href?: string;
   name: string;
   onCall?: () => void;
   onCopy?: () => void;
   phoneNumber: string;
   source: string;
   statusLabel: string;
-  statusTone: "amber" | "blue" | "green" | "purple" | "red";
+  statusTone: SalesLeadStatusToneData;
   vehicleName: string;
 }
 
-/**
- * Renders a lead item card with status and quick contact actions.
- */
+/** Lead Card Component */
 export function LeadCard({
-  detailsHref,
+  href,
   name,
   onCall,
   onCopy,
@@ -42,45 +45,24 @@ export function LeadCard({
   // Define States
 
   // Helper Functions
-  const toneClassNameData = {
-    amber: {
-      border: "border-amber-500",
-      dot: "bg-gradient-to-b from-amber-400 to-amber-600",
-      status: "bg-amber-100 text-amber-600",
-    },
-    blue: {
-      border: "border-blue-500",
-      dot: "bg-gradient-to-b from-blue-400 to-blue-600",
-      status: "bg-blue-100 text-blue-600",
-    },
-    green: {
-      border: "border-green-500",
-      dot: "bg-gradient-to-b from-green-400 to-green-600",
-      status: "bg-green-100 text-green-600",
-    },
-    purple: {
-      border: "border-purple-500",
-      dot: "bg-gradient-to-b from-purple-400 to-purple-600",
-      status: "bg-purple-100 text-purple-600",
-    },
-    red: {
-      border: "border-red-500",
-      dot: "bg-gradient-to-b from-red-400 to-red-600",
-      status: "bg-red-100 text-red-600",
-    },
-  };
-
-  const borderToneClassName = toneClassNameData[statusTone].border;
-  const dotToneClassName = toneClassNameData[statusTone].dot;
-  const statusClassName = toneClassNameData[statusTone].status;
+  const borderToneClassName = salesLeadToneClassNameData[statusTone].border;
+  const dotToneClassName = salesLeadToneClassNameData[statusTone].dot;
+  const statusClassName = salesLeadToneClassNameData[statusTone].status;
+  const detailsPageHref = href ?? ROUTES.sales.leads;
 
   // Use Effects
 
   return (
     <div
-      aria-label={`Open details for ${name}`}
       className={`bg-n-50 relative flex flex-col gap-3 rounded-[20px] border-l-4 px-5 py-4 ${borderToneClassName}`}
     >
+      {/* Full-card clickable overlay */}
+      <Link
+        href={detailsPageHref}
+        aria-label={`Open details for ${name}`}
+        className="absolute inset-0 z-0 rounded-[20px]"
+      />
+
       {/* Top row */}
       <div className="pointer-events-none relative z-10 flex items-start justify-between gap-3">
         {/* Lead identity */}
@@ -104,13 +86,17 @@ export function LeadCard({
 
             {/* Vehicle details */}
             <div className="flex flex-col gap-0.5">
+              {/* Vehicle Name */}
               <p className="font-secondary text-n-600 text-xs leading-none font-bold">
                 {vehicleName}
               </p>
 
               {/* Lead source and status dot */}
               <div className="flex items-center gap-1">
+                {/* Source  */}
                 <p className="font-secondary text-n-600 text-xs">{source}</p>
+
+                {/* Status dot */}
                 <span className="border-n-200 bg-n-50 flex size-4 items-center justify-center rounded-full border">
                   <span className={`size-3 rounded-full ${dotToneClassName}`} />
                 </span>
@@ -118,6 +104,7 @@ export function LeadCard({
             </div>
           </div>
         </div>
+
         {/* Status badge */}
         <Badge
           className={`font-secondary h-auto rounded-3xl text-xs tracking-[-0.2px] ${statusClassName}`}
@@ -128,7 +115,7 @@ export function LeadCard({
 
       {/* Contact actions */}
       <div className="relative z-20 flex items-center justify-between gap-3">
-        {/* Phone and copy actions */}
+        {/* Lead contact actions component to copy or call */}
         <LeadContactActions
           phoneNumber={phoneNumber}
           onCall={onCall}
@@ -143,6 +130,7 @@ export function LeadCard({
           aria-label="Open WhatsApp chat"
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-green-200 bg-green-100 p-0 active:bg-green-200"
         >
+          {/* Icon */}
           <WhatsappLogo
             primaryColor="var(--color-green-600)"
             className="size-4.5"

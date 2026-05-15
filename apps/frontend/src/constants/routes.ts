@@ -12,5 +12,8 @@ export const ROUTES = {
   },
   sales: {
     leads: "/leads",
+    addLead: "/leads/add",
+    alerts: "/profile/notifications",
+    profile: "/profile",
   },
 } as const;

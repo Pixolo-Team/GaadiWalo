@@ -3,16 +3,14 @@ import Link from "next/link";
 
 interface SectionHeaderPropsData {
   title: string;
-  actionHref?: string;
-  actionLabel?: string;
+  href?: string;
+  label?: string;
 }
 
-/**
- * Renders a reusable section header with optional right-side action link.
- */
+/** Section header component */
 export function SectionHeader({
-  actionHref,
-  actionLabel,
+  href,
+  label,
   title,
 }: Readonly<SectionHeaderPropsData>) {
   // Define Navigation
@@ -30,15 +28,15 @@ export function SectionHeader({
   return (
     <div className="flex items-center justify-between">
       {/* Section title */}
-      <h2 className="text-base font-semibold text-n-800">{title}</h2>
+      <h2 className="text-n-800 text-base font-semibold">{title}</h2>
 
       {/* Section action */}
-      {actionHref && actionLabel ? (
+      {href && label ? (
         <Link
-          href={actionHref}
+          href={href}
           className="font-secondary text-sm font-medium text-blue-600"
         >
-          {actionLabel}
+          {label}
         </Link>
       ) : null}
     </div>

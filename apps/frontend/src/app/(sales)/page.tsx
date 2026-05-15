@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 import ImportInput from "@/components/icons/neevo-icons/ImportInput";
 import UserAddPlus from "@/components/icons/neevo-icons/UserAddPlus";
 import { LeadCard } from "@/components/sales/LeadCard";
-import { PhaseTabs } from "@/components/sales/PhaseTabs";
+import { PhaseCards } from "@/components/sales/PhaseCards";
 import { QuickActionCard } from "@/components/sales/QuickActionCard";
-import { SalesTopHeader } from "@/components/sales/SalesTopHeader";
+import { SalesDashboardHeader } from "@/components/sales/SalesDashboardHeader";
 import { SectionHeader } from "@/components/sales/SectionHeader";
 
 // CONSTANTS //
@@ -19,7 +19,7 @@ import { ROUTES } from "@/constants/routes";
 import { useAuthContext } from "@/context/AuthContext";
 
 // DATA //
-import { salesPhaseTabs, salesRecentLeads } from "@/data/sales";
+import { salesPhaseCardsDetails, salesRecentLeads } from "@/data/sales";
 
 /**
  * Renders the sales home screen.
@@ -49,32 +49,31 @@ export default function Home() {
 
   return (
     <section className="bg-n-100">
-      {/* Sales home content */}
       <div className="flex flex-col gap-6">
-        {/* Top summary header */}
-        <SalesTopHeader />
+        {/* Sales dashboard header */}
+        <SalesDashboardHeader />
 
-        {/* Main sales content */}
         <div className="flex flex-col gap-6 px-6 pb-6">
           {/* Leads by phase section */}
           <div className="flex flex-col gap-2">
+            {/* Title */}
             <p className="font-secondary text-n-600 text-xs font-semibold tracking-wide uppercase">
               LEADS BY PHASE
             </p>
-            <PhaseTabs activeKey="all" tabs={salesPhaseTabs} />
+            {/* Phase Cards List Component */}
+            <PhaseCards activeKey="all" tabs={salesPhaseCardsDetails} />
           </div>
 
           {/* Recent leads section */}
           <div className="flex flex-col gap-3">
-            <SectionHeader
-              title="Recent Leads"
-              actionHref="#"
-              actionLabel="View All"
-            />
+            {/* Section Header component with title and action link */}
+            <SectionHeader title="Recent Leads" href="#" label="View All" />
 
             {/* Recent leads list */}
             <div className="flex flex-col gap-3">
+              {/* Leads */}
               {salesRecentLeads.map((leadItem) => (
+                // LeadCard Component
                 <LeadCard
                   key={leadItem.key}
                   name={leadItem.name}
@@ -90,12 +89,15 @@ export default function Home() {
 
           {/* Quick actions section */}
           <div className="flex flex-col gap-3">
+            {/* Section Header component with title and action link */}
             <SectionHeader title="Quick Actions" />
 
             {/* Quick actions list */}
             <div className="flex gap-2">
+              {/* Import Excel QuickAction Component */}
               <QuickActionCard
                 icon={
+                  // Icon
                   <ImportInput
                     primaryColor="var(--color-n-800)"
                     className="size-6"
@@ -103,8 +105,11 @@ export default function Home() {
                 }
                 label="Import Excel"
               />
+
+              {/* Add New Lead QuickAction Component */}
               <QuickActionCard
                 icon={
+                  // Icon
                   <UserAddPlus
                     primaryColor="var(--color-n-800)"
                     className="size-6"

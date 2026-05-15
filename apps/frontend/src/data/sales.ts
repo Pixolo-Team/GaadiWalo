@@ -1,6 +1,49 @@
 /**
- * Sales filter tag dummy data.
+ * Supported lead status tone options.
  */
+export type SalesLeadStatusToneData =
+  | "amber"
+  | "blue"
+  | "green"
+  | "purple"
+  | "red";
+
+/**
+ * Sales lead tone class map.
+ */
+export const salesLeadToneClassNameData: Record<
+  SalesLeadStatusToneData,
+  { border: string; dot: string; status: string }
+> = {
+  amber: {
+    border: "border-amber-500",
+    dot: "bg-gradient-to-b from-amber-400 to-amber-600",
+    status: "bg-amber-100 text-amber-600",
+  },
+  blue: {
+    border: "border-blue-500",
+    dot: "bg-gradient-to-b from-blue-400 to-blue-600",
+    status: "bg-blue-100 text-blue-600",
+  },
+  green: {
+    border: "border-green-500",
+    dot: "bg-gradient-to-b from-green-400 to-green-600",
+    status: "bg-green-100 text-green-600",
+  },
+  purple: {
+    border: "border-purple-500",
+    dot: "bg-gradient-to-b from-purple-400 to-purple-600",
+    status: "bg-purple-100 text-purple-600",
+  },
+  red: {
+    border: "border-red-500",
+    dot: "bg-gradient-to-b from-red-400 to-red-600",
+    status: "bg-red-100 text-red-600",
+  },
+};
+
+// TODO: Remove after API Integration
+//Sales filter tag dummy data
 export const salesLeadFilterTags = [
   { count: 12, key: "all", label: "All" },
   { count: 4, key: "new", label: "New" },
@@ -9,14 +52,14 @@ export const salesLeadFilterTags = [
 ] as const;
 
 /**
- * Sales phase tab dummy data.
+ * Sales phase card dummy data.
  */
-export const salesPhaseTabs = [
+export const salesPhaseCardsDetails = [
   { count: 12, key: "all", label: "All" },
   { count: 4, key: "new", label: "New" },
   { count: 3, key: "contacted", label: "Contacted" },
   { count: 2, key: "interested", label: "Interested" },
-  { count: 1, key: "won", label: "Won" },
+  { count: 1, key: "won", label: "🎉 Won" },
 ] as const;
 
 /**
@@ -81,7 +124,7 @@ export const salesRecentLeads = [
     name: "Vikram Nair",
     phoneNumber: "9876876878",
     source: "CarWale",
-    statusLabel: "Won",
+    statusLabel: "🎉 Won",
     statusTone: "green",
     vehicleName: "Maruti Suzuki Swift",
   },
