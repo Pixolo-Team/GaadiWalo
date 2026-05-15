@@ -1,4 +1,8 @@
 "use client";
+// REACT //
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 // COMPONENTS //
 import ImportInput from "@/components/icons/neevo-icons/ImportInput";
 import UserAddPlus from "@/components/icons/neevo-icons/UserAddPlus";
@@ -7,6 +11,14 @@ import { PhaseTabs } from "@/components/sales/PhaseTabs";
 import { QuickActionCard } from "@/components/sales/QuickActionCard";
 import { SalesTopHeader } from "@/components/sales/SalesTopHeader";
 import { SectionHeader } from "@/components/sales/SectionHeader";
+
+// CONSTANTS //
+import { ROUTES } from "@/constants/routes";
+
+// OTHERS //
+import { useAuthContext } from "@/context/AuthContext";
+
+// DATA //
 import { salesPhaseTabs, salesRecentLeads } from "@/data/sales";
 
 /**
@@ -14,16 +26,26 @@ import { salesPhaseTabs, salesRecentLeads } from "@/data/sales";
  */
 export default function Home() {
   // Define Navigation
+  const router = useRouter();
 
   // Define Context
-
-  // Define Refs
-
-  // Define States
-
-  // Helper Functions
+  const { isAuthenticated, isLoading } = useAuthContext();
 
   // Use Effects
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      // Protect sales home route when auth session is missing.
+      router.replace(ROUTES.auth.login);
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  if (isAuthenticated !== true) {
+    return null;
+  }
 
   return (
     <section className="bg-n-100">

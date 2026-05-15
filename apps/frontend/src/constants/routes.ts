@@ -7,7 +7,8 @@ export const ROUTES = {
     login: "/login",
     resetPassword: "/reset-password",
     verifyOtp: "/verify-otp",
-    newPassword: "/new-password",
+    changePassword: "/change-password",
+    newPassword: "/change-password",
   },
   sales: {
     leads: "/leads",
