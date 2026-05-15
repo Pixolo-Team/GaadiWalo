@@ -19,6 +19,9 @@ const environmentSchema = z.object({
   SUPABASE_USER_NAME_COLUMN: z.string().min(1).default("full_name"),
   SUPABASE_USER_ROLE_COLUMN: z.string().min(1).default("role_id"),
   SUPABASE_USER_ACTIVE_COLUMN: z.string().min(1).default("is_active"),
+  SUPABASE_ROLES_TABLE: z.string().min(1).default("roles"),
+  SUPABASE_ROLE_ID_COLUMN: z.string().min(1).default("id"),
+  SUPABASE_ROLE_NAME_COLUMN: z.string().min(1).default("name"),
 });
 
 const environmentParseResult = environmentSchema.safeParse(process.env);
@@ -49,6 +52,9 @@ export const environmentConfig = {
     environmentParseResult.data.SUPABASE_USER_ROLE_COLUMN,
   supabaseUserActiveColumn:
     environmentParseResult.data.SUPABASE_USER_ACTIVE_COLUMN,
+  supabaseRolesTable: environmentParseResult.data.SUPABASE_ROLES_TABLE,
+  supabaseRoleIdColumn: environmentParseResult.data.SUPABASE_ROLE_ID_COLUMN,
+  supabaseRoleNameColumn: environmentParseResult.data.SUPABASE_ROLE_NAME_COLUMN,
 };
 
 export const isAuthEnvironmentConfigured = (): boolean => {

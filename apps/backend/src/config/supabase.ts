@@ -23,6 +23,11 @@ interface SupabaseSessionData {
   };
 }
 
+export interface SupabaseAuthUserData {
+  id: string;
+  email: string;
+}
+
 interface SupabaseErrorResponseData {
   error?: string;
   code?: string;
@@ -36,11 +41,73 @@ export interface SupabaseUserRecordData {
   email: string;
   full_name?: string;
   role?: string;
+  role_id?: string;
   is_active?: boolean;
   user_id?: string;
   auth_id?: string;
   [key: string]: unknown;
 }
+
+const normalizeRoleValue = (roleValue: string): string => {
+  return roleValue.trim().toLowerCase();
+};
+
+const resolveRoleNameByIdentifier = async (
+  roleIdentifier: string,
+): Promise<string | null> => {
+  const requestUrl = new URL(
+    `${environmentConfig.supabaseUrl}/rest/v1/${environmentConfig.supabaseRolesTable}`,
+  );
+
+  requestUrl.searchParams.set("select", environmentConfig.supabaseRoleNameColumn);
+  requestUrl.searchParams.set(
+    environmentConfig.supabaseRoleIdColumn,
+    `eq.${roleIdentifier}`,
+  );
+  requestUrl.searchParams.set("limit", "1");
+
+  const response = await fetch(requestUrl, {
+    method: "GET",
+    headers: buildSupabaseHeaders({
+      apiKey: environmentConfig.supabaseServiceRoleKey,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorMessage = await getErrorMessage(response);
+    const normalizedErrorMessage = errorMessage.toLowerCase();
+
+    throw new Error(errorMessage);
+  }
+
+  const responseBody = (await response.json()) as Record<string, unknown>[];
+  const roleRecord = responseBody[0];
+  const roleName = roleRecord?.[environmentConfig.supabaseRoleNameColumn];
+
+  if (typeof roleName !== "string" || roleName.trim().length === 0) {
+    return null;
+  }
+
+  return normalizeRoleValue(roleName);
+};
+
+const resolveUserRoleValue = async (
+  rawRoleValue: unknown,
+): Promise<{ role: string | undefined; roleId: string | undefined }> => {
+  if (typeof rawRoleValue !== "string" || rawRoleValue.trim().length === 0) {
+    return {
+      role: undefined,
+      roleId: undefined,
+    };
+  }
+
+  const resolvedRoleName = await resolveRoleNameByIdentifier(rawRoleValue);
+
+  return {
+    role: resolvedRoleName ?? undefined,
+    roleId: rawRoleValue,
+  };
+};
 
 const buildSupabaseHeaders = ({
   apiKey,
@@ -105,7 +172,7 @@ const isRetryableAuthLookupError = (errorMessage: string): boolean => {
   );
 };
 
-const mapUserRecord = ({
+const mapUserRecord = async ({
   userRecord,
   configuration,
   fallbackUserId,
@@ -115,7 +182,11 @@ const mapUserRecord = ({
   configuration: SupabaseAuthConfigurationData;
   fallbackUserId?: string;
   fallbackEmail?: string;
-}): SupabaseUserRecordData => {
+}): Promise<SupabaseUserRecordData> => {
+  const resolvedRoleValue = await resolveUserRoleValue(
+    userRecord[configuration.roleColumn],
+  );
+
   return {
     ...userRecord,
     email: String(userRecord[configuration.emailColumn] ?? fallbackEmail ?? ""),
@@ -123,10 +194,8 @@ const mapUserRecord = ({
       typeof userRecord[configuration.nameColumn] === "string"
         ? String(userRecord[configuration.nameColumn])
         : undefined,
-    role:
-      typeof userRecord[configuration.roleColumn] === "string"
-        ? String(userRecord[configuration.roleColumn])
-        : undefined,
+    role: resolvedRoleValue.role,
+    role_id: resolvedRoleValue.roleId,
     is_active:
       typeof userRecord[configuration.activeColumn] === "boolean"
         ? Boolean(userRecord[configuration.activeColumn])
@@ -136,6 +205,89 @@ const mapUserRecord = ({
         ? String(userRecord[configuration.loginUserIdColumn])
         : fallbackUserId,
   };
+};
+
+const createUserSelectQuery = (
+  configuration: SupabaseAuthConfigurationData,
+): string => {
+  return [
+    configuration.loginUserIdColumn,
+    configuration.emailColumn,
+    configuration.nameColumn,
+    configuration.roleColumn,
+    configuration.activeColumn,
+    "id",
+    "auth_id",
+  ].join(",");
+};
+
+const getUserByColumnValue = async ({
+  columnName,
+  columnValue,
+}: {
+  columnName: string;
+  columnValue: string;
+}): Promise<SupabaseUserRecordData | null> => {
+  assertSupabaseConfiguration();
+
+  let lastLookupError: Error | null = null;
+
+  for (const configurationItem of getSupabaseAuthConfigurations()) {
+    const requestUrl = new URL(
+      `${environmentConfig.supabaseUrl}/rest/v1/${configurationItem.usersTable}`,
+    );
+
+    requestUrl.searchParams.set(
+      "select",
+      createUserSelectQuery(configurationItem),
+    );
+    requestUrl.searchParams.set(columnName, `eq.${columnValue}`);
+    requestUrl.searchParams.set("limit", "1");
+
+    const response = await fetch(requestUrl, {
+      method: "GET",
+      headers: buildSupabaseHeaders({
+        apiKey: environmentConfig.supabaseServiceRoleKey,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorMessage = await getErrorMessage(response);
+
+      if (isRetryableAuthLookupError(errorMessage)) {
+        lastLookupError = new Error(errorMessage);
+        continue;
+      }
+
+      if (
+        errorMessage.toLowerCase().includes("column") &&
+        errorMessage.toLowerCase().includes(columnName.toLowerCase())
+      ) {
+        lastLookupError = new Error(errorMessage);
+        continue;
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    const responseBody = (await response.json()) as Record<string, unknown>[];
+    const userRecord = responseBody[0];
+
+    if (!userRecord) {
+      return null;
+    }
+
+    return mapUserRecord({
+      userRecord,
+      configuration: configurationItem,
+    });
+  }
+
+  if (lastLookupError) {
+    throw lastLookupError;
+  }
+
+  return null;
 };
 
 /**
@@ -155,15 +307,7 @@ export const getUserByLoginIdentifier = async (
 
     requestUrl.searchParams.set(
       "select",
-      [
-        configurationItem.loginUserIdColumn,
-        configurationItem.emailColumn,
-        configurationItem.nameColumn,
-        configurationItem.roleColumn,
-        configurationItem.activeColumn,
-        "id",
-        "auth_id",
-      ].join(","),
+      createUserSelectQuery(configurationItem),
     );
     requestUrl.searchParams.set(
       configurationItem.loginUserIdColumn,
@@ -216,67 +360,87 @@ export const getUserByLoginIdentifier = async (
 export const getUserByEmailIdentifier = async (
   email: string,
 ): Promise<SupabaseUserRecordData | null> => {
+  const userRecord = await getUserByColumnValue({
+    columnName: environmentConfig.supabaseUserEmailColumn,
+    columnValue: email,
+  });
+
+  if (!userRecord) {
+    return null;
+  }
+
+  return {
+    ...userRecord,
+    email: userRecord.email || email,
+  };
+};
+
+/**
+ * Fetches a user record by the Supabase auth user identifier.
+ */
+export const getUserByAuthIdentifier = async (
+  authId: string,
+): Promise<SupabaseUserRecordData | null> => {
+  return getUserByColumnValue({
+    columnName: "auth_id",
+    columnValue: authId,
+  });
+};
+
+/**
+ * Fetches a user record by either the configured business User ID column or the row id.
+ */
+export const getUserByRecordIdentifier = async (
+  userIdentifier: string,
+): Promise<SupabaseUserRecordData | null> => {
+  const configuredUserRecord = await getUserByColumnValue({
+    columnName: environmentConfig.supabaseLoginUserIdColumn,
+    columnValue: userIdentifier,
+  });
+
+  if (configuredUserRecord) {
+    return configuredUserRecord;
+  }
+
+  return getUserByColumnValue({
+    columnName: "id",
+    columnValue: userIdentifier,
+  });
+};
+
+/**
+ * Resolves the authenticated Supabase user from a Bearer token.
+ */
+export const getAuthUserByAccessToken = async (
+  accessToken: string,
+): Promise<SupabaseAuthUserData> => {
   assertSupabaseConfiguration();
 
-  let lastLookupError: Error | null = null;
+  const response = await fetch(`${environmentConfig.supabaseUrl}/auth/v1/user`, {
+    method: "GET",
+    headers: buildSupabaseHeaders({
+      apiKey: environmentConfig.supabaseAnonKey,
+      accessToken,
+    }),
+  });
 
-  for (const configurationItem of getSupabaseAuthConfigurations()) {
-    const requestUrl = new URL(
-      `${environmentConfig.supabaseUrl}/rest/v1/${configurationItem.usersTable}`,
-    );
-
-    requestUrl.searchParams.set(
-      "select",
-      [
-        configurationItem.loginUserIdColumn,
-        configurationItem.emailColumn,
-        configurationItem.nameColumn,
-        configurationItem.roleColumn,
-        configurationItem.activeColumn,
-        "id",
-        "auth_id",
-      ].join(","),
-    );
-    requestUrl.searchParams.set(configurationItem.emailColumn, `eq.${email}`);
-    requestUrl.searchParams.set("limit", "1");
-
-    const response = await fetch(requestUrl, {
-      method: "GET",
-      headers: buildSupabaseHeaders({
-        apiKey: environmentConfig.supabaseServiceRoleKey,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorMessage = await getErrorMessage(response);
-
-      if (isRetryableAuthLookupError(errorMessage)) {
-        lastLookupError = new Error(errorMessage);
-        continue;
-      }
-
-      throw new Error(errorMessage);
-    }
-
-    const responseBody = (await response.json()) as Record<string, unknown>[];
-    const userRecord = responseBody[0];
-
-    if (!userRecord) {
-      return null;
-    }
-
-    return mapUserRecord({
-      userRecord,
-      configuration: configurationItem,
-      fallbackEmail: email,
-    });
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
   }
 
-  if (lastLookupError) {
-    throw lastLookupError;
+  const responseBody = (await response.json()) as {
+    id?: string;
+    email?: string;
+  };
+
+  if (!responseBody.id || !responseBody.email) {
+    throw new Error("Authenticated user could not be resolved.");
   }
 
-  return null;
+  return {
+    id: responseBody.id,
+    email: responseBody.email,
+  };
 };
 
 /**

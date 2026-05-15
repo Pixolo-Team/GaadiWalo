@@ -9,6 +9,7 @@ import { sendResponse } from "./common/utils/send-response.js";
 // SERVICES //
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { healthRoutes } from "./modules/health/health.routes.js";
+import { salesLeadsRoutes } from "./modules/sales-leads/sales-leads.routes.js";
 // LIBRARIES //
 import { Hono } from "hono";
 import type { Context, Next } from "hono";
@@ -30,6 +31,7 @@ export const app = new Hono();
 app.use("*", requestLoggerMiddleware);
 app.route("/", healthRoutes);
 app.route("/", authRoutes);
+app.route("/", salesLeadsRoutes);
 
 app.notFound((context) =>
   sendResponse({
@@ -41,12 +43,18 @@ app.notFound((context) =>
   }),
 );
 
-app.onError((_error, context) =>
-  sendResponse({
+app.onError((error, context) => {
+  console.error("[app] unhandled error", {
+    method: context.req.method,
+    path: context.req.path,
+    error,
+  });
+
+  return sendResponse({
     context,
     statusCode: HTTP_STATUS_CODES.internalServerError,
     status: "error",
     message: INTERNAL_SERVER_ERROR_MESSAGE,
     error: INTERNAL_SERVER_ERROR_MESSAGE,
-  }),
-);
+  });
+});
