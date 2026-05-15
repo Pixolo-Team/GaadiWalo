@@ -22,7 +22,7 @@ export default function AuthLayout({
   const router = useRouter();
 
   // Define Context
-  const { session } = useAuthContext();
+  const { isAuthenticated, isLoading } = useAuthContext();
 
   // Define Refs
 
@@ -32,13 +32,17 @@ export default function AuthLayout({
 
   // Use Effects
   useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
     // Block auth pages once valid auth session exists.
-    if (session?.token) {
+    if (isAuthenticated) {
       router.replace(ROUTES.home);
     }
-  }, [router, session?.token]);
+  }, [isAuthenticated, isLoading, router]);
 
-  if (session?.token) {
+  if (isLoading || isAuthenticated) {
     return null;
   }
 

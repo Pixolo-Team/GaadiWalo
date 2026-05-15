@@ -5,7 +5,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 // TYPES //
-import type { LoginUserFieldInputData } from "@/types/auth";
+import type { LoginUserFieldInputData, LoginResponseData } from "@/types/auth";
+import type { ApiResponseData } from "@/types/api";
 
 // COMPONENTS //
 import Image from "next/image";
@@ -15,20 +16,18 @@ import NoEyes from "@/components/icons/neevo-icons/NoEyes";
 import InputBox from "@/components/common/InputBox";
 import { Button } from "@/components/ui/button";
 
-// SERVICES //
-import { useAuthContext } from "@/context/AuthContext";
+// API SERVICES //
 import { loginRequest } from "@/services/api/auth.api.service";
 
 // CONSTANTS //
 import { CONSTANTS } from "@/constants/constants";
 import { ROUTES } from "@/constants/routes";
 
-// LIBRARIES //
+// OTHERS //
+import { useAuthContext } from "@/context/AuthContext";
 import { toast } from "sonner";
 
-/**
- * Renders the login screen UI for the auth flow.
- */
+/** Login Page Component */
 export default function LoginPage() {
   // Define Navigation
   const router = useRouter();
@@ -56,46 +55,59 @@ export default function LoginPage() {
     !userFieldInput.password.trim();
 
   /** Handles the login action. */
-  const handleLogin = async (): Promise<void> => {
+  const handleLogin = (): void => {
     if (isLoginDisabled) {
       return;
     }
 
+    // Set submitting state to true
     setIsSubmitting(true);
 
-    try {
-      const response = await loginRequest(
-        userFieldInput.userId.trim(),
-        userFieldInput.password,
-      );
+    /** Make login API request */
+    loginRequest(userFieldInput.userId.trim(), userFieldInput.password)
+      .then((response: ApiResponseData<LoginResponseData>) => {
+        if (response.status_code === 200) {
+          setAuthSessionService(
+            { token: response.data?.accessToken ?? "" },
+            response.data?.user ?? null,
+          );
 
-      if (!response.data || response.status_code !== 200) {
-        toast.error(response.error ?? response.message);
-        return;
-      }
+          // Set auth session in local storage for persistence
+          window.localStorage.setItem(
+            CONSTANTS.REFRESH_TOKEN,
+            response.data?.refreshToken ?? "",
+          );
+          window.localStorage.setItem(
+            CONSTANTS.EXPIRES_IN,
+            String(response.data?.expiresIn ?? ""),
+          );
 
-      setAuthSessionService(
-        { token: response.data.accessToken },
-        response.data.user,
-      );
+          // Reset login fields
+          setUserFieldInput({ userId: "", password: "" });
 
-      window.localStorage.setItem(
-        CONSTANTS.REFRESH_TOKEN,
-        response.data.refreshToken ?? "",
-      );
-      window.localStorage.setItem(
-        CONSTANTS.EXPIRES_IN,
-        String(response.data.expiresIn ?? ""),
-      );
+          // Show success toast
+          toast.success(response.message);
 
-      setUserFieldInput({ userId: "", password: "" });
-      toast.success(response.message);
-      router.push(ROUTES.home);
-    } catch {
-      toast.error("Unable to login. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+          // Set submitting state to false
+          setIsSubmitting(false);
+
+          // Route to Home page
+          router.push(ROUTES.home);
+        } else {
+          // Show error toast
+          toast.error(response.error ?? response.message);
+
+          // Reset submitting state
+          setIsSubmitting(false);
+        }
+      })
+      .catch(() => {
+        // Show error toast
+        toast.error("Unable to login. Please try again.");
+
+        // Reset submitting state
+        setIsSubmitting(false);
+      });
   };
 
   /** Toggles the password visibility state. */
@@ -170,7 +182,10 @@ export default function LoginPage() {
                   aria-label="Toggle password visibility"
                 >
                   {isPasswordVisible ? (
-                    <NoEyes primaryColor="var(--color-n-400)" className="size-5" />
+                    <NoEyes
+                      primaryColor="var(--color-n-400)"
+                      className="size-5"
+                    />
                   ) : (
                     <EyeOptic
                       primaryColor="var(--color-n-400)"

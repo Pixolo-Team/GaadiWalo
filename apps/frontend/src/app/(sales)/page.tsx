@@ -18,23 +18,21 @@ export default function HomePage() {
   const router = useRouter();
 
   // Define Context
-  const { session, user } = useAuthContext();
-
-  // Define Refs
-
-  // Define States
-
-  // Helper Functions
+  const { isAuthenticated, isLoading, user } = useAuthContext();
 
   // Use Effects
   useEffect(() => {
-    if (!session?.token) {
+    if (isLoading) {
+      return;
+    }
+
+    if (!isAuthenticated) {
       // Protect sales home route when auth session is missing.
       router.replace(ROUTES.auth.login);
     }
-  }, [router, session?.token]);
+  }, [isAuthenticated, isLoading, router]);
 
-  if (!session?.token) {
+  if (isAuthenticated !== true) {
     return null;
   }
 

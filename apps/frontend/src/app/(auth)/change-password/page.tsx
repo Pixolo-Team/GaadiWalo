@@ -5,7 +5,11 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 // TYPES //
-import type { ChangePasswordInputData } from "@/types/auth";
+import type { ApiResponseData } from "@/types/api";
+import type {
+  ChangePasswordInputData,
+  ResetPasswordResponseData,
+} from "@/types/auth";
 
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
@@ -14,8 +18,15 @@ import CheckCircle from "@/components/icons/neevo-icons/CheckCircle";
 import Circle from "@/components/icons/neevo-icons/Circle";
 import { Button } from "@/components/ui/button";
 
+// API SERVICES //
+import { resetPasswordRequest } from "@/services/api/auth.api.service";
+
 // CONSTANTS //
+import { CONSTANTS } from "@/constants/constants";
 import { ROUTES } from "@/constants/routes";
+
+// OTHERS //
+import { toast } from "sonner";
 
 interface PasswordValidationStateData {
   hasMinimumLength: boolean;
@@ -23,9 +34,7 @@ interface PasswordValidationStateData {
   hasNumberCharacter: boolean;
 }
 
-/**
- * Renders the change password screen UI with live password rule checks.
- */
+/** Change Password Page Component */
 export default function ChangePasswordPage() {
   // Define Navigation
   const router = useRouter();
@@ -40,6 +49,7 @@ export default function ChangePasswordPage() {
       newPassword: "",
       confirmPassword: "",
     });
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Helper Functions
   /** Returns the password rule validation state. */
@@ -65,8 +75,45 @@ export default function ChangePasswordPage() {
     if (!isPasswordValid || !isPasswordMatch) {
       return;
     }
+    // Get reset token from local storage
+    const resetToken = window.localStorage.getItem(CONSTANTS.RESET_TOKEN) ?? "";
 
-    router.push(ROUTES.auth.login);
+    if (!resetToken) {
+      toast.error("Reset token is missing. Please verify OTP again.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    /** Call reset password API */
+    resetPasswordRequest({
+      newPassword: passwordInputField.newPassword,
+      resetToken,
+    })
+      .then((response: ApiResponseData<ResetPasswordResponseData>) => {
+        if (response.status_code === 200) {
+          // Clear recovery state after successful password reset.
+          window.localStorage.removeItem(CONSTANTS.RESET_TOKEN);
+          window.localStorage.removeItem(CONSTANTS.RECOVERY_EMAIL);
+
+          // Show success toast
+          toast.success(response.message);
+
+          // Navigate to login screen for Relogin with the Changed Password.
+          router.push(ROUTES.auth.login);
+        } else {
+          // Show error toast
+          toast.error(response.error ?? response.message);
+        }
+      })
+      .catch(() => {
+        // Show error toast
+        toast.error("Unable to change password. Please try again.");
+      })
+      .finally(() => {
+        // Reset submitting state
+        setIsSubmitting(false);
+      });
   };
 
   /** Returns the icon based on whether a password rule is satisfied. */
@@ -89,8 +136,8 @@ export default function ChangePasswordPage() {
 
       {/* Content */}
       <div className="flex flex-col gap-6 p-6">
-        {/* Password form */}
         <div className="flex flex-col gap-4">
+          {/* New Password Input */}
           <InputBox
             id="new-password"
             label="NEW PASSWORD"
@@ -105,6 +152,7 @@ export default function ChangePasswordPage() {
             }
           />
 
+          {/* Confirm Password Input */}
           <InputBox
             id="confirm-password"
             label="CONFIRM PASSWORD"
@@ -167,7 +215,7 @@ export default function ChangePasswordPage() {
           type="button"
           variant="primary"
           onClick={handleChangePassword}
-          disabled={!isPasswordValid || !isPasswordMatch}
+          disabled={!isPasswordValid || !isPasswordMatch || isSubmitting}
         >
           Change Password
         </Button>
