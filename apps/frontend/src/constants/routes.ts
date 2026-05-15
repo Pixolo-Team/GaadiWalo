@@ -10,4 +10,10 @@ export const ROUTES = {
     changePassword: "/change-password",
     newPassword: "/change-password",
   },
+  sales: {
+    leads: "/leads",
+    addLead: "/leads/add",
+    alerts: "/profile/notifications",
+    profile: "/profile",
+  },
 } as const;
