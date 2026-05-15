@@ -40,7 +40,7 @@ export function Header({ showBack = true, title }: HeaderPropsData) {
           type="button"
           aria-label="Go back"
           onClick={handleBackNavigation}
-          className="border-n-200 bg-n-50 flex size-9 items-center justify-center rounded-full border"
+          className="border-n-200 bg-n-50 active:bg-n-100 hover:bg-n-100 flex size-9 items-center justify-center rounded-full border"
         >
           {/* Left Arrow Icon */}
           <LineArrowLeft1
