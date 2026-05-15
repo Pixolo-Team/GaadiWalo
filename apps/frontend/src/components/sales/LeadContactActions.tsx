@@ -2,6 +2,7 @@
 import Copy1 from "@/components/icons/neevo-icons/Copy1";
 import Phone from "@/components/icons/neevo-icons/Phone";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface LeadContactActionsPropsData {
   onCall?: () => void;
@@ -9,9 +10,7 @@ interface LeadContactActionsPropsData {
   phoneNumber: string;
 }
 
-/**
- * Renders split phone and copy actions for a lead contact row.
- */
+/** Lead Contact Actions Component */
 export function LeadContactActions({
   onCall,
   onCopy,
@@ -37,12 +36,15 @@ export function LeadContactActions({
         variant="secondary"
         className="text-n-600 h-auto w-auto justify-start gap-2 border-0 bg-transparent px-0 py-0 shadow-none hover:bg-transparent active:bg-transparent"
       >
-        <a href={`tel:${phoneNumber}`} onClick={onCall}>
+        <Link href={`tel:${phoneNumber}`} onClick={onCall}>
+          {/* Phone Icon */}
           <Phone primaryColor="var(--color-n-600)" className="size-5" />
+
+          {/* Phone Number */}
           <span className="font-secondary text-sm leading-none font-bold">
             {phoneNumber}
           </span>
-        </a>
+        </Link>
       </Button>
 
       {/* Divider */}
@@ -55,6 +57,7 @@ export function LeadContactActions({
         onClick={onCopy}
         className="h-auto w-auto border-0 bg-transparent p-0 shadow-none hover:bg-transparent active:bg-transparent"
       >
+        {/* Copy Icon */}
         <Copy1 primaryColor="var(--color-n-600)" className="size-5" />
       </Button>
     </div>

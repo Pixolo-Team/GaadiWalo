@@ -37,18 +37,18 @@ All paths below are relative to `apps/frontend/src`.
 
 ## Component Catalogue (Planned + Active)
 
-| Component | Path | Purpose |
-|------|------|------|
-| `BottomNav` | `components/layout/BottomNav.tsx` | Role-based 5-tab bottom navigation |
-| `PageHeader` | `components/layout/PageHeader.tsx` | Standardized page headers with optional actions |
-| `LeadCard` | `components/leads/LeadCard.tsx` | Lead summary card in list views |
-| `LeadStatusBadge` | `components/leads/LeadStatusBadge.tsx` | Status visualization using lead status color tokens |
-| `LeadFilterSheet` | `components/leads/LeadFilterSheet.tsx` | Filter UI for status/source/date |
-| `AddNoteSheet` | `components/leads/AddNoteSheet.tsx` | Create-note bottom sheet in lead details |
-| `TeamMemberRow` | `components/admin/TeamMemberRow.tsx` | Ranked/top performer row |
-| `RemoveSalespersonDialog` | `components/admin/RemoveSalespersonDialog.tsx` | Destructive confirmation with reassignment |
-| `StatCard` | `components/shared/StatCard.tsx` | KPI card used across sales/admin dashboards |
-| `EmptyState` | `components/shared/EmptyState.tsx` | Empty data state with message and CTA |
+| Component                 | Path                                           | Purpose                                             |
+| ------------------------- | ---------------------------------------------- | --------------------------------------------------- |
+| `BottomBar`               | `components/layout/BottomBar.tsx`              | Role-based 5-tab bottom navigation                  |
+| `PageHeader`              | `components/layout/PageHeader.tsx`             | Standardized page headers with optional actions     |
+| `LeadCard`                | `components/leads/LeadCard.tsx`                | Lead summary card in list views                     |
+| `LeadStatusBadge`         | `components/leads/LeadStatusBadge.tsx`         | Status visualization using lead status color tokens |
+| `LeadFilterSheet`         | `components/leads/LeadFilterSheet.tsx`         | Filter UI for status/source/date                    |
+| `AddNoteSheet`            | `components/leads/AddNoteSheet.tsx`            | Create-note bottom sheet in lead details            |
+| `TeamMemberRow`           | `components/admin/TeamMemberRow.tsx`           | Ranked/top performer row                            |
+| `RemoveSalespersonDialog` | `components/admin/RemoveSalespersonDialog.tsx` | Destructive confirmation with reassignment          |
+| `StatCard`                | `components/shared/StatCard.tsx`               | KPI card used across sales/admin dashboards         |
+| `EmptyState`              | `components/shared/EmptyState.tsx`             | Empty data state with message and CTA               |
 
 ## Construction Rules
 

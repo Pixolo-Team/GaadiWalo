@@ -2,8 +2,6 @@
 
 // REACT //
 import type { ReactNode } from "react";
-
-// LIBRARIES //
 import { useRouter } from "next/navigation";
 
 // COMPONENTS //
@@ -39,6 +37,7 @@ export function Header({
   // Define States
 
   // Helper Functions
+  /** Function to handle back navigation */
   const handleBackNavigation = (): void => {
     router.back();
   };
