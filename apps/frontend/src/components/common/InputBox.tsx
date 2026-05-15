@@ -24,9 +24,7 @@ interface InputBoxPropsData {
   value?: string;
 }
 
-/**
- * Renders a reusable input box with shared project field label and caption styling.
- */
+/** Input Box Component */
 export default function InputBox({
   caption,
   className,

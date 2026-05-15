@@ -7,10 +7,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-// CONSTANTS //
-import { ROUTES } from "@/constants/routes";
-import { CONSTANTS } from "@/constants/constants";
-
 // COMPONENTS //
 import { OtpInput } from "@/components/auth/OtpInput";
 import { Header } from "@/components/common/Header";
@@ -21,6 +17,10 @@ import {
   resendOtpRequest,
   verifyOtpRequest,
 } from "@/services/api/auth.api.service";
+
+// CONSTANTS //
+import { CONSTANTS } from "@/constants/constants";
+import { ROUTES } from "@/constants/routes";
 
 // UTILS //
 import { validateOtpValue } from "@/utils/validations";
@@ -50,8 +50,7 @@ export default function VerifyOtpPage() {
   });
 
   // Helper Functions
-  // Verify action handler
-  /** Handles OTP verification and moves user to new password screen. */
+  /** Handles OTP verification and moves user to change password screen. */
   const handleVerifyOtp = async (): Promise<void> => {
     const validationMessage = validateOtpValue(otpValue);
 
@@ -69,6 +68,7 @@ export default function VerifyOtpPage() {
 
     setIsSubmitting(true);
     setErrorMessage("");
+
     try {
       const response = await verifyOtpRequest({
         email: recoveryEmail,
@@ -82,11 +82,8 @@ export default function VerifyOtpPage() {
       }
 
       window.localStorage.setItem(CONSTANTS.RESET_TOKEN, response.data.resetToken);
-
       toast.success(response.message);
-
-      // Redirect to new password screen after OTP verification
-      router.push(ROUTES.auth.newPassword);
+      router.push(ROUTES.auth.changePassword);
     } catch {
       const fallbackErrorMessage = "Unable to verify OTP. Please try again.";
       setErrorMessage(fallbackErrorMessage);
@@ -96,7 +93,6 @@ export default function VerifyOtpPage() {
     }
   };
 
-  // Resend OTP handler
   /** Handles OTP resend trigger after cooldown period. */
   const handleResendOtp = async (): Promise<void> => {
     if (resendSecondsCount > 0) {
@@ -111,10 +107,9 @@ export default function VerifyOtpPage() {
 
     setIsResending(true);
     setErrorMessage("");
+
     try {
-      const response = await resendOtpRequest({
-        email: recoveryEmail,
-      });
+      const response = await resendOtpRequest({ email: recoveryEmail });
 
       if (response.status_code !== 200) {
         setErrorMessage(response.message);
@@ -139,7 +134,7 @@ export default function VerifyOtpPage() {
       return;
     }
 
-    // Countdown timer for resend action cooldown
+    // Countdown timer for resend action cooldown.
     const timerId = window.setTimeout(() => {
       setResendSecondsCount(
         (previousSecondCountItem) => previousSecondCountItem - 1,
@@ -156,20 +151,16 @@ export default function VerifyOtpPage() {
       {/* Header */}
       <Header title="Verify OTP" />
 
-      {/* Screen content container */}
+      {/* Content */}
       <div className="flex flex-col gap-6 p-6">
         {/* OTP info card */}
         <div className="flex flex-col items-center gap-3 text-center">
-          {/* Icon */}
           <div className="flex size-16 items-center justify-center p-3 text-3xl">
             📱
           </div>
 
           <div className="flex flex-col items-center gap-2">
-            {/* Title */}
             <p className="text-n-800 text-lg font-semibold">OTP Sent!</p>
-
-            {/* Description */}
             <p className="font-secondary text-n-600 font-regular w-[90%] text-sm">
               Enter the 6-digit OTP sent to{" "}
               <span className="font-bold">
@@ -179,21 +170,18 @@ export default function VerifyOtpPage() {
           </div>
         </div>
 
-        {/* OTP input */}
+        {/* OTP field */}
         <OtpInput value={otpValue} onChange={setOtpValue} />
 
-        {/* OTP form content */}
+        {/* Actions */}
         <div className="flex flex-col gap-6">
-          {/* API error message */}
           {errorMessage ? (
             <p className="font-secondary text-center text-sm text-red-600">
               {errorMessage}
             </p>
           ) : null}
 
-          {/* Actions */}
           <div className="flex flex-col gap-4">
-            {/* Verify OTP button */}
             <Button
               type="button"
               variant="primary"
@@ -203,7 +191,6 @@ export default function VerifyOtpPage() {
               Verify OTP
             </Button>
 
-            {/* Resend action */}
             <div className="text-center text-sm">
               <span className="font-secondary text-n-600">
                 Didn&apos;t receive?{" "}

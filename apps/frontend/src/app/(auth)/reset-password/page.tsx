@@ -7,10 +7,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-// CONSTANTS //
-import { ROUTES } from "@/constants/routes";
-import { CONSTANTS } from "@/constants/constants";
-
 // COMPONENTS //
 import InputBox from "@/components/common/InputBox";
 import { Header } from "@/components/common/Header";
@@ -19,6 +15,10 @@ import { Button } from "@/components/ui/button";
 
 // SERVICES //
 import { forgotPasswordRequest } from "@/services/api/auth.api.service";
+
+// CONSTANTS //
+import { CONSTANTS } from "@/constants/constants";
+import { ROUTES } from "@/constants/routes";
 
 // UTILS //
 import { validateRecoveryEmail } from "@/utils/validations";
@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
   const isValidEmail = validateRecoveryEmail(inputValue) === null;
   const isSendOtpDisabled = isSubmitting || !isValidEmail;
 
-  /** Handles the reset password action */
+  /** Handles reset-password submission. */
   const handleResetPassword = async (): Promise<void> => {
     const emailValue = inputValue.trim();
     const validationMessage = validateRecoveryEmail(emailValue);
@@ -59,9 +59,7 @@ export default function ForgotPasswordPage() {
     setErrorMessage("");
 
     try {
-      const response = await forgotPasswordRequest({
-        email: emailValue,
-      });
+      const response = await forgotPasswordRequest({ email: emailValue });
 
       if (!response.data || response.status_code !== 200) {
         setErrorMessage(response.message);
@@ -70,7 +68,6 @@ export default function ForgotPasswordPage() {
       }
 
       window.localStorage.setItem(CONSTANTS.RECOVERY_EMAIL, response.data.email);
-
       toast.success(response.message);
       router.push(ROUTES.auth.verifyOtp);
     } catch {
@@ -86,29 +83,25 @@ export default function ForgotPasswordPage() {
 
   return (
     <section className="bg-n-100 flex flex-1 flex-col">
-      {/* Header  */}
+      {/* Header */}
       <Header title="Reset Password" />
 
       {/* Content */}
       <div className="flex flex-col gap-6 p-6">
-        {/* Information banner */}
+        {/* Info banner */}
         <div className="flex gap-4 rounded-[14px] border border-blue-200 bg-blue-100 px-4.5 py-4">
-          {/* Icon */}
           <InformationCircle
             primaryColor="#155dfc"
             className="mt-0.5 size-5 shrink-0"
           />
-
-          {/* Text */}
           <p className="font-secondary text-sm leading-normal font-medium text-blue-800">
             Enter your registered email or phone number. We&apos;ll send a reset
             link or OTP to verify your identity.
           </p>
         </div>
 
-        {/* Reset form content */}
+        {/* Form */}
         <div className="flex flex-col gap-4.5">
-          {/* Email or phone input */}
           <InputBox
             id="identifier"
             label="EMAIL OR PHONE"
@@ -118,14 +111,10 @@ export default function ForgotPasswordPage() {
             onChange={setInputValue}
           />
 
-          {/* API error message */}
           {errorMessage ? (
-            <p className="font-secondary text-sm text-red-600">
-              {errorMessage}
-            </p>
+            <p className="font-secondary text-sm text-red-600">{errorMessage}</p>
           ) : null}
 
-          {/* Send OTP button */}
           <Button
             type="button"
             variant="primary"

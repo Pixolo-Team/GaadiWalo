@@ -77,3 +77,19 @@ export interface ResetPasswordRequestData {
   newPassword: string;
   resetToken: string;
 }
+
+/**
+ * Defines login input field shape for UI state.
+ */
+export type LoginUserFieldInputData = {
+  password: string;
+  userId: string;
+};
+
+/**
+ * Defines change-password input field shape for UI state.
+ */
+export type ChangePasswordInputData = {
+  confirmPassword: string;
+  newPassword: string;
+};

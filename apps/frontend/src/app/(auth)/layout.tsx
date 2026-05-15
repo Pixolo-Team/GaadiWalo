@@ -43,8 +43,8 @@ export default function AuthLayout({
   }
 
   return (
-    <div className="min-h-screen bg-n-100">
-      <div className="mx-auto flex min-h-screen w-full flex-col bg-n-50">
+    <div className="bg-n-100 min-h-screen">
+      <div className="bg-n-50 mx-auto flex min-h-screen w-full flex-col">
         {children}
       </div>
     </div>
