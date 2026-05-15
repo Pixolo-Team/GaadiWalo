@@ -5,18 +5,27 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 // TYPES //
-import { LoginUserFieldInputData } from "@/types/auth";
+import type { LoginUserFieldInputData, LoginResponseData } from "@/types/auth";
+import type { ApiResponseData } from "@/types/api";
 
 // COMPONENTS //
 import Image from "next/image";
 import Link from "next/link";
 import EyeOptic from "@/components/icons/neevo-icons/EyeOptic";
 import NoEyes from "@/components/icons/neevo-icons/NoEyes";
-import { Button } from "@/components/ui/button";
 import InputBox from "@/components/common/InputBox";
+import { Button } from "@/components/ui/button";
+
+// API SERVICES //
+import { loginRequest } from "@/services/api/auth.api.service";
 
 // CONSTANTS //
+import { CONSTANTS } from "@/constants/constants";
 import { ROUTES } from "@/constants/routes";
+
+// OTHERS //
+import { useAuthContext } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 /** Login Page Component */
 export default function LoginPage() {
@@ -24,6 +33,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   // Define Context
+  const { setAuthSessionService } = useAuthContext();
 
   // Define Refs
 
@@ -35,14 +45,72 @@ export default function LoginPage() {
     },
   );
   const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Helper Functions
-  /** Handles the login action */
+  /** Resolves whether login button should be disabled. */
+  const isLoginDisabled =
+    isSubmitting ||
+    !userFieldInput.userId.trim() ||
+    !userFieldInput.password.trim();
+
+  /** Handles the login action. */
   const handleLogin = (): void => {
-    router.push(ROUTES.home);
+    if (isLoginDisabled) {
+      return;
+    }
+
+    // Set submitting state to true
+    setIsSubmitting(true);
+
+    /** Make login API request */
+    loginRequest(userFieldInput.userId.trim(), userFieldInput.password)
+      .then((response: ApiResponseData<LoginResponseData>) => {
+        if (response.status_code === 200) {
+          setAuthSessionService(
+            { token: response.data?.accessToken ?? "" },
+            response.data?.user ?? null,
+          );
+
+          // Set auth session in local storage for persistence
+          window.localStorage.setItem(
+            CONSTANTS.REFRESH_TOKEN,
+            response.data?.refreshToken ?? "",
+          );
+          window.localStorage.setItem(
+            CONSTANTS.EXPIRES_IN,
+            String(response.data?.expiresIn ?? ""),
+          );
+
+          // Reset login fields
+          setUserFieldInput({ userId: "", password: "" });
+
+          // Show success toast
+          toast.success(response.message);
+
+          // Set submitting state to false
+          setIsSubmitting(false);
+
+          // Route to Home page
+          router.push(ROUTES.home);
+        } else {
+          // Show error toast
+          toast.error(response.error ?? response.message);
+
+          // Reset submitting state
+          setIsSubmitting(false);
+        }
+      })
+      .catch(() => {
+        // Show error toast
+        toast.error("Unable to login. Please try again.");
+
+        // Reset submitting state
+        setIsSubmitting(false);
+      });
   };
 
-  /** Toggles the password visibility state */
+  /** Toggles the password visibility state. */
   const handlePasswordVisibility = (): void => {
     setIsPasswordVisible(
       (previousVisibilityStateItem) => !previousVisibilityStateItem,
@@ -53,6 +121,7 @@ export default function LoginPage() {
 
   return (
     <section>
+      {/* Top hero */}
       <div className="flex items-start justify-center bg-gradient-to-br from-blue-700 to-blue-900 px-6 py-24">
         <Image
           src="/images/brand/brand-logo.png"
@@ -64,23 +133,20 @@ export default function LoginPage() {
         />
       </div>
 
+      {/* Login content */}
       <div className="flex flex-1 flex-col gap-7 px-6 py-7">
         {/* Top text */}
         <div className="flex flex-col gap-1.5">
-          {/* Title */}
           <p className="text-n-800 text-2xl font-bold">Welcome back!</p>
-
-          {/* Description */}
           <p className="font-secondary text-n-600 text-sm">
             Sign in to your account
           </p>
         </div>
 
-        {/* Login form content */}
+        {/* Form body */}
         <div className="flex flex-col gap-7">
-          {/* Fields section */}
           <div className="flex flex-col gap-4">
-            {/* User Id Input */}
+            {/* USER ID */}
             <InputBox
               id="user-identifier"
               label="USER ID"
@@ -88,11 +154,14 @@ export default function LoginPage() {
               placeholder="Enter user ID"
               value={userFieldInput.userId}
               onChange={(value) =>
-                setUserFieldInput({ ...userFieldInput, userId: value })
+                setUserFieldInput((previousFieldInputItem) => ({
+                  ...previousFieldInputItem,
+                  userId: value,
+                }))
               }
             />
 
-            {/* Password Input */}
+            {/* PASSWORD */}
             <InputBox
               id="user-password"
               label="PASSWORD"
@@ -100,7 +169,10 @@ export default function LoginPage() {
               placeholder="Enter password"
               value={userFieldInput.password}
               onChange={(value) =>
-                setUserFieldInput({ ...userFieldInput, password: value })
+                setUserFieldInput((previousFieldInputItem) => ({
+                  ...previousFieldInputItem,
+                  password: value,
+                }))
               }
               iconRight={
                 <button
@@ -124,7 +196,7 @@ export default function LoginPage() {
               }
             />
 
-            {/* Reset password link */}
+            {/* Forgot password link */}
             <Link
               href={ROUTES.auth.resetPassword}
               className="font-secondary self-end text-sm font-medium text-blue-600 hover:underline"
@@ -133,8 +205,13 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          {/* Sign In Button */}
-          <Button type="button" variant="primary" onClick={handleLogin}>
+          {/* Submit */}
+          <Button
+            type="button"
+            variant="primary"
+            onClick={handleLogin}
+            disabled={isLoginDisabled}
+          >
             Sign In
           </Button>
         </div>
