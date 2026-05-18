@@ -16,7 +16,7 @@ export const ROUTES = {
     addLead: "/leads/add",
     leadAdd: "/leads/add",
     leadImport: "/leads/import",
-    alerts: "/profile/notifications",
+    alerts: "/alerts",
     profile: "/profile",
     profileEdit: "/profile/edit",
     profileChangePassword: "/profile/change-password",
