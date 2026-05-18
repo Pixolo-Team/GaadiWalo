@@ -3,8 +3,10 @@ import "./globals.css";
 
 // COMPONENTS //
 import { DM_Sans, Sora } from "next/font/google";
-import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
+
+// OTHERS //
+import { AuthProvider } from "@/context/AuthContext";
 
 // DATA //
 import type { Metadata } from "next";
@@ -33,6 +35,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${soraFont.variable} ${dmSansFont.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
         <AuthProvider>
