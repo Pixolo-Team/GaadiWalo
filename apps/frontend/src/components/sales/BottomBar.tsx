@@ -28,12 +28,17 @@ export function BottomBar() {
   // Define States
 
   // Helper Functions
-  const isHomeSelected = pathname === ROUTES.home;
-  const isLeadsSelected = pathname.startsWith(ROUTES.sales.leads);
+  const normalizedPathname =
+    pathname.length > 1 && pathname.endsWith("/")
+      ? pathname.slice(0, -1)
+      : pathname;
+
+  const isHomeSelected = normalizedPathname === ROUTES.home;
+  const isLeadsSelected = normalizedPathname.startsWith(ROUTES.sales.leads);
   const isProfileSelected =
-    pathname === ROUTES.sales.profile ||
-    pathname.startsWith(`${ROUTES.sales.profile}/`);
-  const isAlertsSelected = pathname === ROUTES.sales.alerts;
+    normalizedPathname === ROUTES.sales.profile ||
+    normalizedPathname.startsWith(`${ROUTES.sales.profile}/`);
+  const isAlertsSelected = normalizedPathname === ROUTES.sales.alerts;
 
   // Use Effects
 

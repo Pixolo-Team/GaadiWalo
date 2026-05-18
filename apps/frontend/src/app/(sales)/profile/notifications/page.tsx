@@ -19,9 +19,7 @@ interface NotificationStateData {
   [key: string]: boolean;
 }
 
-/**
- * Renders the notifications preferences screen.
- */
+/** Notifications Page Component */
 export default function ProfileNotificationsPage() {
   // Define Navigation
 

@@ -77,6 +77,7 @@ export default function ProfilePage() {
               />
               {/* Change password action item */}
               <ProfileMenuItem
+                href={ROUTES.sales.profileChangePassword}
                 iconBackgroundColor="bg-amber-100"
                 iconNode={
                   <LoginPassword
@@ -88,6 +89,7 @@ export default function ProfilePage() {
               />
               {/* Notification preferences action item */}
               <ProfileMenuItem
+                href={ROUTES.sales.profileNotifications}
                 iconBackgroundColor="bg-purple-100"
                 iconNode={
                   <BellNotification

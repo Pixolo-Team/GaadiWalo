@@ -8,9 +8,13 @@ import { Header } from "@/components/common/Header";
 import InputBox from "@/components/common/InputBox";
 import { Button } from "@/components/ui/button";
 
-/**
- * Renders the change password screen.
- */
+interface ChangePasswordInputFiledData {
+  confirmPassword: string;
+  currentPassword: string;
+  newPassword: string;
+}
+
+/** Change Password Page Component */
 export default function ChangePasswordPage() {
   // Define Navigation
 
@@ -19,16 +23,36 @@ export default function ChangePasswordPage() {
   // Define Refs
 
   // Define States
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changePasswordInputFiled, setChangePasswordInputField] =
+    useState<ChangePasswordInputFiledData>({
+      confirmPassword: "",
+      currentPassword: "",
+      newPassword: "",
+    });
 
   // Helper Functions
-  const canSubmit =
-    currentPassword.trim().length > 0 &&
-    newPassword.trim().length >= 8 &&
-    confirmPassword.trim().length > 0;
+  /**
+   * Updates one change-password input field while keeping other field values unchanged.
+   */
+  const updateChangePasswordInputFiled = (
+    inputFieldKey: keyof ChangePasswordInputFiledData,
+    inputFieldValue: string,
+  ): void => {
+    setChangePasswordInputField((previousStateItem) => ({
+      ...previousStateItem,
+      [inputFieldKey]: inputFieldValue,
+    }));
+  };
 
+  // Enable submit only when required fields are filled and password length is valid.
+  const canSubmit =
+    changePasswordInputFiled.currentPassword.trim().length > 0 &&
+    changePasswordInputFiled.newPassword.trim().length >= 8 &&
+    changePasswordInputFiled.confirmPassword.trim().length > 0;
+
+  /**
+   * Handles the change password action when input validation passes.
+   */
   const handleChangePassword = (): void => {
     if (!canSubmit) {
       return;
@@ -38,7 +62,7 @@ export default function ChangePasswordPage() {
   // Use Effects
 
   return (
-    <section className="h-full bg-n-100">
+    <section className="bg-n-100 h-full">
       {/* Change password page shell */}
       <div className="flex h-full flex-col">
         {/* Header */}
@@ -50,28 +74,46 @@ export default function ChangePasswordPage() {
           <div className="flex flex-col gap-6">
             {/* Input fields */}
             <div className="flex flex-col gap-4">
+              {/* Current password input */}
               <InputBox
                 label="CURRENT PASSWORD"
                 placeholder="Enter current password"
                 type="password"
-                value={currentPassword}
-                onChange={setCurrentPassword}
+                value={changePasswordInputFiled.currentPassword}
+                onChange={(currentPasswordValue: string) =>
+                  updateChangePasswordInputFiled(
+                    "currentPassword",
+                    currentPasswordValue,
+                  )
+                }
               />
 
+              {/* New password input */}
               <InputBox
                 label="NEW PASSWORD"
                 placeholder="Min. 8 characters"
                 type="password"
-                value={newPassword}
-                onChange={setNewPassword}
+                value={changePasswordInputFiled.newPassword}
+                onChange={(newPasswordValue: string) =>
+                  updateChangePasswordInputFiled(
+                    "newPassword",
+                    newPasswordValue,
+                  )
+                }
               />
 
+              {/* Confirm new password input */}
               <InputBox
                 label="CONFIRM NEW PASSWORD"
                 placeholder="Re-enter new password"
                 type="password"
-                value={confirmPassword}
-                onChange={setConfirmPassword}
+                value={changePasswordInputFiled.confirmPassword}
+                onChange={(confirmPasswordValue: string) =>
+                  updateChangePasswordInputFiled(
+                    "confirmPassword",
+                    confirmPasswordValue,
+                  )
+                }
               />
             </div>
 
