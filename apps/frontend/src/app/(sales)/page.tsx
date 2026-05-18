@@ -96,6 +96,7 @@ export default function Home() {
             <div className="flex gap-2">
               {/* Import Excel QuickAction Component */}
               <QuickActionCard
+                href={ROUTES.sales.leadImport}
                 icon={
                   // Icon
                   <ImportInput
@@ -108,6 +109,7 @@ export default function Home() {
 
               {/* Add New Lead QuickAction Component */}
               <QuickActionCard
+                href={ROUTES.sales.leadAdd}
                 icon={
                   // Icon
                   <UserAddPlus

@@ -30,7 +30,7 @@ export default function SalesLayout({
   // Define States
 
   // Helper Functions
-  const shouldHideBottomNav = pathname.startsWith(`${ROUTES.sales.leads}/`);
+  const shouldHideBottomBar = pathname.startsWith(`${ROUTES.sales.leads}/`);
 
   // Use Effects
 
@@ -42,7 +42,7 @@ export default function SalesLayout({
         <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
 
         {/* Bottom navigation */}
-        {shouldHideBottomNav ? null : <BottomBar />}
+        {shouldHideBottomBar ? null : <BottomBar />}
       </div>
     </section>
   );

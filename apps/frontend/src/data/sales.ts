@@ -319,3 +319,76 @@ export const salesLeadNotes = [
     variant: "incoming",
   },
 ] as const;
+
+/**
+ * Add lead source dummy options.
+ */
+export const salesAddLeadSourceOptions = [
+  { label: "CarWale", value: "carwale" },
+  { label: "CarDekho", value: "cardekho" },
+  { label: "Walk In", value: "walk-in" },
+  { label: "Referral", value: "referral" },
+] as const;
+
+/**
+ * Add lead car brand dummy options.
+ */
+export const salesAddLeadCarBrandOptions = [
+  { label: "Maruti Suzuki", value: "maruti-suzuki" },
+  { label: "Hyundai", value: "hyundai" },
+  { label: "Tata", value: "tata" },
+  { label: "Mahindra", value: "mahindra" },
+] as const;
+
+/**
+ * Add lead car model dummy options.
+ */
+export const salesAddLeadCarModelOptions = [
+  { label: "Swift", value: "swift" },
+  { label: "Baleno", value: "baleno" },
+  { label: "Brezza", value: "brezza" },
+  { label: "WagonR", value: "wagonr" },
+] as const;
+
+/**
+ * Add lead variant/category dummy options.
+ */
+export const salesAddLeadVariantOptions = [
+  { label: "Base", value: "base" },
+  { label: "Mid", value: "mid" },
+  { label: "Top", value: "top" },
+  { label: "Automatic", value: "automatic" },
+] as const;
+
+/**
+ * Add lead budget dummy options.
+ */
+export const salesAddLeadBudgetOptions = [
+  { label: "Under 5 Lakh", value: "under-5-lakh" },
+  { label: "5 - 8 Lakh", value: "5-8-lakh" },
+  { label: "8 - 12 Lakh", value: "8-12-lakh" },
+  { label: "12+ Lakh", value: "12-plus-lakh" },
+] as const;
+
+/**
+ * Import lead source tag options dummy data.
+ */
+export const salesImportLeadSourceTagOptions = [
+  { label: "Skip / Mixed sources", value: "skip-mixed-sources" },
+  { label: "CarWale", value: "carwale" },
+  { label: "CarDekho", value: "cardekho" },
+  { label: "Walk In", value: "walk-in" },
+  { label: "Referral", value: "referral" },
+] as const;
+
+/**
+ * Import expected columns dummy data.
+ */
+export const salesImportExpectedColumns = [
+  "Name",
+  "Phone",
+  "Email",
+  "Source",
+  "Car Brand",
+  "Car Model",
+] as const;

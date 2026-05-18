@@ -14,6 +14,8 @@ export const ROUTES = {
     leads: "/leads",
     leadDetails: (leadId: string): string => `/leads/${leadId}`,
     addLead: "/leads/add",
+    leadAdd: "/leads/add",
+    leadImport: "/leads/import",
     alerts: "/profile/notifications",
     profile: "/profile",
   },
