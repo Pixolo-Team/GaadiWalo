@@ -392,3 +392,84 @@ export const salesImportExpectedColumns = [
   "Car Brand",
   "Car Model",
 ] as const;
+
+/**
+ * Sales profile summary dummy data.
+ */
+export const salesProfileSummaryData = {
+  avatarLabel: "RS",
+  branch: "Mumbai Branch",
+  email: "rahul.sharma@autolead.in",
+  joined: "Jan 2025",
+  languagePreference: "english",
+  name: "Rahul Sharma",
+  phoneNumber: "+91 98765 43210",
+  role: "Sales Executive",
+  userId: "SP001",
+} as const;
+
+/**
+ * Sales profile metric cards dummy data.
+ */
+export const salesProfileMetrics = [
+  {
+    helper: "Conversion",
+    key: "rate",
+    label: "RATE",
+    tone: "blue",
+    value: "19%",
+  },
+  { helper: "Converted", key: "won", label: "WON", tone: "green", value: "9" },
+  {
+    helper: "This month",
+    key: "leads",
+    label: "LEADS",
+    tone: "neutral",
+    value: "47",
+  },
+] as const;
+
+/**
+ * Sales profile menu dummy data.
+ */
+export const salesProfileMenuItems = [
+  {
+    icon: "edit-profile",
+    key: "edit-profile",
+    label: "Edit Profile",
+    tone: "blue",
+  },
+  {
+    icon: "change-password",
+    key: "change-password",
+    label: "Change Password",
+    tone: "amber",
+  },
+  {
+    icon: "notifications",
+    key: "notifications",
+    label: "Notification Preferences",
+    tone: "purple",
+  },
+  {
+    icon: "performance",
+    key: "performance",
+    label: "My Performance Report",
+    tone: "green",
+  },
+  {
+    icon: "logout",
+    key: "logout",
+    label: "Logout",
+    tone: "red",
+  },
+] as const;
+
+/**
+ * Sales profile edit language options dummy data.
+ */
+export const salesProfileLanguageOptions = [
+  { label: "English", value: "english" },
+  { label: "Hindi", value: "hindi" },
+  { label: "Marathi", value: "marathi" },
+] as const;

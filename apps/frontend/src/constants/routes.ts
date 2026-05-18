@@ -18,5 +18,6 @@ export const ROUTES = {
     leadImport: "/leads/import",
     alerts: "/profile/notifications",
     profile: "/profile",
+    profileEdit: "/profile/edit",
   },
 } as const;

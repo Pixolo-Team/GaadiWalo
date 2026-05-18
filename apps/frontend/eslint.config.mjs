@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated icon set is large and slows full-repo lint significantly.
+    "src/components/icons/neevo-icons/**",
   ]),
 ]);
 
