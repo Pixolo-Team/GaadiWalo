@@ -7,12 +7,16 @@ export const ROUTES = {
     login: "/login",
     resetPassword: "/reset-password",
     verifyOtp: "/verify-otp",
-    newPassword: "/new-password",
+    changePassword: "/change-password",
+    newPassword: "/change-password",
   },
   sales: {
     leads: "/leads",
+    leadDetails: (leadId: string): string => `/leads/${leadId}`,
+    addLead: "/leads/add",
     leadAdd: "/leads/add",
     leadImport: "/leads/import",
-    leadDetails: (leadId: string) => `/leads/${leadId}`,
+    alerts: "/profile/notifications",
+    profile: "/profile",
   },
 } as const;

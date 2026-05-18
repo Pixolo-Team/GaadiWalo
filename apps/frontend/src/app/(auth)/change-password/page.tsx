@@ -4,6 +4,13 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+// TYPES //
+import type { ApiResponseData } from "@/types/api";
+import type {
+  ChangePasswordInputData,
+  ResetPasswordResponseData,
+} from "@/types/auth";
+
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
 import InputBox from "@/components/common/InputBox";
@@ -11,8 +18,15 @@ import CheckCircle from "@/components/icons/neevo-icons/CheckCircle";
 import Circle from "@/components/icons/neevo-icons/Circle";
 import { Button } from "@/components/ui/button";
 
+// API SERVICES //
+import { resetPasswordRequest } from "@/services/api/auth.api.service";
+
 // CONSTANTS //
+import { CONSTANTS } from "@/constants/constants";
 import { ROUTES } from "@/constants/routes";
+
+// OTHERS //
+import { toast } from "sonner";
 
 interface PasswordValidationStateData {
   hasMinimumLength: boolean;
@@ -20,10 +34,8 @@ interface PasswordValidationStateData {
   hasNumberCharacter: boolean;
 }
 
-/**
- * Renders the new password setup screen UI with live password rule checks.
- */
-export default function NewPasswordPage() {
+/** Change Password Page Component */
+export default function ChangePasswordPage() {
   // Define Navigation
   const router = useRouter();
 
@@ -32,37 +44,76 @@ export default function NewPasswordPage() {
   // Define Refs
 
   // Define States
-  const [newPasswordValue, setNewPasswordValue] = useState<string>("");
-  const [confirmPasswordValue, setConfirmPasswordValue] = useState<string>("");
+  const [passwordInputField, setPasswordInputField] =
+    useState<ChangePasswordInputData>({
+      newPassword: "",
+      confirmPassword: "",
+    });
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Helper Functions
-  // Password rule validation state
+  /** Returns the password rule validation state. */
   const passwordValidationState = useMemo<PasswordValidationStateData>(() => {
     return {
-      hasMinimumLength: newPasswordValue.length >= 8,
-      hasUppercaseCharacter: /[A-Z]/.test(newPasswordValue),
-      hasNumberCharacter: /[0-9]/.test(newPasswordValue),
+      hasMinimumLength: passwordInputField.newPassword.length >= 8,
+      hasUppercaseCharacter: /[A-Z]/.test(passwordInputField.newPassword),
+      hasNumberCharacter: /[0-9]/.test(passwordInputField.newPassword),
     };
-  }, [newPasswordValue]);
+  }, [passwordInputField.newPassword]);
 
-  // Aggregate password validity flags
   const isPasswordValid =
     passwordValidationState.hasMinimumLength &&
     passwordValidationState.hasUppercaseCharacter &&
     passwordValidationState.hasNumberCharacter;
 
   const isPasswordMatch =
-    confirmPasswordValue.length > 0 &&
-    confirmPasswordValue === newPasswordValue;
+    passwordInputField.confirmPassword.length > 0 &&
+    passwordInputField.confirmPassword === passwordInputField.newPassword;
 
-  /** Handles setting a new password */
-  const handleNewPassword = (): void => {
+  /** Handles change password submission. */
+  const handleChangePassword = (): void => {
     if (!isPasswordValid || !isPasswordMatch) {
       return;
     }
+    // Get reset token from local storage
+    const resetToken = window.localStorage.getItem(CONSTANTS.RESET_TOKEN) ?? "";
 
-    // Redirect to login after password is successfully updated
-    router.push(ROUTES.auth.login);
+    if (!resetToken) {
+      toast.error("Reset token is missing. Please verify OTP again.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    /** Call reset password API */
+    resetPasswordRequest({
+      newPassword: passwordInputField.newPassword,
+      resetToken,
+    })
+      .then((response: ApiResponseData<ResetPasswordResponseData>) => {
+        if (response.status_code === 200) {
+          // Clear recovery state after successful password reset.
+          window.localStorage.removeItem(CONSTANTS.RESET_TOKEN);
+          window.localStorage.removeItem(CONSTANTS.RECOVERY_EMAIL);
+
+          // Show success toast
+          toast.success(response.message);
+
+          // Navigate to login screen for Relogin with the Changed Password.
+          router.push(ROUTES.auth.login);
+        } else {
+          // Show error toast
+          toast.error(response.error ?? response.message);
+        }
+      })
+      .catch(() => {
+        // Show error toast
+        toast.error("Unable to change password. Please try again.");
+      })
+      .finally(() => {
+        // Reset submitting state
+        setIsSubmitting(false);
+      });
   };
 
   /** Returns the icon based on whether a password rule is satisfied. */
@@ -79,45 +130,51 @@ export default function NewPasswordPage() {
   // Use Effects
 
   return (
-    <section className="flex flex-1 flex-col bg-n-100">
+    <section className="bg-n-100 flex flex-1 flex-col">
       {/* Header */}
-      <Header title="New Password" />
+      <Header title="Change Password" />
 
       {/* Content */}
       <div className="flex flex-col gap-6 p-6">
-        {/* Password form content */}
         <div className="flex flex-col gap-4">
-          {/* New password input */}
+          {/* New Password Input */}
           <InputBox
             id="new-password"
             label="NEW PASSWORD"
             type="password"
             placeholder="At least 8 characters"
-            value={newPasswordValue}
-            onChange={setNewPasswordValue}
+            value={passwordInputField.newPassword}
+            onChange={(value) =>
+              setPasswordInputField((previousFieldInputItem) => ({
+                ...previousFieldInputItem,
+                newPassword: value,
+              }))
+            }
           />
 
-          {/* Confirm password input */}
+          {/* Confirm Password Input */}
           <InputBox
             id="confirm-password"
             label="CONFIRM PASSWORD"
             type="password"
             placeholder="Re-enter new password"
-            value={confirmPasswordValue}
-            onChange={setConfirmPasswordValue}
+            value={passwordInputField.confirmPassword}
+            onChange={(value) =>
+              setPasswordInputField((previousFieldInputItem) => ({
+                ...previousFieldInputItem,
+                confirmPassword: value,
+              }))
+            }
           />
         </div>
 
         {/* Password rules */}
         <div className="flex flex-col gap-2">
-          {/* Password rules title */}
-          <p className="font-secondary text-xs font-medium text-n-700">
+          <p className="font-secondary text-n-700 text-xs font-medium">
             Password must have:
           </p>
 
-          {/* Password rules list */}
           <div className="flex flex-col gap-1 text-xs font-normal">
-            {/* Rule: minimum length */}
             <div
               className={`flex items-center gap-2 ${
                 passwordValidationState.hasMinimumLength
@@ -129,7 +186,6 @@ export default function NewPasswordPage() {
               <span className="font-secondary">Minimum 8 characters</span>
             </div>
 
-            {/* Rule: uppercase letter */}
             <div
               className={`flex items-center gap-2 ${
                 passwordValidationState.hasUppercaseCharacter
@@ -141,7 +197,6 @@ export default function NewPasswordPage() {
               <span className="font-secondary">One uppercase letter</span>
             </div>
 
-            {/* Rule: number */}
             <div
               className={`flex items-center gap-2 ${
                 passwordValidationState.hasNumberCharacter
@@ -155,9 +210,14 @@ export default function NewPasswordPage() {
           </div>
         </div>
 
-        {/* Set password button */}
-        <Button type="button" variant="primary" onClick={handleNewPassword}>
-          Set New Password
+        {/* Submit */}
+        <Button
+          type="button"
+          variant="primary"
+          onClick={handleChangePassword}
+          disabled={!isPasswordValid || !isPasswordMatch || isSubmitting}
+        >
+          Change Password
         </Button>
       </div>
     </section>

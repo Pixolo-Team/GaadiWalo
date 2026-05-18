@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -201,4 +200,10 @@
   html:not(.light) .theme-image-dark {
     display: block !important;
   }
+}
+
+input::selection,
+textarea::selection {
+  background-color: var(--color-n-200);
+  color: var(--color-n-900);
 }

@@ -2,8 +2,6 @@
 
 // REACT //
 import type { ReactNode } from "react";
-
-// LIBRARIES //
 import { useRouter } from "next/navigation";
 
 // COMPONENTS //
@@ -28,7 +26,7 @@ export function Header({
   rightLabel = "Open filters",
   showBack = true,
   title,
-}: Readonly<HeaderPropsData>) {
+}: HeaderPropsData) {
   // Define Navigation
   const router = useRouter();
 
@@ -39,6 +37,7 @@ export function Header({
   // Define States
 
   // Helper Functions
+  /** Function to handle back navigation */
   const handleBackNavigation = (): void => {
     router.back();
   };
@@ -82,3 +81,4 @@ export function Header({
     </header>
   );
 }
+

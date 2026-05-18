@@ -1,18 +1,16 @@
-interface PhaseTabItemData {
+interface PhaseCardItemData {
   count: number;
   key: string;
   label: string;
 }
 
-interface PhaseTabsPropsData {
+interface PhaseCardPropsData {
   activeKey: string;
-  tabs: ReadonlyArray<PhaseTabItemData>;
+  tabs: ReadonlyArray<PhaseCardItemData>;
 }
 
-/**
- * Renders horizontal lead phase tabs.
- */
-export function PhaseTabs({ activeKey, tabs }: Readonly<PhaseTabsPropsData>) {
+/** Phase Card Component */
+export function PhaseCards({ activeKey, tabs }: PhaseCardPropsData) {
   // Define Navigation
 
   // Define Context
@@ -27,12 +25,12 @@ export function PhaseTabs({ activeKey, tabs }: Readonly<PhaseTabsPropsData>) {
 
   return (
     <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
-      {/* Leads phase tabs list */}
+      {/* Leads phase cards list */}
       {tabs.map((tabItem) => {
         const isActive = tabItem.key === activeKey;
 
         return (
-          /* Lead phase tab */
+          /* Lead phase card */
           <button
             key={tabItem.key}
             type="button"
@@ -55,3 +53,4 @@ export function PhaseTabs({ activeKey, tabs }: Readonly<PhaseTabsPropsData>) {
     </div>
   );
 }
+
