@@ -35,7 +35,6 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${soraFont.variable} ${dmSansFont.variable} h-full antialiased`}
-      suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
         <AuthProvider>
