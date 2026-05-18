@@ -16,7 +16,7 @@ interface LeadDetailsInfoCardPropsData {
 export function LeadDetailsInfoCard({
   rows,
   title,
-}: Readonly<LeadDetailsInfoCardPropsData>) {
+}: LeadDetailsInfoCardPropsData) {
   // Define Navigation
 
   // Define Context
@@ -30,9 +30,9 @@ export function LeadDetailsInfoCard({
   // Use Effects
 
   return (
-    <div className="flex flex-col gap-4 rounded-[14px] bg-n-50 p-5">
+    <div className="bg-n-50 flex flex-col gap-4 rounded-[14px] p-5">
       {/* Card title */}
-      <p className="font-secondary text-xs font-bold tracking-[0.5px] text-n-600 uppercase">
+      <p className="font-secondary text-n-600 text-xs font-bold tracking-[0.5px] uppercase">
         {title}
       </p>
 
@@ -42,11 +42,11 @@ export function LeadDetailsInfoCard({
           /* Info row */
           <div key={rowItem.key} className="flex flex-col gap-3">
             <div className="flex items-start justify-between gap-4">
-              <p className="font-secondary text-sm text-n-700">
+              <p className="font-secondary text-n-700 text-sm">
                 {rowItem.label}
               </p>
               <p
-                className={`text-right font-secondary text-sm font-medium ${
+                className={`font-secondary text-right text-sm font-medium ${
                   rowItem.isHighlighted ? "text-blue-600" : "text-n-800"
                 }`}
               >
@@ -56,7 +56,7 @@ export function LeadDetailsInfoCard({
 
             {/* Info divider */}
             {rowIndex < rows.length - 1 ? (
-              <span className="h-px w-full bg-n-200" />
+              <span className="bg-n-200 h-px w-full" />
             ) : null}
           </div>
         ))}

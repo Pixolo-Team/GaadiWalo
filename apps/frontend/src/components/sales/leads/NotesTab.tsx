@@ -9,14 +9,12 @@ interface LeadNoteData {
   variant: "incoming" | "outgoing";
 }
 
-interface LeadNotesPanelPropsData {
+interface NotesTabPropsData {
   notes: ReadonlyArray<LeadNoteData>;
 }
 
-/**
- * Renders the lead notes tab with sticky note composer.
- */
-export function LeadNotesPanel({ notes }: Readonly<LeadNotesPanelPropsData>) {
+/** Lead Notes Tab */
+export function NotesTab({ notes }: NotesTabPropsData) {
   // Define Navigation
 
   // Define Context
@@ -52,7 +50,7 @@ export function LeadNotesPanel({ notes }: Readonly<LeadNotesPanelPropsData>) {
               >
                 {/* Note bubble */}
                 <div
-                  className={`w-full rounded-b-xl rounded-tr-xl px-3.5 py-3.5 ${
+                  className={`w-full rounded-tr-xl rounded-b-xl px-3.5 py-3.5 ${
                     isOutgoing
                       ? "bg-blue-100 text-blue-800"
                       : "bg-n-50 text-n-800"
@@ -65,7 +63,7 @@ export function LeadNotesPanel({ notes }: Readonly<LeadNotesPanelPropsData>) {
 
                 {/* Note meta */}
                 <p
-                  className={`font-secondary text-xs text-n-500 ${
+                  className={`font-secondary text-n-500 text-xs ${
                     isOutgoing ? "text-right" : "text-left"
                   }`}
                 >
@@ -78,14 +76,14 @@ export function LeadNotesPanel({ notes }: Readonly<LeadNotesPanelPropsData>) {
       </div>
 
       {/* Sticky note input */}
-      <div className="fixed right-1/2 bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 border-t border-n-200 bg-n-50 px-3.5 pt-4 pb-5">
-        <div className="flex min-h-14 items-center gap-2 rounded-[32px] border border-n-200 bg-n-50 py-2 pr-2 pl-4">
+      <div className="border-n-200 bg-n-50 fixed right-1/2 bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 border-t px-3.5 pt-4 pb-5">
+        <div className="border-n-200 bg-n-50 flex min-h-14 items-center gap-2 rounded-[32px] border py-2 pr-2 pl-4">
           {/* Note input */}
           <input
             type="text"
             aria-label="Add a note about this lead"
             placeholder="Add a note about this lead..."
-            className="min-w-0 flex-1 bg-transparent font-secondary text-sm text-n-800 placeholder:text-n-400 focus:outline-none"
+            className="font-secondary text-n-800 placeholder:text-n-400 min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
           />
 
           {/* Send note action */}

@@ -26,7 +26,7 @@ export function Header({
   rightLabel = "Open filters",
   showBack = true,
   title,
-}: Readonly<HeaderPropsData>) {
+}: HeaderPropsData) {
   // Define Navigation
   const router = useRouter();
 
@@ -81,3 +81,4 @@ export function Header({
     </header>
   );
 }
+

@@ -17,9 +17,9 @@ import { usePathname } from "next/navigation";
 /** Sales Layout Component */
 export default function SalesLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   // Define Navigation
   const pathname = usePathname();
 
@@ -47,3 +47,4 @@ export default function SalesLayout({
     </section>
   );
 }
+

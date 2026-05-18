@@ -32,7 +32,7 @@ export default function FilterDropdown({
   prefix,
   selectedOption,
   title,
-}: Readonly<FilterDropdownPropsData>) {
+}: FilterDropdownPropsData) {
   // Define Navigation
 
   // Define Context
@@ -96,3 +96,4 @@ export default function FilterDropdown({
     </Select>
   );
 }
+

@@ -11,7 +11,7 @@ export function LeadDetailsTabs({
   onChange,
   selectedTab,
   tabs,
-}: Readonly<LeadDetailsTabsPropsData>) {
+}: LeadDetailsTabsPropsData) {
   // Define Navigation
 
   // Define Context
@@ -25,7 +25,7 @@ export function LeadDetailsTabs({
   // Use Effects
 
   return (
-    <div className="flex rounded-[10px] bg-n-100 p-0">
+    <div className="bg-n-100 flex rounded-[10px] p-0">
       {/* Lead detail tab list */}
       {tabs.map((tabItem) => {
         const isSelected = selectedTab === tabItem;
@@ -37,10 +37,10 @@ export function LeadDetailsTabs({
             type="button"
             aria-pressed={isSelected}
             onClick={() => onChange(tabItem)}
-            className={`flex-1 rounded-[7px] px-1 py-2.5 font-secondary text-sm ${
+            className={`font-secondary flex-1 rounded-[7px] px-1 py-2.5 text-sm ${
               isSelected
                 ? "bg-n-50 font-semibold text-blue-600"
-                : "font-medium text-n-600"
+                : "text-n-600 font-medium"
             }`}
           >
             {tabItem}

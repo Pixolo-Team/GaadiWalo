@@ -35,7 +35,7 @@ export function LeadCard({
   statusLabel,
   statusTone,
   vehicleName,
-}: Readonly<LeadCardPropsData>) {
+}: LeadCardPropsData) {
   // Define Navigation
 
   // Define Context

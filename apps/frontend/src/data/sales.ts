@@ -191,3 +191,131 @@ export const salesCarBrandOptions = [
   { label: "Hyundai", value: "hyundai" },
   { label: "Tata", value: "tata" },
 ] as const;
+
+/**
+ * Sales lead details tab labels.
+ */
+export const salesLeadDetailTabs = ["Info", "Activity", "Notes"] as const;
+
+/**
+ * Sales lead status options for lead details.
+ */
+export const salesLeadStatusOptions = [
+  { label: "New", value: "new" },
+  { label: "Contacted", value: "contacted" },
+  { label: "Interested", value: "interested" },
+  { label: "Test Drive", value: "test-drive" },
+  { label: "Won", value: "won" },
+  { label: "Lost", value: "lost" },
+] as const;
+
+/**
+ * Sales lead lost reason options for lead details.
+ */
+export const salesLeadLostReasonOptions = [
+  { label: "Price Issue", value: "price-issue" },
+  { label: "No Response", value: "no-response" },
+  { label: "Bought Elsewhere", value: "bought-elsewhere" },
+  { label: "Budget Mismatch", value: "budget-mismatch" },
+] as const;
+
+/**
+ * Sales lead details payload.
+ */
+export const salesLeadDetails = {
+  lead: {
+    age: "32 yrs",
+    avatarLabel: "VN",
+    name: "Vikram Nair",
+    phoneNumber: "9876876878",
+    status: "Interested",
+    statusTone: "purple" as const,
+  },
+  contactInfo: [
+    {
+      isHighlighted: true,
+      key: "phone",
+      label: "Phone",
+      value: "9876876878",
+    },
+    {
+      isHighlighted: false,
+      key: "source",
+      label: "Source",
+      value: "CarWale",
+    },
+    {
+      isHighlighted: false,
+      key: "city",
+      label: "City",
+      value: "Mumbai",
+    },
+  ],
+  carInterest: [
+    {
+      isHighlighted: true,
+      key: "model",
+      label: "Model",
+      value: "Maruti Suzuki Swift",
+    },
+    {
+      isHighlighted: false,
+      key: "fuel",
+      label: "Fuel Type",
+      value: "Petrol",
+    },
+    {
+      isHighlighted: false,
+      key: "variant",
+      label: "Variant",
+      value: "ZXI+",
+    },
+  ],
+} as const;
+
+/**
+ * Sales lead activity timeline dummy data.
+ */
+export const salesLeadActivities = [
+  {
+    description: "Follow-up call scheduled for tomorrow.",
+    key: "act-1",
+    meta: "Today, 10:30 AM",
+    tone: "blue",
+    type: "calendar",
+  },
+  {
+    description: "Status changed to Interested.",
+    key: "act-2",
+    meta: "Today, 09:10 AM",
+    tone: "purple",
+    type: "status",
+  },
+  {
+    description: "Lead received from CarWale.",
+    key: "act-3",
+    meta: "Yesterday, 06:42 PM",
+    tone: "green",
+    type: "lead",
+  },
+] as const;
+
+/**
+ * Sales lead notes panel dummy data.
+ */
+export const salesLeadNotes = [
+  {
+    author: "Rahul Sharma",
+    key: "note-1",
+    message: "Customer wants top-end variant and quick delivery timeline.",
+    meta: "10:30 AM",
+    variant: "outgoing",
+  },
+  {
+    author: "Vikram Nair",
+    key: "note-2",
+    message: "Will confirm after discussing finance options with family.",
+    meta: "09:50 AM",
+    variant: "incoming",
+  },
+] as const;

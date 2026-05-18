@@ -10,7 +10,7 @@ interface PhaseCardPropsData {
 }
 
 /** Phase Card Component */
-export function PhaseCards({ activeKey, tabs }: Readonly<PhaseCardPropsData>) {
+export function PhaseCards({ activeKey, tabs }: PhaseCardPropsData) {
   // Define Navigation
 
   // Define Context
@@ -53,3 +53,4 @@ export function PhaseCards({ activeKey, tabs }: Readonly<PhaseCardPropsData>) {
     </div>
   );
 }
+

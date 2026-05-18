@@ -15,9 +15,9 @@ import { ROUTES } from "@/constants/routes";
  */
 export default function AuthLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   // Define Navigation
   const router = useRouter();
 
@@ -54,3 +54,4 @@ export default function AuthLayout({
     </div>
   );
 }
+

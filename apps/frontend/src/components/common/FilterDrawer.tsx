@@ -29,7 +29,7 @@ export default function FilterDrawer({
   isOpen,
   onOpenChange,
   title = "Filters",
-}: Readonly<FilterDrawerPropsData>) {
+}: FilterDrawerPropsData) {
   // Define Navigation
 
   // Define Context
@@ -67,3 +67,4 @@ export default function FilterDrawer({
     </Drawer>
   );
 }
+
