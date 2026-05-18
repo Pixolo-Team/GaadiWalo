@@ -8,11 +8,7 @@ interface SectionHeaderPropsData {
 }
 
 /** Section header component */
-export function SectionHeader({
-  href,
-  label,
-  title,
-}: Readonly<SectionHeaderPropsData>) {
+export function SectionHeader({ href, label, title }: SectionHeaderPropsData) {
   // Define Navigation
 
   // Define Context

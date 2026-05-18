@@ -25,7 +25,7 @@ export function Tab({
   isActive = false,
   isFloating = false,
   label,
-}: Readonly<TabPropsData>) {
+}: TabPropsData) {
   // Define Navigation
 
   // Define Context
@@ -52,3 +52,4 @@ export function Tab({
     </Link>
   );
 }
+

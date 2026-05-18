@@ -12,6 +12,7 @@ export const ROUTES = {
   },
   sales: {
     leads: "/leads",
+    leadDetails: (leadId: string): string => `/leads/${leadId}`,
     addLead: "/leads/add",
     alerts: "/profile/notifications",
     profile: "/profile",

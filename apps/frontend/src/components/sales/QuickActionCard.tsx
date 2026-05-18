@@ -15,7 +15,7 @@ export function QuickActionCard({
   href,
   icon,
   label,
-}: Readonly<QuickActionCardPropsData>) {
+}: QuickActionCardPropsData) {
   // Define Navigation
 
   // Define Context

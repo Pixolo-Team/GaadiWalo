@@ -15,7 +15,7 @@ export function LeadContactActions({
   onCall,
   onCopy,
   phoneNumber,
-}: Readonly<LeadContactActionsPropsData>) {
+}: LeadContactActionsPropsData) {
   // Define Navigation
 
   // Define Context
