@@ -9,6 +9,7 @@ import InputBox from "@/components/common/InputBox";
 import Dropdown from "@/components/common/Dropdown";
 import ContentInsightIdeaTrivia from "@/components/icons/neevo-icons/ContentInsightIdeaTrivia";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 // DATA //
 import {
@@ -19,9 +20,31 @@ import {
   salesAddLeadVariantOptions,
 } from "@/data/sales";
 
-/**
- * Renders the add new lead screen.
- */
+interface LeadInputFiledData {
+  budget: string;
+  carBrand: string;
+  carModel: string;
+  email: string;
+  fullName: string;
+  initialNote: string;
+  phoneNumber: string;
+  source: string;
+  variant: string;
+}
+
+const initialLeadInputFiledData: LeadInputFiledData = {
+  budget: "",
+  carBrand: "",
+  carModel: "",
+  email: "",
+  fullName: "",
+  initialNote: "",
+  phoneNumber: "",
+  source: "",
+  variant: "",
+};
+
+/** Add Lead Page Component */
 export default function AddLeadPage() {
   // Define Navigation
 
@@ -30,36 +53,36 @@ export default function AddLeadPage() {
   // Define Refs
 
   // Define States
-  const [fullName, setFullName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [email, setEmail] = useState("");
-  const [source, setSource] = useState("");
-  const [carBrand, setCarBrand] = useState("");
-  const [carModel, setCarModel] = useState("");
-  const [variant, setVariant] = useState("");
-  const [budget, setBudget] = useState("");
-  const [initialNote, setInitialNote] = useState("");
+  const [leadInputFiled, setLeadInputField] = useState<LeadInputFiledData>(
+    initialLeadInputFiledData,
+  );
 
   // Helper Functions
-  const canCreateLead =
-    fullName.trim().length > 0 && phoneNumber.trim().length > 0;
+  /** Function to Update input Fields */
+  const updateLeadInputFiled = (
+    field: keyof LeadInputFiledData,
+    value: string,
+  ): void => {
+    setLeadInputField((previousInputField) => ({
+      ...previousInputField,
+      [field]: value,
+    }));
+  };
 
+  const canCreateLead =
+    leadInputFiled.fullName.trim().length > 0 &&
+    leadInputFiled.phoneNumber.trim().length > 0;
+
+  /** Handles the create lead action. */
   const handleCreateLead = (): void => {
     if (!canCreateLead) {
       return;
     }
   };
 
+  /** Function to clear all fields to their initial values */
   const handleCancel = (): void => {
-    setFullName("");
-    setPhoneNumber("");
-    setEmail("");
-    setSource("");
-    setCarBrand("");
-    setCarModel("");
-    setVariant("");
-    setBudget("");
-    setInitialNote("");
+    setLeadInputField(initialLeadInputFiledData);
   };
 
   // Use Effects
@@ -77,6 +100,7 @@ export default function AddLeadPage() {
           <div className="flex flex-col gap-6 p-6">
             {/* Informational banner */}
             <div className="flex items-start gap-4 rounded-[14px] bg-blue-100 px-[18px] py-4">
+              {/* Icon */}
               <ContentInsightIdeaTrivia
                 primaryColor="var(--color-blue-700)"
                 className="mt-0.5 size-5 shrink-0"
@@ -96,26 +120,33 @@ export default function AddLeadPage() {
 
                 {/* Personal info fields */}
                 <div className="flex flex-col gap-4">
+                  {/* Full Name Input */}
                   <InputBox
                     label="FULL NAME *"
                     placeholder="e.g. Rahul Kumar"
-                    value={fullName}
-                    onChange={setFullName}
+                    value={leadInputFiled.fullName}
+                    onChange={(value) =>
+                      updateLeadInputFiled("fullName", value)
+                    }
                   />
 
+                  {/* Phone Input */}
                   <InputBox
                     label="PHONE NUMBER *"
                     placeholder="+91 XXXXXXXXXX"
-                    value={phoneNumber}
-                    onChange={setPhoneNumber}
+                    value={leadInputFiled.phoneNumber}
+                    onChange={(value) =>
+                      updateLeadInputFiled("phoneNumber", value)
+                    }
                   />
 
+                  {/* Email Input  */}
                   <InputBox
                     label="EMAIL (OPTIONAL)"
                     placeholder="email@example.com"
                     type="email"
-                    value={email}
-                    onChange={setEmail}
+                    value={leadInputFiled.email}
+                    onChange={(value) => updateLeadInputFiled("email", value)}
                   />
                 </div>
               </div>
@@ -129,13 +160,14 @@ export default function AddLeadPage() {
                   Lead Source
                 </p>
 
+                {/* Source Dropdown */}
                 <Dropdown
                   label="SOURCE"
                   required
                   title="Select Source"
                   options={salesAddLeadSourceOptions}
-                  selectedOption={source}
-                  onChange={setSource}
+                  selectedOption={leadInputFiled.source}
+                  onChange={(value) => updateLeadInputFiled("source", value)}
                 />
               </div>
 
@@ -150,52 +182,57 @@ export default function AddLeadPage() {
 
                 {/* Car details fields */}
                 <div className="flex flex-col gap-4">
+                  {/* Car Brand Dropdown */}
                   <Dropdown
                     label="CAR BRAND"
                     required
                     title="Select Brand"
                     options={salesAddLeadCarBrandOptions}
-                    selectedOption={carBrand}
-                    onChange={setCarBrand}
+                    selectedOption={leadInputFiled.carBrand}
+                    onChange={(value) =>
+                      updateLeadInputFiled("carBrand", value)
+                    }
                   />
 
+                  {/* Car Model Dropdown */}
                   <Dropdown
                     label="MODEL"
                     title="Select Model"
                     options={salesAddLeadCarModelOptions}
-                    selectedOption={carModel}
-                    onChange={setCarModel}
+                    selectedOption={leadInputFiled.carModel}
+                    onChange={(value) =>
+                      updateLeadInputFiled("carModel", value)
+                    }
                   />
 
+                  {/* Car Variant Dropdown */}
                   <Dropdown
                     label="VARIANT / CATEGORY"
                     title="Select"
                     options={salesAddLeadVariantOptions}
-                    selectedOption={variant}
-                    onChange={setVariant}
+                    selectedOption={leadInputFiled.variant}
+                    onChange={(value) => updateLeadInputFiled("variant", value)}
                   />
 
+                  {/* Budget Range Dropdown */}
                   <Dropdown
                     label="BUDGET RANGE"
                     title="Select Budget"
                     options={salesAddLeadBudgetOptions}
-                    selectedOption={budget}
-                    onChange={setBudget}
+                    selectedOption={leadInputFiled.budget}
+                    onChange={(value) => updateLeadInputFiled("budget", value)}
                   />
 
-                  {/* Initial note field */}
-                  <div className="flex flex-col gap-1">
-                    <p className="font-secondary text-n-600 text-xs leading-normal font-medium tracking-wide uppercase">
-                      INITIAL NOTE (OPTIONAL)
-                    </p>
-
-                    <textarea
-                      value={initialNote}
-                      onChange={(event) => setInitialNote(event.target.value)}
-                      placeholder="Any additional info about this lead..."
-                      className="border-n-200 bg-n-50 font-secondary text-n-800 placeholder:text-n-400 min-h-[120px] w-full resize-none rounded-lg border p-3.5 text-base leading-normal outline-none"
-                    />
-                  </div>
+                  {/* Optional Textarea Component */}
+                  <Textarea
+                    label="INITIAL NOTE (OPTIONAL)"
+                    value={leadInputFiled.initialNote}
+                    onChange={(event) =>
+                      updateLeadInputFiled("initialNote", event.target.value)
+                    }
+                    placeholder="Any additional info about this lead..."
+                    className="border-n-200 bg-n-50 font-secondary text-n-800 placeholder:text-n-400 min-h-[120px] w-full resize-y rounded-lg border p-3.5 text-base leading-normal outline-none"
+                  />
                 </div>
               </div>
             </div>
