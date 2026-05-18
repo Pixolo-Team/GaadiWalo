@@ -16,7 +16,7 @@ interface LeadActivityData {
   type: "calendar" | "call" | "lead" | "status" | "whatsapp";
 }
 
-interface LeadActivityTimelinePropsData {
+interface ActivityTabPropsData {
   activities: ReadonlyArray<LeadActivityData>;
 }
 
@@ -43,12 +43,8 @@ const activityToneClassNameData = {
   },
 } as const;
 
-/**
- * Renders the lead activity timeline tab.
- */
-export function LeadActivityTimeline({
-  activities,
-}: Readonly<LeadActivityTimelinePropsData>) {
+/** Lead Activity Tab */
+export function ActivityTab({ activities }: ActivityTabPropsData) {
   // Define Navigation
 
   // Define Context
@@ -58,6 +54,7 @@ export function LeadActivityTimeline({
   // Define States
 
   // Helper Functions
+
   /**
    * Returns the icon for a lead activity item.
    */
@@ -91,7 +88,7 @@ export function LeadActivityTimeline({
   // Use Effects
 
   return (
-    <div className="rounded-[14px] bg-n-50 p-5">
+    <div className="bg-n-50 rounded-[14px] p-5">
       {/* Activity timeline */}
       <div className="flex flex-col">
         {activities.map((activityItem, activityIndex) => {
@@ -110,15 +107,15 @@ export function LeadActivityTimeline({
                 </span>
 
                 {/* Timeline line */}
-                {!isLastItem ? <span className="w-px flex-1 bg-n-200" /> : null}
+                {!isLastItem ? <span className="bg-n-200 w-px flex-1" /> : null}
               </div>
 
               {/* Activity copy */}
               <div className="flex min-w-0 flex-1 flex-col gap-1 pb-7">
-                <p className="font-secondary text-sm leading-[1.4] text-n-800">
+                <p className="font-secondary text-n-800 text-sm leading-[1.4]">
                   {activityItem.description}
                 </p>
-                <p className="font-secondary text-xs font-medium text-n-500">
+                <p className="font-secondary text-n-500 text-xs font-medium">
                   {activityItem.meta}
                 </p>
               </div>

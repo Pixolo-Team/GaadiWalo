@@ -4,16 +4,16 @@ import { useState } from "react";
 // COMPONENTS //
 import FilterDropdown from "@/components/common/FilterDropdown";
 import Building1 from "@/components/icons/neevo-icons/Building1";
+
+// DATA //
 import {
   salesHeaderUser,
   salesLocationOptions,
   salesSummaryMetrics,
 } from "@/data/sales";
 
-/**
- * Renders top greeting and summary panel on sales home screen.
- */
-export function SalesTopHeader() {
+/** Sales Dashboard Header */
+export function SalesDashboardHeader() {
   // Define Navigation
 
   // Define Context
@@ -61,7 +61,7 @@ export function SalesTopHeader() {
           prefix={
             <Building1 primaryColor="var(--color-n-500)" className="size-4" />
           }
-          className="border-n-300 h-10 rounded-3xl text-xs font-bold text-n-600"
+          className="border-n-300 text-n-600 h-10 rounded-3xl text-xs font-bold"
         />
       </div>
 
