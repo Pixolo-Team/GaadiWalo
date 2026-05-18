@@ -1,6 +1,5 @@
 "use client";
 
-// LIBRARIES //
 // COMPONENTS //
 import BellNotification from "@/components/icons/neevo-icons/BellNotification";
 import Home3 from "@/components/icons/neevo-icons/Home3";

@@ -28,25 +28,6 @@ export function QuickActionCard({
 
   // Use Effects
 
-  // Render link-style action card
-  if (href) {
-    return (
-      <Link
-        href={href}
-        className="bg-n-50 flex flex-1 flex-col items-center gap-2 rounded-2xl p-4"
-      >
-        {/* Action icon */}
-        <div className="size-6">{icon}</div>
-
-        {/* Action label */}
-        <span className="font-secondary text-n-800 text-sm font-semibold">
-          {label}
-        </span>
-      </Link>
-    );
-  }
-
-  // Render button-style action card
   return (
     <Link
       href={href || "#"}
