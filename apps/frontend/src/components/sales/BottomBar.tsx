@@ -30,6 +30,10 @@ export function BottomBar() {
   // Helper Functions
   const isHomeSelected = pathname === ROUTES.home;
   const isLeadsSelected = pathname.startsWith(ROUTES.sales.leads);
+  const isProfileSelected =
+    pathname === ROUTES.sales.profile ||
+    pathname.startsWith(`${ROUTES.sales.profile}/`);
+  const isAlertsSelected = pathname === ROUTES.sales.alerts;
 
   // Use Effects
 
@@ -83,9 +87,12 @@ export function BottomBar() {
         <Tab
           href={ROUTES.sales.alerts}
           label="Alerts"
+          isActive={isAlertsSelected}
           icon={
             <BellNotification
-              primaryColor="var(--color-n-500)"
+              primaryColor={
+                isAlertsSelected ? "var(--color-blue-600)" : "var(--color-n-500)"
+              }
               className="size-7"
             />
           }
@@ -95,9 +102,12 @@ export function BottomBar() {
         <Tab
           href={ROUTES.sales.profile}
           label="Profile"
+          isActive={isProfileSelected}
           icon={
             <UserCircleSingle
-              primaryColor="var(--color-n-500)"
+              primaryColor={
+                isProfileSelected ? "var(--color-blue-600)" : "var(--color-n-500)"
+              }
               className="size-7"
             />
           }

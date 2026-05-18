@@ -399,8 +399,11 @@ export const salesImportExpectedColumns = [
 export const salesProfileSummaryData = {
   avatarLabel: "RS",
   branch: "Mumbai Branch",
+  email: "rahul.sharma@autolead.in",
   joined: "Jan 2025",
+  languagePreference: "english",
   name: "Rahul Sharma",
+  phoneNumber: "+91 98765 43210",
   role: "Sales Executive",
   userId: "SP001",
 } as const;
@@ -409,9 +412,21 @@ export const salesProfileSummaryData = {
  * Sales profile metric cards dummy data.
  */
 export const salesProfileMetrics = [
-  { helper: "Conversion", key: "rate", label: "RATE", tone: "blue", value: "19%" },
+  {
+    helper: "Conversion",
+    key: "rate",
+    label: "RATE",
+    tone: "blue",
+    value: "19%",
+  },
   { helper: "Converted", key: "won", label: "WON", tone: "green", value: "9" },
-  { helper: "This month", key: "leads", label: "LEADS", tone: "neutral", value: "47" },
+  {
+    helper: "This month",
+    key: "leads",
+    label: "LEADS",
+    tone: "neutral",
+    value: "47",
+  },
 ] as const;
 
 /**
