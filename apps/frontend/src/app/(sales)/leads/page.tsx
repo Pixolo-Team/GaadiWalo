@@ -10,6 +10,8 @@ import { SearchInput } from "@/components/common/SearchInput";
 import HorizontalSlider2 from "@/components/icons/neevo-icons/HorizontalSlider2";
 import { LeadCard } from "@/components/sales/LeadCard";
 import { LeadsFilterDrawer } from "@/components/sales/LeadsFilterDrawer";
+
+// CONSTANTS //
 import { ROUTES } from "@/constants/routes";
 
 // DATA //
@@ -19,9 +21,7 @@ import {
   salesSortOptions,
 } from "@/data/sales";
 
-/**
- * Renders the sales leads screen.
- */
+/** Leads Page Component */
 export default function LeadsPage() {
   // Define Navigation
 
@@ -124,7 +124,7 @@ export default function LeadsPage() {
                 {salesLeads.map((leadItem) => (
                   <LeadCard
                     key={leadItem.key}
-                    detailsHref={ROUTES.sales.leadDetails(leadItem.key)}
+                    href={ROUTES.sales.leadDetails(leadItem.key)}
                     name={leadItem.name}
                     phoneNumber={leadItem.phoneNumber}
                     source={leadItem.source}

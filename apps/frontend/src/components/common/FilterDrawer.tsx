@@ -29,7 +29,7 @@ export default function FilterDrawer({
   isOpen,
   onOpenChange,
   title = "Filters",
-}: Readonly<FilterDrawerPropsData>) {
+}: FilterDrawerPropsData) {
   // Define Navigation
 
   // Define Context
@@ -54,11 +54,11 @@ export default function FilterDrawer({
           </DrawerTitle>
 
           {/* Drawer description */}
-          {description ? (
-            <DrawerDescription className="text-n-500 text-left text-xs">
-              {description}
-            </DrawerDescription>
-          ) : null}
+          <DrawerDescription
+            className={description ? "text-n-500 text-left text-xs" : "sr-only"}
+          >
+            {description ?? "Filter options panel"}
+          </DrawerDescription>
         </DrawerHeader>
 
         {/* Drawer body */}
@@ -67,3 +67,4 @@ export default function FilterDrawer({
     </Drawer>
   );
 }
+
