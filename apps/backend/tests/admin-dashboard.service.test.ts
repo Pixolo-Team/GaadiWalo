@@ -139,8 +139,8 @@ describe("admin-dashboard.service", () => {
     assert.deepEqual(adminSummaryResult.data, {
       totalLeads: 4,
       totalLeadsChange: 100,
-      converted: 2,
-      conversionRate: 50,
+      converted: 1,
+      conversionRate: 25,
       activeLeads: 3,
       won: 1,
       wonChange: 0,
@@ -262,8 +262,8 @@ describe("admin-dashboard.service", () => {
     assert.deepEqual(adminSummaryResult.data, {
       totalLeads: 4,
       totalLeadsChange: 100,
-      converted: 2,
-      conversionRate: 50,
+      converted: 1,
+      conversionRate: 25,
       activeLeads: 3,
       won: 1,
       wonChange: 0,

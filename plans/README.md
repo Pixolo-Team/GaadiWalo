@@ -23,6 +23,7 @@ This folder contains all planning documents for the GaadiWalo project.
 | [backend/authentication.md](./backend/authentication.md)                             | Auth and authorization strategy                                                                                  |
 | [backend/lead-details-flow.md](./backend/lead-details-flow.md)                       | Backend plan for sales lead details, notes, activities, and status updates                                      |
 | [backend/sales-leads-api-docs.md](./backend/sales-leads-api-docs.md)                 | Production-facing API documentation for sales lead detail, note, activity, and create/update endpoints          |
+| [backend/sales-leads-api-qa-guide.md](./backend/sales-leads-api-qa-guide.md)         | Simplified QA-friendly guide for sales lead endpoints, request bodies, process flow, and expected responses     |
 
 ## Frontend Implementation Files
 

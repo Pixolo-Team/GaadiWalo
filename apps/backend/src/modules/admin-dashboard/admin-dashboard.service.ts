@@ -15,7 +15,6 @@ import { getUserByRecordIdentifier } from "../../config/supabase.js";
 // CONSTANTS //
 import {
   ADMIN_DASHBOARD_ACTIVE_STATUSES,
-  ADMIN_DASHBOARD_CONVERTED_STATUSES,
   ADMIN_DASHBOARD_OTHER_SOURCE_LABEL,
   ADMIN_DASHBOARD_SOURCE_COLOR_MAP,
   ADMIN_DASHBOARD_UNKNOWN_REFERRER_LABEL,
@@ -535,13 +534,6 @@ export const createAdminDashboardService = (
         );
 
         // Each dashboard card is calculated from the same filtered period slice.
-        const currentConverted = currentStatuses.filter(
-          (statusNameItem) =>
-            statusNameItem !== null &&
-            ADMIN_DASHBOARD_CONVERTED_STATUSES.includes(
-              statusNameItem as (typeof ADMIN_DASHBOARD_CONVERTED_STATUSES)[number],
-            ),
-        ).length;
         const currentActive = currentStatuses.filter(
           (statusNameItem) =>
             statusNameItem !== null &&
@@ -563,12 +555,12 @@ export const createAdminDashboardService = (
               currentLeadRecords.length,
               previousLeadRecords.length,
             ),
-            converted: currentConverted,
+            converted: currentWon,
             conversionRate:
               currentLeadRecords.length === 0
                 ? 0
                 : toRoundedPercent(
-                    (currentConverted / currentLeadRecords.length) * 100,
+                    (currentWon / currentLeadRecords.length) * 100,
                   ),
             activeLeads: currentActive,
             won: currentWon,

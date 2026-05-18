@@ -55,7 +55,7 @@ Source of truth:
 ```json
 {
   "userId": "S001",
-  "password": "Zinedine14!$"
+  "password": "SkorostUnited12!"
 }
 ```
 
