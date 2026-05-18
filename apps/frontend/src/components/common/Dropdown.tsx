@@ -55,7 +55,7 @@ export default function Dropdown({
   // Use Effects
 
   return (
-    <div className="flex h-full flex-col gap-1.5">
+    <div className="flex h-full w-full flex-col gap-1.5">
       {/* Dropdown label */}
       {label ? (
         <div className="relative flex">

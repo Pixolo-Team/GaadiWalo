@@ -2,15 +2,14 @@
 
 // REACT //
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 // COMPONENTS //
 import Dropdown from "@/components/common/Dropdown";
 import { Header } from "@/components/common/Header";
+import InputBox from "@/components/common/InputBox";
 import Paperclip1 from "@/components/icons/neevo-icons/Paperclip1";
 import { LeadDetailsInfoCard } from "@/components/sales/LeadDetailsInfoCard";
 import { Button } from "@/components/ui/button";
-import InputBox from "@/components/common/InputBox";
 
 // DATA //
 import {
@@ -28,7 +27,6 @@ interface EditProfileInputFieldsData {
 /** Edit Profile Page Component */
 export default function EditProfilePage() {
   // Define Navigation
-  const router = useRouter();
 
   // Define Context
 

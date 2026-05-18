@@ -1,11 +1,11 @@
 "use client";
 
 // COMPONENTS //
+import BellNotification from "@/components/icons/neevo-icons/BellNotification";
 import DesktopMonitorBrowseActivityPerformance from "@/components/icons/neevo-icons/DesktopMonitorBrowseActivityPerformance";
 import LoginPassword from "@/components/icons/neevo-icons/LoginPassword";
 import Logout3 from "@/components/icons/neevo-icons/Logout3";
 import UserEditPencil from "@/components/icons/neevo-icons/UserEditPencil";
-import BellNotification from "@/components/icons/neevo-icons/BellNotification";
 import MetricItem from "@/components/sales/profile/MetricItem";
 import ProfileMenuItem from "@/components/sales/profile/ProfileMenuItem";
 import ProfileTopSummary from "@/components/sales/profile/ProfileTopSummary";
@@ -75,9 +75,9 @@ export default function ProfilePage() {
                 }
                 label="Edit Profile"
               />
-
               {/* Change password action item */}
               <ProfileMenuItem
+                href={ROUTES.sales.profileChangePassword}
                 iconBackgroundColor="bg-amber-100"
                 iconNode={
                   <LoginPassword
@@ -87,9 +87,9 @@ export default function ProfilePage() {
                 }
                 label="Change Password"
               />
-
               {/* Notification preferences action item */}
               <ProfileMenuItem
+                href={ROUTES.sales.profileNotifications}
                 iconBackgroundColor="bg-purple-100"
                 iconNode={
                   <BellNotification
@@ -99,7 +99,6 @@ export default function ProfilePage() {
                 }
                 label="Notification Preferences"
               />
-
               {/* Performance report action item */}
               <ProfileMenuItem
                 iconBackgroundColor="bg-green-100"

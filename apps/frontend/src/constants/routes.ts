@@ -19,5 +19,7 @@ export const ROUTES = {
     alerts: "/profile/notifications",
     profile: "/profile",
     profileEdit: "/profile/edit",
+    profileChangePassword: "/profile/change-password",
+    profileNotifications: "/profile/notifications",
   },
 } as const;
