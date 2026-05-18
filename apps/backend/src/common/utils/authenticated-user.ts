@@ -33,6 +33,7 @@ const LEAD_ALLOWED_ROLE_VALUES = new Set<string>([
   SALES_ROLE_VALUE,
   ADMIN_ROLE_VALUE,
 ]);
+const ADMIN_ALLOWED_ROLE_VALUES = new Set<string>([ADMIN_ROLE_VALUE]);
 
 const getBearerToken = (authorizationHeader: string | undefined): string | null => {
   if (!authorizationHeader) {
@@ -46,6 +47,56 @@ const getBearerToken = (authorizationHeader: string | undefined): string | null 
   }
 
   return token.trim();
+};
+
+const createUnauthorizedResponse = (
+  context: Context,
+  message: string = LEAD_UNAUTHORIZED_MESSAGE,
+): Response => {
+  return sendResponse({
+    context,
+    statusCode: HTTP_STATUS_CODES.unauthorized,
+    status: "error",
+    message,
+    error: message,
+  });
+};
+
+const isInvalidAccessTokenError = (error: unknown): error is Error => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const normalizedErrorMessage = error.message.toLowerCase();
+
+  return (
+    normalizedErrorMessage.includes("jwt") ||
+    normalizedErrorMessage.includes("token") ||
+    normalizedErrorMessage.includes("expired") ||
+    normalizedErrorMessage.includes("session") ||
+    normalizedErrorMessage.includes("unauthorized") ||
+    normalizedErrorMessage.includes("invalid claim")
+  );
+};
+
+const getInvalidAccessTokenMessage = (error: Error): string => {
+  const normalizedErrorMessage = error.message.toLowerCase();
+
+  if (normalizedErrorMessage.includes("expired")) {
+    return "Access token has expired.";
+  }
+
+  return "Access token is invalid.";
+};
+
+const logAuthenticationError = (
+  scope: "sales" | "admin",
+  error: unknown,
+): void => {
+  console.log(`[auth] ${scope} authentication failure`, {
+    message: error instanceof Error ? error.message : String(error),
+    name: error instanceof Error ? error.name : "UnknownError",
+  });
 };
 
 const mapAuthenticatedUser = (
@@ -94,13 +145,7 @@ export const requireAuthenticatedSalesUser = async (
     if (!accessToken) {
       return {
         authenticatedUser: null,
-        errorResponse: sendResponse({
-          context,
-          statusCode: HTTP_STATUS_CODES.unauthorized,
-          status: "error",
-          message: LEAD_UNAUTHORIZED_MESSAGE,
-          error: LEAD_UNAUTHORIZED_MESSAGE,
-        }),
+        errorResponse: createUnauthorizedResponse(context),
       };
     }
 
@@ -112,13 +157,7 @@ export const requireAuthenticatedSalesUser = async (
     if (!userRecord) {
       return {
         authenticatedUser: null,
-        errorResponse: sendResponse({
-          context,
-          statusCode: HTTP_STATUS_CODES.unauthorized,
-          status: "error",
-          message: LEAD_UNAUTHORIZED_MESSAGE,
-          error: LEAD_UNAUTHORIZED_MESSAGE,
-        }),
+        errorResponse: createUnauthorizedResponse(context),
       };
     }
 
@@ -144,7 +183,98 @@ export const requireAuthenticatedSalesUser = async (
       authenticatedUser,
       errorResponse: null,
     };
-  } catch {
+  } catch (error) {
+    logAuthenticationError("sales", error);
+
+    if (isInvalidAccessTokenError(error)) {
+      return {
+        authenticatedUser: null,
+        errorResponse: createUnauthorizedResponse(
+          context,
+          getInvalidAccessTokenMessage(error),
+        ),
+      };
+    }
+
+    return {
+      authenticatedUser: null,
+      errorResponse: sendResponse({
+        context,
+        statusCode: HTTP_STATUS_CODES.internalServerError,
+        status: "error",
+        message: INTERNAL_SERVER_ERROR_MESSAGE,
+        error: INTERNAL_SERVER_ERROR_MESSAGE,
+      }),
+    };
+  }
+};
+
+/**
+ * Resolves the authenticated Admin User from the request Bearer token.
+ */
+export const requireAuthenticatedAdminUser = async (
+  context: Context,
+): Promise<{
+  authenticatedUser: AuthenticatedUserData | null;
+  errorResponse: Response | null;
+}> => {
+  try {
+    const accessToken = getBearerToken(context.req.header("Authorization"));
+
+    if (!accessToken) {
+      return {
+        authenticatedUser: null,
+        errorResponse: createUnauthorizedResponse(context),
+      };
+    }
+
+    const authUser = await getAuthUserByAccessToken(accessToken);
+    const userRecord =
+      (await getUserByAuthIdentifier(authUser.id)) ??
+      (await getUserByEmailIdentifier(authUser.email));
+
+    if (!userRecord) {
+      return {
+        authenticatedUser: null,
+        errorResponse: createUnauthorizedResponse(context),
+      };
+    }
+
+    const authenticatedUser = mapAuthenticatedUser(userRecord);
+
+    if (
+      !authenticatedUser ||
+      !ADMIN_ALLOWED_ROLE_VALUES.has(authenticatedUser.role)
+    ) {
+      return {
+        authenticatedUser: null,
+        errorResponse: sendResponse({
+          context,
+          statusCode: HTTP_STATUS_CODES.forbidden,
+          status: "error",
+          message: LEAD_UNAUTHORIZED_MESSAGE,
+          error: LEAD_UNAUTHORIZED_MESSAGE,
+        }),
+      };
+    }
+
+    return {
+      authenticatedUser,
+      errorResponse: null,
+    };
+  } catch (error) {
+    logAuthenticationError("admin", error);
+
+    if (isInvalidAccessTokenError(error)) {
+      return {
+        authenticatedUser: null,
+        errorResponse: createUnauthorizedResponse(
+          context,
+          getInvalidAccessTokenMessage(error),
+        ),
+      };
+    }
+
     return {
       authenticatedUser: null,
       errorResponse: sendResponse({

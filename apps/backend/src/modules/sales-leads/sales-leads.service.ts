@@ -282,6 +282,56 @@ const createSalesLeadServiceError = (
   return salesLeadError;
 };
 
+const SALES_LEAD_SERVICE_ERROR_CODES = new Set<SalesLeadServiceErrorData["code"]>([
+  "UNAUTHORIZED",
+  "FORBIDDEN",
+  "NOT_FOUND",
+  "CONFLICT",
+  "INTERNAL",
+]);
+
+const isDuplicatePhoneConstraintError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const duplicateCandidate = error as Error & {
+    code?: unknown;
+    details?: unknown;
+    hint?: unknown;
+    constraint?: unknown;
+  };
+  const normalizedMessage = error.message.toLowerCase();
+  const normalizedDetails =
+    typeof duplicateCandidate.details === "string"
+      ? duplicateCandidate.details.toLowerCase()
+      : "";
+  const normalizedHint =
+    typeof duplicateCandidate.hint === "string"
+      ? duplicateCandidate.hint.toLowerCase()
+      : "";
+  const normalizedConstraint =
+    typeof duplicateCandidate.constraint === "string"
+      ? duplicateCandidate.constraint.toLowerCase()
+      : "";
+  const duplicateSignals = [
+    normalizedMessage,
+    normalizedDetails,
+    normalizedHint,
+    normalizedConstraint,
+  ].join(" ");
+
+  const hasUniqueViolationCode = duplicateCandidate.code === "23505";
+  const hasDuplicateSignal =
+    duplicateSignals.includes("duplicate") ||
+    duplicateSignals.includes("unique");
+  const hasPhoneSignal =
+    duplicateSignals.includes("phone") ||
+    duplicateSignals.includes("leads_phone");
+
+  return hasPhoneSignal && (hasUniqueViolationCode || hasDuplicateSignal);
+};
+
 /**
  * Maps a Supabase user record into the lightweight lead user summary shape.
  */
@@ -1021,15 +1071,14 @@ export const createSalesLeadsService = (
     if (
       error instanceof Error &&
       "code" in error &&
-      typeof (error as SalesLeadServiceErrorData).code === "string"
+      SALES_LEAD_SERVICE_ERROR_CODES.has(
+        (error as SalesLeadServiceErrorData).code,
+      )
     ) {
       return error as SalesLeadServiceErrorData;
     }
 
-    if (
-      error instanceof Error &&
-      error.message.toLowerCase().includes("duplicate")
-    ) {
+    if (isDuplicatePhoneConstraintError(error)) {
       return createSalesLeadServiceError("CONFLICT", LEAD_DUPLICATE_PHONE_MESSAGE);
     }
 

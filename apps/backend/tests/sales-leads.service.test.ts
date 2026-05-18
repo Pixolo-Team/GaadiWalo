@@ -208,6 +208,54 @@ describe("sales-leads.service", () => {
     );
   });
 
+  it("maps a database duplicate-phone error to a conflict when updating a lead", async () => {
+    const duplicatePhoneError = Object.assign(
+      new Error('duplicate key value violates unique constraint "leads_phone_key"'),
+      {
+        code: "23505",
+        details: "Key (phone)=(9876543210) already exists.",
+        constraint: "leads_phone_key",
+      },
+    );
+    const salesLeadsService = createSalesLeadsService({
+      ...createDependencies(),
+      getLeadByPhone: async () => null,
+      updateLeadRecord: async () => {
+        throw duplicatePhoneError;
+      },
+    });
+
+    const updateLeadDetailsResult =
+      await salesLeadsService.updateLeadDetailsService(
+        authenticatedSalesUser,
+        "lead-1",
+        {
+          fullName: "Rahul Sharma",
+          phone: "9876543210",
+          email: "rahul@example.com",
+          source: "CarWale",
+          referrerName: null,
+          referrerPhone: null,
+          carBrand: "Hyundai",
+          carModel: "i10",
+          variantName: "Sportz",
+          colorPreference: "Red",
+          budget: "6-8 Lakh",
+          isUsed: true,
+        },
+      );
+
+    assert.equal(updateLeadDetailsResult.data, null);
+    assert.equal(
+      updateLeadDetailsResult.error?.message,
+      "A lead with this phone number already exists.",
+    );
+    assert.equal(
+      (updateLeadDetailsResult.error as SalesLeadServiceErrorData | null)?.code,
+      "CONFLICT",
+    );
+  });
+
   it("creates a note and returns the authored response payload", async () => {
     const salesLeadsService = createSalesLeadsService(createDependencies());
 
@@ -381,5 +429,52 @@ describe("sales-leads.service", () => {
     assert.equal(createLeadResult.data?.lead.id, "lead-created");
     assert.equal(createLeadResult.data?.note, null);
     assert.equal(createdNoteCount, 0);
+  });
+
+  it("maps a database duplicate-phone error to a conflict when creating a lead", async () => {
+    const duplicatePhoneError = Object.assign(
+      new Error('duplicate key value violates unique constraint "leads_phone_key"'),
+      {
+        code: "23505",
+        details: "Key (phone)=(9999999997) already exists.",
+        constraint: "leads_phone_key",
+      },
+    );
+    const salesLeadsService = createSalesLeadsService({
+      ...createDependencies(),
+      getLeadByPhone: async () => null,
+      createLeadRecord: async () => {
+        throw duplicatePhoneError;
+      },
+    });
+
+    const createLeadResult = await salesLeadsService.createLeadService(
+      authenticatedSalesUser,
+      {
+        fullName: "Rahul Sharma",
+        phone: "9999999997",
+        email: "rahul@example.com",
+        source: "CarWale",
+        referrerName: null,
+        referrerPhone: null,
+        carBrand: "Hyundai",
+        carModel: "i10",
+        variantName: "Sportz",
+        colorPreference: "Red",
+        budget: "6-8 Lakh",
+        isUsed: true,
+        initialNote: null,
+      },
+    );
+
+    assert.equal(createLeadResult.data, null);
+    assert.equal(
+      createLeadResult.error?.message,
+      "A lead with this phone number already exists.",
+    );
+    assert.equal(
+      (createLeadResult.error as SalesLeadServiceErrorData | null)?.code,
+      "CONFLICT",
+    );
   });
 });
