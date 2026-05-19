@@ -7,9 +7,9 @@ import { useState } from "react";
 import Dropdown from "@/components/common/Dropdown";
 import { Header } from "@/components/common/Header";
 import InputBox from "@/components/common/InputBox";
-import Paperclip1 from "@/components/icons/neevo-icons/Paperclip1";
 import { LeadDetailsInfoCard } from "@/components/sales/LeadDetailsInfoCard";
 import { Button } from "@/components/ui/button";
+import ImageUpload from "@/components/common/ImageUpload";
 
 // DATA //
 import {
@@ -42,6 +42,8 @@ export default function EditProfilePage() {
 
   const [editProfileInputFields, setEditProfileInputFields] =
     useState<EditProfileInputFieldsData>(initialEditProfileInputFieldsData);
+
+  const [profileImage, setProfileImage] = useState<string>("");
 
   // Helper Functions
   /**
@@ -117,28 +119,14 @@ export default function EditProfilePage() {
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
           {/* Content stack */}
           <div className="flex flex-col gap-6">
-            {/* Avatar and change photo */}
-            <div className="flex flex-col items-center gap-1.5">
-              {/* Avatar */}
-              <div className="flex size-24 items-center justify-center rounded-full border border-blue-300 bg-blue-100">
-                <p className="font-primary text-3xl font-semibold text-blue-600">
-                  {salesProfileSummaryData.avatarLabel}
-                </p>
-              </div>
-
-              {/* Change photo action */}
-              <Button
-                type="button"
-                variant="secondary"
-                className="border-n-300 bg-n-100 h-auto w-auto gap-2 rounded-[7px] px-[13px] py-[9px] text-xs"
-              >
-                <Paperclip1
-                  primaryColor="var(--color-n-700)"
-                  className="size-4"
-                />
-                Change Photo
-              </Button>
-            </div>
+            {/* Profile Photo */}
+            <ImageUpload
+              imageUrl={profileImage}
+              avatarLabel={salesProfileSummaryData.avatarLabel}
+              onImageCropped={(croppedBase64Image: string) => {
+                setProfileImage(croppedBase64Image);
+              }}
+            />
 
             {/* Editable form */}
             <div className="flex flex-col gap-4">
