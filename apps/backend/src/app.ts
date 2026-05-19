@@ -8,6 +8,7 @@ import {
 import { sendResponse } from "./common/utils/send-response.js";
 // SERVICES //
 import { adminDashboardRoutes } from "./modules/admin-dashboard/admin-dashboard.routes.js";
+import { adminTeamRoutes } from "./modules/admin-team/admin-team.routes.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { healthRoutes } from "./modules/health/health.routes.js";
 import { salesLeadsRoutes } from "./modules/sales-leads/sales-leads.routes.js";
@@ -34,6 +35,7 @@ app.route("/", healthRoutes);
 app.route("/", authRoutes);
 app.route("/", salesLeadsRoutes);
 app.route("/", adminDashboardRoutes);
+app.route("/", adminTeamRoutes);
 
 app.notFound((context) =>
   sendResponse({

@@ -17,11 +17,18 @@ const environmentSchema = z.object({
   SUPABASE_LOGIN_USER_ID_COLUMN: z.string().min(1).default("user_code"),
   SUPABASE_USER_EMAIL_COLUMN: z.string().min(1).default("email"),
   SUPABASE_USER_NAME_COLUMN: z.string().min(1).default("full_name"),
+  SUPABASE_USER_PHONE_COLUMN: z.string().min(1).default("phone"),
   SUPABASE_USER_ROLE_COLUMN: z.string().min(1).default("role_id"),
+  SUPABASE_USER_BRANCH_COLUMN: z.string().min(1).default("branch_id"),
   SUPABASE_USER_ACTIVE_COLUMN: z.string().min(1).default("is_active"),
+  SUPABASE_USER_JOINED_AT_COLUMN: z.string().min(1).default("created_at"),
   SUPABASE_ROLES_TABLE: z.string().min(1).default("roles"),
   SUPABASE_ROLE_ID_COLUMN: z.string().min(1).default("id"),
   SUPABASE_ROLE_NAME_COLUMN: z.string().min(1).default("name"),
+  SUPABASE_BRANCHES_TABLE: z.string().min(1).default("branches"),
+  SUPABASE_BRANCH_ID_COLUMN: z.string().min(1).default("id"),
+  SUPABASE_BRANCH_NAME_COLUMN: z.string().min(1).default("name"),
+  SUPABASE_BRANCH_ACTIVE_COLUMN: z.string().min(1).default("is_active"),
 });
 
 const environmentParseResult = environmentSchema.safeParse(process.env);
@@ -48,13 +55,26 @@ export const environmentConfig = {
     environmentParseResult.data.SUPABASE_USER_EMAIL_COLUMN,
   supabaseUserNameColumn:
     environmentParseResult.data.SUPABASE_USER_NAME_COLUMN,
+  supabaseUserPhoneColumn:
+    environmentParseResult.data.SUPABASE_USER_PHONE_COLUMN,
   supabaseUserRoleColumn:
     environmentParseResult.data.SUPABASE_USER_ROLE_COLUMN,
+  supabaseUserBranchColumn:
+    environmentParseResult.data.SUPABASE_USER_BRANCH_COLUMN,
   supabaseUserActiveColumn:
     environmentParseResult.data.SUPABASE_USER_ACTIVE_COLUMN,
+  supabaseUserJoinedAtColumn:
+    environmentParseResult.data.SUPABASE_USER_JOINED_AT_COLUMN,
   supabaseRolesTable: environmentParseResult.data.SUPABASE_ROLES_TABLE,
   supabaseRoleIdColumn: environmentParseResult.data.SUPABASE_ROLE_ID_COLUMN,
   supabaseRoleNameColumn: environmentParseResult.data.SUPABASE_ROLE_NAME_COLUMN,
+  supabaseBranchesTable: environmentParseResult.data.SUPABASE_BRANCHES_TABLE,
+  supabaseBranchIdColumn:
+    environmentParseResult.data.SUPABASE_BRANCH_ID_COLUMN,
+  supabaseBranchNameColumn:
+    environmentParseResult.data.SUPABASE_BRANCH_NAME_COLUMN,
+  supabaseBranchActiveColumn:
+    environmentParseResult.data.SUPABASE_BRANCH_ACTIVE_COLUMN,
 };
 
 export const isAuthEnvironmentConfigured = (): boolean => {

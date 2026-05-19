@@ -124,6 +124,15 @@ export const loginController = async (context: Context): Promise<Response> => {
   if (loginResult.error || !loginResult.data) {
     // The service decides the auth outcome; the controller only translates it into HTTP.
     const mappedError = mapAuthError(loginResult.error);
+    const authError = loginResult.error as Partial<AuthServiceErrorData> | null;
+
+    console.log("[auth/login] Returning error response", {
+      userId: requestParseResult.data.userId.trim(),
+      authErrorCode: authError?.code ?? null,
+      serviceErrorMessage: loginResult.error?.message ?? null,
+      responseStatusCode: mappedError.statusCode,
+      responseMessage: mappedError.message,
+    });
 
     return sendResponse({
       context,

@@ -297,6 +297,12 @@ export const createAuthService = (
         const configurationError = ensureConfigured();
 
         if (configurationError) {
+          console.log("[auth/login] Configuration error", {
+            userId: payload.userId.trim(),
+            errorCode: configurationError.code,
+            errorMessage: configurationError.message,
+          });
+
           return { data: null, error: configurationError };
         }
 
@@ -306,6 +312,10 @@ export const createAuthService = (
         );
 
         if (!userRecord) {
+          console.log("[auth/login] User lookup did not return a record", {
+            userId: payload.userId.trim(),
+          });
+
           return {
             data: null,
             error: createAuthServiceError(
@@ -317,6 +327,11 @@ export const createAuthService = (
 
         // Inactive users are blocked before hitting Supabase to keep responses predictable.
         if (userRecord.is_active === false) {
+          console.log("[auth/login] Inactive user blocked from login", {
+            userId: payload.userId.trim(),
+            email: userRecord.email,
+          });
+
           return {
             data: null,
             error: createAuthServiceError(
@@ -347,6 +362,14 @@ export const createAuthService = (
           error: null,
         };
       } catch (error) {
+        console.log("[auth/login] Unexpected login failure", {
+          userId: payload.userId.trim(),
+          errorName: error instanceof Error ? error.name : "UnknownError",
+          errorMessage:
+            error instanceof Error ? error.message : "Non-Error value thrown.",
+          errorStack: error instanceof Error ? error.stack : null,
+        });
+
         // Unexpected provider failures are converted into service-level auth errors instead of thrown.
         return {
           data: null,

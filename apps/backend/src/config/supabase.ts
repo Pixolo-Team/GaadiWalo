@@ -40,12 +40,25 @@ export interface SupabaseUserRecordData {
   id?: string;
   email: string;
   full_name?: string;
+  phone?: string;
   role?: string;
   role_id?: string;
+  branch_id?: string;
   is_active?: boolean;
   user_id?: string;
   auth_id?: string;
+  joined_at?: string;
   [key: string]: unknown;
+}
+
+export interface SupabaseLookupRecordData {
+  id: string;
+  name: string;
+}
+
+interface SupabaseAdminUserCreateResponseData {
+  id: string;
+  email?: string;
 }
 
 const normalizeRoleValue = (roleValue: string): string => {
@@ -194,11 +207,23 @@ const mapUserRecord = async ({
       typeof userRecord[configuration.nameColumn] === "string"
         ? String(userRecord[configuration.nameColumn])
         : undefined,
+    phone:
+      typeof userRecord[configuration.phoneColumn] === "string"
+        ? String(userRecord[configuration.phoneColumn])
+        : undefined,
     role: resolvedRoleValue.role,
     role_id: resolvedRoleValue.roleId,
+    branch_id:
+      typeof userRecord[configuration.branchColumn] === "string"
+        ? String(userRecord[configuration.branchColumn])
+        : undefined,
     is_active:
       typeof userRecord[configuration.activeColumn] === "boolean"
         ? Boolean(userRecord[configuration.activeColumn])
+        : undefined,
+    joined_at:
+      typeof userRecord[configuration.joinedAtColumn] === "string"
+        ? String(userRecord[configuration.joinedAtColumn])
         : undefined,
     user_id:
       typeof userRecord[configuration.loginUserIdColumn] === "string"
@@ -214,11 +239,123 @@ const createUserSelectQuery = (
     configuration.loginUserIdColumn,
     configuration.emailColumn,
     configuration.nameColumn,
+    configuration.phoneColumn,
     configuration.roleColumn,
+    configuration.branchColumn,
     configuration.activeColumn,
+    configuration.joinedAtColumn,
     "id",
     "auth_id",
   ].join(",");
+};
+
+const getLookupByIdentifier = async ({
+  tableName,
+  idColumn,
+  nameColumn,
+  activeColumn,
+  identifier,
+}: {
+  tableName: string;
+  idColumn: string;
+  nameColumn: string;
+  activeColumn?: string;
+  identifier: string;
+}): Promise<SupabaseLookupRecordData | null> => {
+  assertSupabaseConfiguration();
+
+  const requestUrl = new URL(
+    `${environmentConfig.supabaseUrl}/rest/v1/${tableName}`,
+  );
+
+  requestUrl.searchParams.set("select", `${idColumn},${nameColumn}`);
+  requestUrl.searchParams.set(idColumn, `eq.${identifier}`);
+
+  if (activeColumn) {
+    requestUrl.searchParams.set(activeColumn, "eq.true");
+  }
+
+  requestUrl.searchParams.set("limit", "1");
+
+  const response = await fetch(requestUrl, {
+    method: "GET",
+    headers: buildSupabaseHeaders({
+      apiKey: environmentConfig.supabaseServiceRoleKey,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+
+  const responseBody = (await response.json()) as Record<string, unknown>[];
+  const lookupRecord = responseBody[0];
+  const recordId = lookupRecord?.[idColumn];
+  const recordName = lookupRecord?.[nameColumn];
+
+  if (typeof recordId !== "string" || typeof recordName !== "string") {
+    return null;
+  }
+
+  return {
+    id: recordId,
+    name: recordName,
+  };
+};
+
+const getLookups = async ({
+  tableName,
+  idColumn,
+  nameColumn,
+  activeColumn,
+}: {
+  tableName: string;
+  idColumn: string;
+  nameColumn: string;
+  activeColumn?: string;
+}): Promise<SupabaseLookupRecordData[]> => {
+  assertSupabaseConfiguration();
+
+  const requestUrl = new URL(
+    `${environmentConfig.supabaseUrl}/rest/v1/${tableName}`,
+  );
+
+  requestUrl.searchParams.set("select", `${idColumn},${nameColumn}`);
+
+  if (activeColumn) {
+    requestUrl.searchParams.set(activeColumn, "eq.true");
+  }
+
+  requestUrl.searchParams.set("order", `${nameColumn}.asc`);
+
+  const response = await fetch(requestUrl, {
+    method: "GET",
+    headers: buildSupabaseHeaders({
+      apiKey: environmentConfig.supabaseServiceRoleKey,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+
+  const responseBody = (await response.json()) as Record<string, unknown>[];
+
+  return responseBody.flatMap((lookupRecordItem) => {
+    const recordId = lookupRecordItem[idColumn];
+    const recordName = lookupRecordItem[nameColumn];
+
+    if (typeof recordId !== "string" || typeof recordName !== "string") {
+      return [];
+    }
+
+    return [
+      {
+        id: recordId,
+        name: recordName,
+      },
+    ];
+  });
 };
 
 const getUserByColumnValue = async ({
@@ -409,6 +546,58 @@ export const getUserByRecordIdentifier = async (
 };
 
 /**
+ * Returns all configured role lookups that are selectable by the admin team UI.
+ */
+export const getRoles = async (): Promise<SupabaseLookupRecordData[]> => {
+  return getLookups({
+    tableName: environmentConfig.supabaseRolesTable,
+    idColumn: environmentConfig.supabaseRoleIdColumn,
+    nameColumn: environmentConfig.supabaseRoleNameColumn,
+  });
+};
+
+/**
+ * Returns one role lookup by identifier.
+ */
+export const getRoleByIdentifier = async (
+  roleIdentifier: string,
+): Promise<SupabaseLookupRecordData | null> => {
+  return getLookupByIdentifier({
+    tableName: environmentConfig.supabaseRolesTable,
+    idColumn: environmentConfig.supabaseRoleIdColumn,
+    nameColumn: environmentConfig.supabaseRoleNameColumn,
+    identifier: roleIdentifier,
+  });
+};
+
+/**
+ * Returns all active branch lookups for admin team forms.
+ */
+export const getBranches = async (): Promise<SupabaseLookupRecordData[]> => {
+  return getLookups({
+    tableName: environmentConfig.supabaseBranchesTable,
+    idColumn: environmentConfig.supabaseBranchIdColumn,
+    nameColumn: environmentConfig.supabaseBranchNameColumn,
+    activeColumn: environmentConfig.supabaseBranchActiveColumn,
+  });
+};
+
+/**
+ * Returns one active branch lookup by identifier.
+ */
+export const getBranchByIdentifier = async (
+  branchIdentifier: string,
+): Promise<SupabaseLookupRecordData | null> => {
+  return getLookupByIdentifier({
+    tableName: environmentConfig.supabaseBranchesTable,
+    idColumn: environmentConfig.supabaseBranchIdColumn,
+    nameColumn: environmentConfig.supabaseBranchNameColumn,
+    activeColumn: environmentConfig.supabaseBranchActiveColumn,
+    identifier: branchIdentifier,
+  });
+};
+
+/**
  * Resolves the authenticated Supabase user from a Bearer token.
  */
 export const getAuthUserByAccessToken = async (
@@ -550,6 +739,103 @@ export const updatePasswordWithRecoveryToken = async ({
       password: newPassword,
     }),
   });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+};
+
+/**
+ * Creates a Supabase Auth user through the admin API.
+ */
+export const createAuthUser = async ({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}): Promise<SupabaseAdminUserCreateResponseData> => {
+  assertSupabaseConfiguration();
+
+  const response = await fetch(`${environmentConfig.supabaseUrl}/auth/v1/admin/users`, {
+    method: "POST",
+    headers: buildSupabaseHeaders({
+      apiKey: environmentConfig.supabaseServiceRoleKey,
+      accessToken: environmentConfig.supabaseServiceRoleKey,
+    }),
+    body: JSON.stringify({
+      email,
+      password,
+      email_confirm: true,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+
+  const responseBody = (await response.json()) as {
+    id?: string;
+    email?: string;
+  };
+
+  if (typeof responseBody.id !== "string") {
+    throw new Error("Supabase Auth user creation did not return an id.");
+  }
+
+  return {
+    id: responseBody.id,
+    email: responseBody.email,
+  };
+};
+
+/**
+ * Deletes a Supabase Auth user by identifier.
+ */
+export const deleteAuthUser = async (authUserId: string): Promise<void> => {
+  assertSupabaseConfiguration();
+
+  const response = await fetch(
+    `${environmentConfig.supabaseUrl}/auth/v1/admin/users/${authUserId}`,
+    {
+      method: "DELETE",
+      headers: buildSupabaseHeaders({
+        apiKey: environmentConfig.supabaseServiceRoleKey,
+        accessToken: environmentConfig.supabaseServiceRoleKey,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+};
+
+/**
+ * Updates a Supabase Auth user's password through the admin API.
+ */
+export const updateAuthUserPassword = async ({
+  authUserId,
+  password,
+}: {
+  authUserId: string;
+  password: string;
+}): Promise<void> => {
+  assertSupabaseConfiguration();
+
+  const response = await fetch(
+    `${environmentConfig.supabaseUrl}/auth/v1/admin/users/${authUserId}`,
+    {
+      method: "PUT",
+      headers: buildSupabaseHeaders({
+        apiKey: environmentConfig.supabaseServiceRoleKey,
+        accessToken: environmentConfig.supabaseServiceRoleKey,
+      }),
+      body: JSON.stringify({
+        password,
+      }),
+    },
+  );
 
   if (!response.ok) {
     throw new Error(await getErrorMessage(response));
