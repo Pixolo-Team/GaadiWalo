@@ -21,6 +21,7 @@ import {
 } from "../../common/constants/http.constants.js";
 // UTILS //
 import { requireAuthenticatedAdminUser } from "../../common/utils/authenticated-user.js";
+import { formatZodError } from "../../common/utils/format-zod-error.js";
 import { sendResponse } from "../../common/utils/send-response.js";
 // SERVICES //
 import { getAdminDashboardService } from "./admin-dashboard.service.js";
@@ -77,7 +78,7 @@ const parseSummaryQuery = (
         statusCode: HTTP_STATUS_CODES.badRequest,
         status: "error",
         message: "Invalid admin dashboard summary query.",
-        error: queryParseResult.error.message,
+        error: formatZodError(queryParseResult.error),
       }),
     };
   }
@@ -109,7 +110,7 @@ const parseLeaderboardQuery = (
         statusCode: HTTP_STATUS_CODES.badRequest,
         status: "error",
         message: "Invalid admin dashboard leaderboard query.",
-        error: queryParseResult.error.message,
+        error: formatZodError(queryParseResult.error),
       }),
     };
   }
