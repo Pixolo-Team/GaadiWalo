@@ -67,18 +67,24 @@ POST /auth/login
 This is the normal testing flow for Sales Leads APIs:
 
 1. Login and get `accessToken`.
-2. If you already have a lead, open that lead using `GET /sales/leads/:leadId`.
-3. Check activity history using `GET /sales/leads/:leadId/activities`.
-4. Check notes using `GET /sales/leads/:leadId/notes`.
-5. Update the lead status using `PATCH /sales/leads/:leadId/status`.
-6. Update customer details using `PATCH /sales/leads/:leadId`.
-7. Add a note using `POST /sales/leads/:leadId/notes`.
-8. Create a fresh lead using `POST /sales/leads`.
+2. Fetch the leads list using `GET /sales/leads`.
+3. Fetch brand options using `GET /sales/leads/car-brands`.
+4. Fetch model options using `GET /sales/leads/car-brands/:carBrandId/car-models`.
+5. If you already have a lead, open that lead using `GET /sales/leads/:leadId`.
+6. Check activity history using `GET /sales/leads/:leadId/activities`.
+7. Check notes using `GET /sales/leads/:leadId/notes`.
+8. Update the lead status using `PATCH /sales/leads/:leadId/status`.
+9. Update customer details using `PATCH /sales/leads/:leadId`.
+10. Add a note using `POST /sales/leads/:leadId/notes`.
+11. Create a fresh lead using `POST /sales/leads`.
 
 ## Endpoint Summary
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
+| `GET` | `/sales/leads` | Get all accessible leads |
+| `GET` | `/sales/leads/car-brands` | Get car brands for the create-lead dropdown |
+| `GET` | `/sales/leads/car-brands/:carBrandId/car-models` | Get models for the selected car brand |
 | `GET` | `/sales/leads/:leadId` | Get one lead's full details |
 | `GET` | `/sales/leads/:leadId/activities` | Get lead activity timeline |
 | `GET` | `/sales/leads/:leadId/notes` | Get notes added on the lead |
@@ -87,7 +93,55 @@ This is the normal testing flow for Sales Leads APIs:
 | `POST` | `/sales/leads/:leadId/notes` | Add a note on the lead |
 | `POST` | `/sales/leads` | Create a new lead |
 
-## 1. Get Lead Details
+## 1. Get All Leads
+
+### Endpoint
+
+```http
+GET /sales/leads
+```
+
+### Request Body
+
+No request body.
+
+### Process Flow
+
+1. API checks the bearer token.
+2. API resolves the logged-in user role and identity.
+3. API fetches all leads accessible to that user.
+4. API returns the lead list sorted by newest first.
+
+### Expected Success Response
+
+```json
+{
+  "data": [
+    {
+      "id": "lead-1",
+      "fullName": "Rahul Sharma",
+      "phone": "9876543210",
+      "email": "rahul@example.com",
+      "source": "CarWale",
+      "status": "INTERESTED",
+      "carBrand": "Hyundai",
+      "carModel": "Creta",
+      "assignedTo": {
+        "id": "sales-1",
+        "name": "Neha Singh"
+      },
+      "createdAt": "2026-05-18T10:00:00.000Z",
+      "updatedAt": "2026-05-18T12:00:00.000Z"
+    }
+  ],
+  "status": "success",
+  "status_code": 200,
+  "message": "Leads fetched successfully.",
+  "error": null
+}
+```
+
+## 2. Get Lead Details
 
 ### Endpoint
 
@@ -144,7 +198,7 @@ No request body.
 }
 ```
 
-## 2. Get Lead Activities
+## 3. Get Lead Activities
 
 ### Endpoint
 
@@ -200,7 +254,7 @@ No request body.
 - `status_change`
 - `system`
 
-## 3. Get Lead Notes
+## 4. Get Lead Notes
 
 ### Endpoint
 
@@ -485,6 +539,8 @@ POST /sales/leads
 }
 ```
 
+Use `GET /sales/leads/car-brands` for Brand options and `GET /sales/leads/car-brands/:carBrandId/car-models` for the dependent Model dropdown before submitting this payload.
+
 ### Important Validation Rules
 
 - `fullName` is required and must be at least 2 characters.
@@ -493,6 +549,8 @@ POST /sales/leads
 - `email` must be valid if provided.
 - `referrerPhone` must be 10 digits if provided.
 - `initialNote` is optional.
+- `carModel` cannot be sent without `carBrand`.
+- `carModel` must belong to the selected `carBrand`.
 - Duplicate phone numbers are not allowed.
 
 ### Process Flow

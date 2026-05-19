@@ -15,6 +15,17 @@ const optionalTrimmedStringSchema = z
 export type LeadStatusData = (typeof LEAD_STATUS_VALUES)[number];
 export type LeadActivityTypeData = (typeof LEAD_ACTIVITY_TYPE_VALUES)[number];
 
+export interface CarBrandData {
+  id: string;
+  name: string;
+}
+
+export interface CarModelData {
+  id: string;
+  name: string;
+  carBrandId: string;
+}
+
 export interface LeadUserSummaryData {
   id: string;
   name: string;
@@ -38,6 +49,20 @@ export interface LeadDetailsData {
   isUsed: boolean | null;
   assignedTo: LeadUserSummaryData | null;
   createdBy: LeadUserSummaryData | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface LeadListItemData {
+  id: string;
+  fullName: string;
+  phone: string;
+  email: string | null;
+  source: string;
+  status: LeadStatusData;
+  carBrand: string | null;
+  carModel: string | null;
+  assignedTo: LeadUserSummaryData | null;
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -66,6 +91,7 @@ export interface CreateLeadResponseData {
 
 export interface SalesLeadServiceErrorData extends Error {
   code:
+    | "BAD_REQUEST"
     | "UNAUTHORIZED"
     | "FORBIDDEN"
     | "NOT_FOUND"
@@ -75,6 +101,10 @@ export interface SalesLeadServiceErrorData extends Error {
 
 export const leadIdParamsSchema = z.object({
   leadId: z.string().trim().min(1),
+});
+
+export const carBrandIdParamsSchema = z.object({
+  carBrandId: z.string().trim().min(1),
 });
 
 export const updateLeadStatusRequestSchema = z
@@ -100,9 +130,12 @@ export const updateLeadStatusRequestSchema = z
     }
   });
 
-export const leadDetailsMutationSchema = z.object({
+const leadDetailsMutationBaseSchema = z.object({
   fullName: z.string().trim().min(2),
-  phone: z.string().trim().regex(mobilePhoneRegex, "Phone number must be 10 digits."),
+  phone: z
+    .string()
+    .trim()
+    .regex(mobilePhoneRegex, "Phone number must be 10 digits."),
   email: z
     .string()
     .trim()
@@ -127,13 +160,34 @@ export const leadDetailsMutationSchema = z.object({
   isUsed: z.boolean().nullable().optional(),
 });
 
+export const leadDetailsMutationSchema = leadDetailsMutationBaseSchema
+  .superRefine((value, context) => {
+    if (value.carModel && !value.carBrand) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["carBrand"],
+        message: "Car brand is required when car model is provided.",
+      });
+    }
+  });
+
 export const createLeadNoteRequestSchema = z.object({
   content: z.string().trim().min(1).max(2000),
 });
 
-export const createLeadRequestSchema = leadDetailsMutationSchema.extend({
-  initialNote: optionalTrimmedStringSchema,
-});
+export const createLeadRequestSchema = leadDetailsMutationBaseSchema
+  .extend({
+    initialNote: optionalTrimmedStringSchema,
+  })
+  .superRefine((value, context) => {
+    if (value.carModel && !value.carBrand) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["carBrand"],
+        message: "Car brand is required when car model is provided.",
+      });
+    }
+  });
 
 export type UpdateLeadStatusRequestData = z.infer<
   typeof updateLeadStatusRequestSchema

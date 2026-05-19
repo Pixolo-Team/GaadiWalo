@@ -3,11 +3,14 @@ import type { QueryResponseData } from "../../common/types/api.types.js";
 import type { AuthenticatedUserData } from "../../common/utils/authenticated-user.js";
 import type { SupabaseUserRecordData } from "../../config/supabase.js";
 import type {
+  CarBrandData,
+  CarModelData,
   CreateLeadNoteRequestData,
   CreateLeadRequestData,
   CreateLeadResponseData,
   LeadActivityData,
   LeadDetailsData,
+  LeadListItemData,
   LeadNoteData,
   LeadStatusData,
   LeadUserSummaryData,
@@ -21,6 +24,7 @@ import { getUserByRecordIdentifier } from "../../config/supabase.js";
 // CONSTANTS //
 import {
   ADMIN_ROLE_VALUE,
+  CAR_MODEL_REQUIRES_BRAND_MESSAGE,
   LEAD_ACCESS_FORBIDDEN_MESSAGE,
   LEAD_DUPLICATE_PHONE_MESSAGE,
   LEAD_NOT_FOUND_MESSAGE,
@@ -72,6 +76,10 @@ interface LeadUserRecordData {
 interface NamedEntityRecordData {
   id: string;
   name: string;
+}
+
+interface CarModelRecordData extends NamedEntityRecordData {
+  car_brand_id: string;
 }
 
 interface SalesLeadActivityRecordData {
@@ -143,11 +151,23 @@ interface CreateLeadActivityRecordInputData {
 }
 
 interface SalesLeadsServiceDependenciesData {
+  getLeadRecords?: () => Promise<SalesLeadRecordData[]>;
+  getCarBrandRecords?: () => Promise<NamedEntityRecordData[]>;
+  getCarModelRecordsByBrandId?: (
+    carBrandId: string,
+  ) => Promise<CarModelRecordData[]>;
   getLeadRecord: (leadId: string) => Promise<SalesLeadRecordData | null>;
+  getLeadRecordsByIds?: (leadIds: string[]) => Promise<SalesLeadRecordData[]>;
   getLeadActivityRecords: (
     leadId: string,
   ) => Promise<SalesLeadActivityRecordData[]>;
+  getLeadRecordsByUserIdentifier?: (
+    userIdentifier: string,
+  ) => Promise<SalesLeadRecordData[]>;
   getLeadUserRecords: (leadId: string) => Promise<LeadUserRecordData[]>;
+  getLeadUserRecordsByUserIdentifier?: (
+    userIdentifier: string,
+  ) => Promise<LeadUserRecordData[]>;
   getLeadNoteRecords: (leadId: string) => Promise<SalesLeadNoteRecordData[]>;
   getUserByRecordIdentifier: (
     userIdentifier: string,
@@ -283,6 +303,7 @@ const createSalesLeadServiceError = (
 };
 
 const SALES_LEAD_SERVICE_ERROR_CODES = new Set<SalesLeadServiceErrorData["code"]>([
+  "BAD_REQUEST",
   "UNAUTHORIZED",
   "FORBIDDEN",
   "NOT_FOUND",
@@ -513,6 +534,28 @@ const createDefaultSalesLeadsServiceDependencies =
     };
 
     return {
+      getLeadRecords: async () => {
+        const requestUrl = createSupabaseTableUrl("leads");
+        requestUrl.searchParams.set("select", "*");
+        requestUrl.searchParams.set("order", "created_at.desc");
+
+        return executeReadRequest<SalesLeadRecordData[]>(requestUrl);
+      },
+      getCarBrandRecords: async () => {
+        const requestUrl = createSupabaseTableUrl("car_brands");
+        requestUrl.searchParams.set("select", "id,name");
+        requestUrl.searchParams.set("order", "name.asc");
+
+        return executeReadRequest<NamedEntityRecordData[]>(requestUrl);
+      },
+      getCarModelRecordsByBrandId: async (carBrandId) => {
+        const requestUrl = createSupabaseTableUrl("car_models");
+        requestUrl.searchParams.set("select", "id,name,car_brand_id");
+        requestUrl.searchParams.set("car_brand_id", `eq.${carBrandId}`);
+        requestUrl.searchParams.set("order", "name.asc");
+
+        return executeReadRequest<CarModelRecordData[]>(requestUrl);
+      },
       getLeadRecord: async (leadId) => {
         const requestUrl = createSupabaseTableUrl("leads");
         requestUrl.searchParams.set("select", "*");
@@ -524,6 +567,18 @@ const createDefaultSalesLeadsServiceDependencies =
         );
 
         return responseBody[0] ?? null;
+      },
+      getLeadRecordsByIds: async (leadIds) => {
+        if (leadIds.length === 0) {
+          return [];
+        }
+
+        const requestUrl = createSupabaseTableUrl("leads");
+        requestUrl.searchParams.set("select", "*");
+        requestUrl.searchParams.set("id", `in.(${leadIds.join(",")})`);
+        requestUrl.searchParams.set("order", "created_at.desc");
+
+        return executeReadRequest<SalesLeadRecordData[]>(requestUrl);
       },
       getLeadActivityRecords: async (leadId) => {
         const requestUrl = createSupabaseTableUrl("lead_status_log");
@@ -537,6 +592,24 @@ const createDefaultSalesLeadsServiceDependencies =
         const requestUrl = createSupabaseTableUrl("lead_user");
         requestUrl.searchParams.set("select", "*");
         requestUrl.searchParams.set("lead_id", `eq.${leadId}`);
+
+        return executeReadRequest<LeadUserRecordData[]>(requestUrl);
+      },
+      getLeadRecordsByUserIdentifier: async (userIdentifier) => {
+        const requestUrl = createSupabaseTableUrl("leads");
+        requestUrl.searchParams.set("select", "*");
+        requestUrl.searchParams.set(
+          "or",
+          `(creator_user_id.eq.${userIdentifier},created_by.eq.${userIdentifier})`,
+        );
+        requestUrl.searchParams.set("order", "created_at.desc");
+
+        return executeReadRequest<SalesLeadRecordData[]>(requestUrl);
+      },
+      getLeadUserRecordsByUserIdentifier: async (userIdentifier) => {
+        const requestUrl = createSupabaseTableUrl("lead_user");
+        requestUrl.searchParams.set("select", "*");
+        requestUrl.searchParams.set("user_id", `eq.${userIdentifier}`);
 
         return executeReadRequest<LeadUserRecordData[]>(requestUrl);
       },
@@ -741,6 +814,16 @@ const createDefaultSalesLeadsServiceDependencies =
   };
 
 export interface SalesLeadsServiceData {
+  getAllLeadsService: (
+    authenticatedUser: AuthenticatedUserData,
+  ) => Promise<QueryResponseData<LeadListItemData[]>>;
+  getCarBrandsService: (
+    authenticatedUser: AuthenticatedUserData,
+  ) => Promise<QueryResponseData<CarBrandData[]>>;
+  getCarModelsService: (
+    authenticatedUser: AuthenticatedUserData,
+    carBrandId: string,
+  ) => Promise<QueryResponseData<CarModelData[]>>;
   getLeadDetailsService: (
     authenticatedUser: AuthenticatedUserData,
     leadId: string,
@@ -820,11 +903,30 @@ export const createSalesLeadsService = (
       );
     }
 
+    if (payload.carModel && !payload.carBrand) {
+      throw createSalesLeadServiceError(
+        "BAD_REQUEST",
+        CAR_MODEL_REQUIRES_BRAND_MESSAGE,
+      );
+    }
+
     const carModelId = payload.carModel
       ? await dependencies.getCarModelIdByName(payload.carModel, carBrandId)
       : null;
 
     if (payload.carModel && !carModelId) {
+      const anyBrandCarModelId = await dependencies.getCarModelIdByName(
+        payload.carModel,
+        null,
+      );
+
+      if (payload.carBrand && anyBrandCarModelId) {
+        throw createSalesLeadServiceError(
+          "BAD_REQUEST",
+          `Car model ${payload.carModel} does not belong to car brand ${payload.carBrand}.`,
+        );
+      }
+
       throw createSalesLeadServiceError(
         "NOT_FOUND",
         `Car model not found: ${payload.carModel}.`,
@@ -942,6 +1044,25 @@ export const createSalesLeadsService = (
       createdBy: mapLeadUserSummary(createdByUserRecord),
       createdAt: leadRecord.created_at,
       updatedAt: leadRecord.updated_at,
+    };
+  };
+
+  /**
+   * Maps full lead details into the lighter list payload.
+   */
+  const mapLeadListItem = (leadDetails: LeadDetailsData): LeadListItemData => {
+    return {
+      id: leadDetails.id,
+      fullName: leadDetails.fullName,
+      phone: leadDetails.phone,
+      email: leadDetails.email,
+      source: leadDetails.source,
+      status: leadDetails.status,
+      carBrand: leadDetails.carBrand,
+      carModel: leadDetails.carModel,
+      assignedTo: leadDetails.assignedTo,
+      createdAt: leadDetails.createdAt,
+      updatedAt: leadDetails.updatedAt,
     };
   };
 
@@ -1089,6 +1210,140 @@ export const createSalesLeadsService = (
   };
 
   return {
+    getAllLeadsService: async (authenticatedUser) => {
+      try {
+        const accessibleLeadMap = new Map<string, SalesLeadRecordData>();
+
+        if (authenticatedUser.role === ADMIN_ROLE_VALUE) {
+          const leadRecords = dependencies.getLeadRecords
+            ? await dependencies.getLeadRecords()
+            : [];
+
+          leadRecords.forEach((leadRecordItem) => {
+            accessibleLeadMap.set(leadRecordItem.id, leadRecordItem);
+          });
+        } else {
+          const userIdentifiers = Array.from(
+            new Set([authenticatedUser.recordId, authenticatedUser.userId]),
+          );
+          const leadCollections = await Promise.all(
+            userIdentifiers.map((userIdentifier) =>
+              dependencies.getLeadRecordsByUserIdentifier
+                ? dependencies.getLeadRecordsByUserIdentifier(userIdentifier)
+                : Promise.resolve([]),
+            ),
+          );
+          const assignedLeadUserCollections = await Promise.all(
+            userIdentifiers.map((userIdentifier) =>
+              dependencies.getLeadUserRecordsByUserIdentifier
+                ? dependencies.getLeadUserRecordsByUserIdentifier(userIdentifier)
+                : Promise.resolve([]),
+            ),
+          );
+          const ownedLeadRecords = leadCollections.flat();
+          const assignedLeadUserRecords = assignedLeadUserCollections.flat();
+
+          ownedLeadRecords.forEach((leadRecordItem) => {
+            accessibleLeadMap.set(leadRecordItem.id, leadRecordItem);
+          });
+
+          const assignedLeadIds = Array.from(
+            new Set(
+              assignedLeadUserRecords.map(
+                (leadUserRecordItem) => leadUserRecordItem.lead_id,
+              ),
+            ),
+          );
+
+          const assignedLeadRecords =
+            dependencies.getLeadRecordsByIds
+              ? await dependencies.getLeadRecordsByIds(assignedLeadIds)
+              : [];
+
+          assignedLeadRecords.forEach((leadRecordItem) => {
+            accessibleLeadMap.set(leadRecordItem.id, leadRecordItem);
+          });
+        }
+
+        const leadItems = await Promise.all(
+          Array.from(accessibleLeadMap.values())
+            .sort((leftItem, rightItem) => {
+              const leftTimestamp = leftItem.created_at
+                ? Date.parse(leftItem.created_at)
+                : 0;
+              const rightTimestamp = rightItem.created_at
+                ? Date.parse(rightItem.created_at)
+                : 0;
+
+              return rightTimestamp - leftTimestamp;
+            })
+            .map(async (leadRecordItem) => {
+              const leadDetails = await mapLeadDetails(leadRecordItem);
+              return mapLeadListItem(leadDetails);
+            }),
+        );
+
+        return {
+          data: leadItems,
+          error: null,
+        };
+      } catch (error) {
+        return {
+          data: null,
+          error: mapServiceError(error),
+        };
+      }
+    },
+    getCarBrandsService: async (_authenticatedUser) => {
+      try {
+        const carBrandRecords = dependencies.getCarBrandRecords
+          ? await dependencies.getCarBrandRecords()
+          : [];
+
+        return {
+          data: carBrandRecords.map((carBrandItem) => ({
+            id: carBrandItem.id,
+            name: carBrandItem.name,
+          })),
+          error: null,
+        };
+      } catch (error) {
+        return {
+          data: null,
+          error: mapServiceError(error),
+        };
+      }
+    },
+    getCarModelsService: async (_authenticatedUser, carBrandId) => {
+      try {
+        const carBrandName = await dependencies.getCarBrandNameById(carBrandId);
+
+        if (!carBrandName) {
+          throw createSalesLeadServiceError(
+            "NOT_FOUND",
+            `Car brand not found: ${carBrandId}.`,
+          );
+        }
+
+        const carModelRecords = dependencies.getCarModelRecordsByBrandId
+          ? await dependencies.getCarModelRecordsByBrandId(carBrandId)
+          : [];
+
+        return {
+          data: carModelRecords.map((carModelItem) => ({
+            id: carModelItem.id,
+            name: carModelItem.name,
+            carBrandId: carModelItem.car_brand_id,
+          })),
+          error: null,
+        };
+      } catch (error) {
+        return {
+          data: null,
+          error: mapServiceError(error),
+        };
+      }
+    },
     getLeadDetailsService: async (authenticatedUser, leadId) => {
       try {
         const leadRecord = await ensureLeadAccess({ authenticatedUser, leadId });

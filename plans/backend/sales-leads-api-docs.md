@@ -23,6 +23,7 @@ Source of truth:
 
 These APIs support the Sales lead detail workflow in the backend. They allow a Sales user to:
 
+- fetch all accessible Leads for the leads list
 - fetch a single Lead and its detailed attributes
 - fetch Lead activities
 - fetch Lead notes
@@ -129,6 +130,9 @@ Examples:
 
 | Endpoint | Method | Purpose |
 | --- | --- | --- |
+| `/sales/leads` | `GET` | Fetch all accessible Leads for the logged-in user |
+| `/sales/leads/car-brands` | `GET` | Fetch available car brands for Lead forms |
+| `/sales/leads/car-brands/:carBrandId/car-models` | `GET` | Fetch available car models for the selected car brand |
 | `/sales/leads/:leadId` | `GET` | Fetch one Lead with detail fields |
 | `/sales/leads/:leadId/activities` | `GET` | Fetch Lead activity timeline |
 | `/sales/leads/:leadId/notes` | `GET` | Fetch Lead notes |
@@ -139,7 +143,97 @@ Examples:
 
 ## Endpoint Details
 
-## 1. Get Lead Details
+## 1. Get All Leads
+
+### Endpoint Name
+
+| Item | Value |
+| --- | --- |
+| HTTP Method | `GET` |
+| Endpoint URL | `/sales/leads` |
+| Description | Returns all Leads accessible to the authenticated Sales or Admin user for the leads listing screen. |
+
+### Request
+
+#### Query Parameters
+
+None.
+
+#### Request Headers
+
+| Header | Required | Description |
+| --- | --- | --- |
+| `Authorization` | Yes | Bearer access token from login. |
+
+#### Request Body
+
+None.
+
+#### Sample Request
+
+```http
+GET /sales/leads HTTP/1.1
+Authorization: Bearer <accessToken>
+```
+
+### Response
+
+#### Success Response Schema
+
+```ts
+interface LeadListItemData {
+  id: string;
+  fullName: string;
+  phone: string;
+  email: string | null;
+  source: string;
+  status:
+    | "NEW"
+    | "CONTACTED"
+    | "INTERESTED"
+    | "TEST_DRIVE"
+    | "NEGOTIATION"
+    | "WON"
+    | "LOST"
+    | "VEHICLE_NA";
+  carBrand: string | null;
+  carModel: string | null;
+  assignedTo: LeadUserSummaryData | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+```
+
+#### Sample Success Response
+
+```json
+{
+  "data": [
+    {
+      "id": "lead-1",
+      "fullName": "Rahul Sharma",
+      "phone": "9876543210",
+      "email": "rahul@example.com",
+      "source": "CarWale",
+      "status": "INTERESTED",
+      "carBrand": "Hyundai",
+      "carModel": "Creta",
+      "assignedTo": {
+        "id": "sales-1",
+        "name": "Neha Singh"
+      },
+      "createdAt": "2026-05-18T10:00:00.000Z",
+      "updatedAt": "2026-05-18T12:00:00.000Z"
+    }
+  ],
+  "status": "success",
+  "status_code": 200,
+  "message": "Leads fetched successfully.",
+  "error": null
+}
+```
+
+## 2. Get Lead Details
 
 ### Endpoint Name
 
@@ -336,7 +430,7 @@ interface LeadDetailsData {
 - Verify a non-existent `leadId` returns `404`.
 - Verify nullable fields such as `email`, `referrerPhone`, and `assignedTo` are handled correctly in the response.
 
-## 2. Get Lead Activities
+## 3. Get Lead Activities
 
 ### Endpoint Name
 
@@ -479,7 +573,7 @@ interface LeadActivityData {
 - Verify note creation creates a `note` activity visible here.
 - Verify unauthorized and forbidden responses match expected ownership behavior.
 
-## 3. Get Lead Notes
+## 4. Get Lead Notes
 
 ### Endpoint Name
 
@@ -1164,7 +1258,7 @@ interface CreateLeadRequestData {
 | `referrerName` | `string \| null` | No | Trimmed, empty string normalized to `null` | Referrer name |
 | `referrerPhone` | `string \| null` | No | Exactly 10 digits if provided | Referrer phone |
 | `carBrand` | `string \| null` | No | Trimmed, empty string normalized to `null` | Vehicle brand |
-| `carModel` | `string \| null` | No | Trimmed, empty string normalized to `null` | Vehicle model |
+| `carModel` | `string \| null` | No | Trimmed, empty string normalized to `null` | Vehicle model. Requires `carBrand` and must belong to that brand |
 | `variantName` | `string \| null` | No | Trimmed, empty string normalized to `null` | Vehicle variant |
 | `colorPreference` | `string \| null` | No | Trimmed, empty string normalized to `null` | Preferred color |
 | `budget` | `string \| null` | No | Trimmed, empty string normalized to `null` | Budget display text |
@@ -1190,6 +1284,12 @@ interface CreateLeadRequestData {
   "initialNote": "Interested in a weekend showroom visit."
 }
 ```
+
+#### Vehicle Catalog Endpoints For Dropdowns
+
+- Use `GET /sales/leads/car-brands` to populate the Car Brand dropdown.
+- Use `GET /sales/leads/car-brands/:carBrandId/car-models` after a Brand is selected to populate the Car Model dropdown.
+- The create-lead payload continues to accept `carBrand` and `carModel` as display names.
 
 ### Response
 
@@ -1520,11 +1620,12 @@ flowchart TD
 
 | Endpoint | Validation |
 | --- | --- |
+| `GET /sales/leads/car-brands/:carBrandId/car-models` | `carBrandId` must be a non-empty trimmed string |
 | All `:leadId` endpoints | `leadId` must be a non-empty trimmed string |
 | `PATCH /:leadId/status` | `status` enum required; `lostReason` conditional |
-| `PATCH /:leadId` | Required `fullName`, `phone`, `email`, `source`; optional normalized fields |
+| `PATCH /:leadId` | Required `fullName`, `phone`, `email`, `source`; optional normalized fields; `carModel` requires `carBrand` |
 | `POST /:leadId/notes` | `content` required, trimmed, max 2000 |
-| `POST /sales/leads` | Same validation as update details plus optional `initialNote` |
+| `POST /sales/leads` | Same validation as update details plus optional `initialNote`; `carModel` must belong to `carBrand` |
 
 ## Postman / Swagger References
 

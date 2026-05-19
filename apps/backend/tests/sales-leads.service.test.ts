@@ -13,6 +13,14 @@ const authenticatedSalesUser = {
   role: "sales",
 } as const;
 
+const authenticatedAdminUser = {
+  recordId: "admin-row-1",
+  userId: "AD001",
+  email: "admin@example.com",
+  fullName: "Admin User",
+  role: "admin",
+} as const;
+
 const baseLeadRecord = {
   id: "lead-1",
   full_name: "Rahul Sharma",
@@ -37,6 +45,19 @@ const baseLeadRecord = {
 
 const createDependencies = () => {
   return {
+    getCarBrandRecords: async () => [
+      { id: "brand-1", name: "Hyundai" },
+      { id: "brand-2", name: "Maruti Suzuki" },
+      { id: "brand-3", name: "Tata" },
+    ],
+    getCarModelRecordsByBrandId: async (carBrandId: string) =>
+      carBrandId === "brand-1"
+        ? [{ id: "model-1", name: "i10", car_brand_id: "brand-1" }]
+        : carBrandId === "brand-2"
+          ? [{ id: "model-2", name: "Swift", car_brand_id: "brand-2" }]
+          : carBrandId === "brand-3"
+            ? [{ id: "model-3", name: "Nexon", car_brand_id: "brand-3" }]
+            : [],
     getLeadRecord: async () => baseLeadRecord,
     getLeadActivityRecords: async () => [],
     getLeadUserRecords: async () => [
@@ -81,13 +102,42 @@ const createDependencies = () => {
     getLostReasonNameById: async (lostReasonId: string) =>
       lostReasonId === "lost-reason-1" ? "Budget issue" : null,
     getCarBrandIdByName: async (brandName: string) =>
-      brandName === "Hyundai" ? "brand-1" : null,
+      brandName === "Hyundai"
+        ? "brand-1"
+        : brandName === "Maruti Suzuki"
+          ? "brand-2"
+          : brandName === "Tata"
+            ? "brand-3"
+            : null,
     getCarBrandNameById: async (brandId: string) =>
-      brandId === "brand-1" ? "Hyundai" : null,
+      brandId === "brand-1"
+        ? "Hyundai"
+        : brandId === "brand-2"
+          ? "Maruti Suzuki"
+          : brandId === "brand-3"
+            ? "Tata"
+            : null,
     getCarModelIdByName: async (modelName: string, carBrandId: string | null) =>
-      modelName === "i10" && carBrandId === "brand-1" ? "model-1" : null,
+      modelName === "i10" && carBrandId === "brand-1"
+        ? "model-1"
+        : modelName === "Swift" && carBrandId === "brand-2"
+          ? "model-2"
+          : modelName === "Nexon" &&
+              (carBrandId === "brand-3" || carBrandId === null)
+            ? "model-3"
+            : modelName === "i10" && carBrandId === null
+              ? "model-1"
+              : modelName === "Swift" && carBrandId === null
+                ? "model-2"
+                : null,
     getCarModelNameById: async (modelId: string) =>
-      modelId === "model-1" ? "i10" : null,
+      modelId === "model-1"
+        ? "i10"
+        : modelId === "model-2"
+          ? "Swift"
+          : modelId === "model-3"
+            ? "Nexon"
+            : null,
     updateLeadRecord: async (_leadId: string, payload: object) => ({
       ...baseLeadRecord,
       ...payload,
@@ -122,6 +172,104 @@ const createDependencies = () => {
 };
 
 describe("sales-leads.service", () => {
+  it("returns all accessible leads for the authenticated sales user", async () => {
+    const newerLeadRecord = {
+      ...baseLeadRecord,
+      id: "lead-2",
+      full_name: "Priya Mehta",
+      phone: "9999999999",
+      created_at: "2026-05-16T10:00:00.000Z",
+      updated_at: "2026-05-16T10:30:00.000Z",
+    };
+    const salesLeadsService = createSalesLeadsService({
+      ...createDependencies(),
+      getLeadRecordsByUserIdentifier: async (userIdentifier: string) =>
+        userIdentifier === "user-row-1" ? [baseLeadRecord] : [],
+      getLeadUserRecordsByUserIdentifier: async (userIdentifier: string) =>
+        userIdentifier === "user-row-1"
+          ? [
+              {
+                lead_id: "lead-2",
+                user_id: "user-row-1",
+                is_primary: true,
+              },
+            ]
+          : [],
+      getLeadRecordsByIds: async (leadIds: string[]) =>
+        leadIds.includes("lead-2") ? [newerLeadRecord] : [],
+      getLeadUserRecords: async (leadId: string) =>
+        leadId === "lead-2"
+          ? [
+              {
+                lead_id: "lead-2",
+                user_id: "user-row-1",
+                is_primary: true,
+              },
+            ]
+          : [
+              {
+                lead_id: "lead-1",
+                user_id: "user-row-1",
+                is_primary: true,
+              },
+            ],
+    });
+
+    const leadListResult =
+      await salesLeadsService.getAllLeadsService(authenticatedSalesUser);
+
+    assert.equal(leadListResult.error, null);
+    assert.equal(leadListResult.data?.length, 2);
+    assert.deepEqual(
+      leadListResult.data?.map((leadItem) => leadItem.id),
+      ["lead-2", "lead-1"],
+    );
+    assert.equal(leadListResult.data?.[0]?.fullName, "Priya Mehta");
+    assert.equal(leadListResult.data?.[1]?.assignedTo?.id, "SP001");
+  });
+
+  it("returns all leads for an authenticated admin user", async () => {
+    const salesLeadsService = createSalesLeadsService({
+      ...createDependencies(),
+      getLeadRecords: async () => [baseLeadRecord],
+    });
+
+    const leadListResult =
+      await salesLeadsService.getAllLeadsService(authenticatedAdminUser);
+
+    assert.equal(leadListResult.error, null);
+    assert.equal(leadListResult.data?.length, 1);
+    assert.equal(leadListResult.data?.[0]?.id, "lead-1");
+  });
+
+  it("returns car brands for the create-lead dropdown", async () => {
+    const salesLeadsService = createSalesLeadsService(createDependencies());
+
+    const carBrandsResult =
+      await salesLeadsService.getCarBrandsService(authenticatedSalesUser);
+
+    assert.equal(carBrandsResult.error, null);
+    assert.deepEqual(carBrandsResult.data, [
+      { id: "brand-1", name: "Hyundai" },
+      { id: "brand-2", name: "Maruti Suzuki" },
+      { id: "brand-3", name: "Tata" },
+    ]);
+  });
+
+  it("returns car models scoped to the selected brand", async () => {
+    const salesLeadsService = createSalesLeadsService(createDependencies());
+
+    const carModelsResult = await salesLeadsService.getCarModelsService(
+      authenticatedSalesUser,
+      "brand-2",
+    );
+
+    assert.equal(carModelsResult.error, null);
+    assert.deepEqual(carModelsResult.data, [
+      { id: "model-2", name: "Swift", carBrandId: "brand-2" },
+    ]);
+  });
+
   it("returns lead details for an assigned sales user", async () => {
     const salesLeadsService = createSalesLeadsService(createDependencies());
 
@@ -429,6 +577,39 @@ describe("sales-leads.service", () => {
     assert.equal(createLeadResult.data?.lead.id, "lead-created");
     assert.equal(createLeadResult.data?.note, null);
     assert.equal(createdNoteCount, 0);
+  });
+
+  it("rejects a lead when the car model does not belong to the selected brand", async () => {
+    const salesLeadsService = createSalesLeadsService(createDependencies());
+
+    const createLeadResult = await salesLeadsService.createLeadService(
+      authenticatedSalesUser,
+      {
+        fullName: "Rahul Sharma",
+        phone: "9999999996",
+        email: "rahul@example.com",
+        source: "CarWale",
+        referrerName: null,
+        referrerPhone: null,
+        carBrand: "Maruti Suzuki",
+        carModel: "Nexon",
+        variantName: "Sportz",
+        colorPreference: "Red",
+        budget: "6-8 Lakh",
+        isUsed: true,
+        initialNote: null,
+      },
+    );
+
+    assert.equal(createLeadResult.data, null);
+    assert.equal(
+      createLeadResult.error?.message,
+      "Car model Nexon does not belong to car brand Maruti Suzuki.",
+    );
+    assert.equal(
+      (createLeadResult.error as SalesLeadServiceErrorData | null)?.code,
+      "BAD_REQUEST",
+    );
   });
 
   it("maps a database duplicate-phone error to a conflict when creating a lead", async () => {

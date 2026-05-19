@@ -25,6 +25,7 @@ export const INVALID_LEAD_STATUS_REQUEST_MESSAGE =
   "Invalid lead status update request.";
 export const INVALID_LEAD_DETAILS_REQUEST_MESSAGE =
   "Invalid lead details update request.";
+export const INVALID_CAR_BRAND_ID_MESSAGE = "Invalid car brand identifier.";
 export const INVALID_CREATE_LEAD_REQUEST_MESSAGE =
   "Invalid create lead request.";
 export const INVALID_CREATE_LEAD_NOTE_REQUEST_MESSAGE =
@@ -32,6 +33,11 @@ export const INVALID_CREATE_LEAD_NOTE_REQUEST_MESSAGE =
 
 export const LEAD_DETAILS_SUCCESS_MESSAGE =
   "Lead details fetched successfully.";
+export const LEADS_SUCCESS_MESSAGE = "Leads fetched successfully.";
+export const CAR_BRANDS_SUCCESS_MESSAGE =
+  "Car brands fetched successfully.";
+export const CAR_MODELS_SUCCESS_MESSAGE =
+  "Car models fetched successfully.";
 export const LEAD_ACTIVITIES_SUCCESS_MESSAGE =
   "Lead activities fetched successfully.";
 export const LEAD_NOTES_SUCCESS_MESSAGE = "Lead notes fetched successfully.";
@@ -52,6 +58,8 @@ export const LEAD_DUPLICATE_PHONE_MESSAGE =
   "A lead with this phone number already exists.";
 export const LEAD_UNAUTHORIZED_MESSAGE =
   "Authentication is required to access this resource.";
+export const CAR_MODEL_REQUIRES_BRAND_MESSAGE =
+  "Car brand is required when car model is provided.";
 export const LEAD_STATUS_CHANGE_ACTIVITY_TEMPLATE =
   "Lead status changed from {previousStatus} to {nextStatus}.";
 export const LEAD_NOTE_ACTIVITY_DESCRIPTION = "A note was added to the Lead.";
