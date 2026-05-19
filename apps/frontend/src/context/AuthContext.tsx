@@ -5,7 +5,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -28,10 +27,9 @@ export type AppSessionData = {
  * Defines internal auth state shape.
  */
 type AuthStateData = {
-  isAuthenticated: boolean | null; // null = not yet hydrated
+  isAuthenticated: boolean;
   session: AppSessionData | null;
   user: UserData | null;
-  isLoading: boolean;
 };
 
 /**
@@ -77,13 +75,20 @@ const readStoredAuthSessionService = (): {
   user: UserData | null;
 } => {
   try {
+    const hasAccessTokenCookie = document.cookie
+      .split(";")
+      .map((cookieItem) => cookieItem.trim())
+      .some((cookieItem) =>
+        cookieItem.startsWith(`${CONSTANTS.ACCESS_TOKEN}=`),
+      );
+
     const storedAccessToken = window.localStorage.getItem(
       CONSTANTS.ACCESS_TOKEN,
     );
     const storedUserData = window.localStorage.getItem(CONSTANTS.AUTH_USER);
     const parsedUserData = parseStoredAuthDataService<UserData>(storedUserData);
 
-    if (!storedAccessToken || !parsedUserData) {
+    if (!hasAccessTokenCookie || !storedAccessToken || !parsedUserData) {
       return { isAuthenticated: false, session: null, user: null };
     }
 
@@ -99,10 +104,9 @@ const readStoredAuthSessionService = (): {
 
 /** Stable server-safe initial state — identical on server and client first render */
 const INITIAL_AUTH_STATE: AuthStateData = {
-  isAuthenticated: null,
+  isAuthenticated: false,
   session: null,
   user: null,
-  isLoading: true,
 };
 
 /**
@@ -116,24 +120,20 @@ export function AuthProvider({ children }: AuthProviderPropsData) {
   // Define Refs
 
   // Define States
-  const [authState, setAuthState] = useState<AuthStateData>(INITIAL_AUTH_STATE);
+  const [authState, setAuthState] = useState<AuthStateData>(() => {
+    if (typeof window === "undefined") {
+      return INITIAL_AUTH_STATE;
+    }
 
-  // Helper Functions
-  /**
-   * Runs only on the client after hydration.
-   * Server and client both start from INITIAL_AUTH_STATE,
-   * so the first render always matches.
-   */
-  useEffect(() => {
     const storedAuthState = readStoredAuthSessionService();
-    setAuthState({
+    return {
       isAuthenticated: storedAuthState.isAuthenticated,
       session: storedAuthState.session,
       user: storedAuthState.user,
-      isLoading: false,
-    });
-  }, []);
+    };
+  });
 
+  // Helper Functions
   /**
    * Persists and updates auth session state in one place.
    */
@@ -145,10 +145,10 @@ export function AuthProvider({ children }: AuthProviderPropsData) {
           isAuthenticated: false,
           session: null,
           user: null,
-          isLoading: false,
         });
         window.localStorage.removeItem(CONSTANTS.ACCESS_TOKEN);
         window.localStorage.removeItem(CONSTANTS.AUTH_USER);
+        document.cookie = `${CONSTANTS.ACCESS_TOKEN}=; Path=/; Max-Age=0; SameSite=Lax`;
         return;
       }
 
@@ -158,12 +158,12 @@ export function AuthProvider({ children }: AuthProviderPropsData) {
         CONSTANTS.AUTH_USER,
         JSON.stringify(userData),
       );
+      document.cookie = `${CONSTANTS.ACCESS_TOKEN}=${encodeURIComponent(sessionData.token)}; Path=/; SameSite=Lax`;
 
       setAuthState({
         isAuthenticated: true,
         session: sessionData,
         user: userData,
-        isLoading: false,
       });
     },
     [],

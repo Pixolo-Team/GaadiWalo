@@ -1,7 +1,4 @@
 "use client";
-// REACT //
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 
 // COMPONENTS //
 import ImportInput from "@/components/icons/neevo-icons/ImportInput";
@@ -15,9 +12,6 @@ import { SectionHeader } from "@/components/sales/SectionHeader";
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
 
-// OTHERS //
-import { useAuthContext } from "@/context/AuthContext";
-
 // DATA //
 import { salesPhaseCardsDetails, salesRecentLeads } from "@/data/sales";
 
@@ -26,26 +20,10 @@ import { salesPhaseCardsDetails, salesRecentLeads } from "@/data/sales";
  */
 export default function Home() {
   // Define Navigation
-  const router = useRouter();
 
   // Define Context
-  const { isAuthenticated, isLoading } = useAuthContext();
 
   // Use Effects
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    if (!isAuthenticated) {
-      // Protect sales home route when auth session is missing.
-      router.replace(ROUTES.auth.login);
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  if (isAuthenticated !== true) {
-    return null;
-  }
 
   return (
     <section className="bg-n-100">
@@ -67,7 +45,11 @@ export default function Home() {
           {/* Recent leads section */}
           <div className="flex flex-col gap-3">
             {/* Section Header component with title and action link */}
-            <SectionHeader title="Recent Leads" href="#" label="View All" />
+            <SectionHeader
+              title="Recent Leads"
+              href={ROUTES.sales.leads}
+              label="View All"
+            />
 
             {/* Recent leads list */}
             <div className="flex flex-col gap-3">

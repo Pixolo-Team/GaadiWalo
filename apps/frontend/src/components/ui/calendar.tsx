@@ -57,7 +57,7 @@ function Calendar({
           "select-none text-sm font-medium text-n-900",
           defaultClassNames.caption_label,
         ),
-        table: "w-full border-collapse",
+        month_grid: "w-full border-collapse",
         weekdays: cn("flex", defaultClassNames.weekdays),
         weekday: cn(
           "flex-1 select-none rounded-md text-xs font-normal text-n-500",

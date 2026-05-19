@@ -42,17 +42,12 @@ export default function FilterDropdown({
   // Define States
 
   // Helper Functions
-  const optionItemsData = options.map((optionItem) => ({
-    label: optionItem,
-    value: optionItem,
-  }));
 
   // Use Effects
 
   return (
     <Select
       value={selectedOption}
-      items={optionItemsData}
       onValueChange={(value) => {
         if (value) {
           onChange(value);

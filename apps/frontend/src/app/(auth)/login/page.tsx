@@ -48,15 +48,14 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Helper Functions
-  /** Resolves whether login button should be disabled. */
-  const isLoginDisabled =
-    isSubmitting ||
-    !userFieldInput.userId.trim() ||
-    !userFieldInput.password.trim();
-
-  /** Handles the login action. */
+  /** Handles login action. */
   const handleLogin = (): void => {
-    if (isLoginDisabled) {
+    if (isSubmitting) {
+      return;
+    }
+
+    if (!userFieldInput.userId.trim() || !userFieldInput.password.trim()) {
+      toast.error("Please enter User ID and Password.");
       return;
     }
 
@@ -209,8 +208,9 @@ export default function LoginPage() {
           <Button
             type="button"
             variant="primary"
+            disabled={isSubmitting}
+            aria-disabled={isSubmitting}
             onClick={handleLogin}
-            disabled={isLoginDisabled}
           >
             Sign In
           </Button>

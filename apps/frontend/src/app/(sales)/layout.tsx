@@ -1,16 +1,18 @@
 "use client";
 
 // REACT //
+import { useEffect } from "react";
 import type React from "react";
 
 // COMPONENTS //
 import { BottomBar } from "@/components/sales/BottomBar";
+import { useAuthContext } from "@/context/AuthContext";
 
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
 
 // NAVIGATION //
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 // LIBRARIES //
 
@@ -21,9 +23,11 @@ export default function SalesLayout({
   children: React.ReactNode;
 }) {
   // Define Navigation
+  const router = useRouter();
   const pathname = usePathname();
 
   // Define Context
+  const { isAuthenticated } = useAuthContext();
 
   // Define Refs
 
@@ -33,6 +37,15 @@ export default function SalesLayout({
   const shouldHideBottomBar = pathname.startsWith(`${ROUTES.sales.leads}/`);
 
   // Use Effects
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace(ROUTES.auth.login);
+    }
+  }, [isAuthenticated, router]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <section className="bg-n-100 h-screen">
