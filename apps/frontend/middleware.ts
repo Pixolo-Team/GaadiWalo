@@ -22,8 +22,10 @@ export function middleware(request: NextRequest): NextResponse {
   );
 
   if (pathname === "/") {
-    const destination = hasAccessToken ? "/leads" : "/login";
-    return NextResponse.redirect(new URL(destination, request.url));
+    if (!hasAccessToken) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    return NextResponse.next();
   }
 
   if (!hasAccessToken && isProtectedRoute) {
@@ -31,7 +33,7 @@ export function middleware(request: NextRequest): NextResponse {
   }
 
   if (hasAccessToken && isAuthRoute) {
-    return NextResponse.redirect(new URL("/leads", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();

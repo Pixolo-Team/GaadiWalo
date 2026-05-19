@@ -2,6 +2,7 @@
 
 // REACT //
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
@@ -11,14 +12,46 @@ import ContentInsightIdeaTrivia from "@/components/icons/neevo-icons/ContentInsi
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-// DATA //
-import {
-  salesAddLeadBudgetOptions,
-  salesAddLeadCarBrandOptions,
-  salesAddLeadCarModelOptions,
-  salesAddLeadSourceOptions,
-  salesAddLeadVariantOptions,
-} from "@/data/sales";
+// SERVICES //
+import { createLeadRequest } from "@/services/api/sales-leads.api.service";
+
+// CONSTANTS //
+import { ROUTES } from "@/constants/routes";
+
+// TYPES //
+import type { ApiResponseData } from "@/types/api";
+import type { CreateLeadResponseData } from "@/types/leads";
+
+// UTILS //
+import { validatePhoneNumberValue } from "@/utils/validations";
+
+// OTHERS //
+import { toast } from "sonner";
+
+const sourceOptions = [
+  { label: "CarWale", value: "CarWale" },
+  { label: "CarDekho", value: "CarDekho" },
+  { label: "Walk In", value: "Walk In" },
+  { label: "Referral", value: "Referral" },
+] as const;
+const carBrandOptions = [
+  { label: "Maruti Suzuki", value: "Maruti Suzuki" },
+  { label: "Hyundai", value: "Hyundai" },
+  { label: "Tata", value: "Tata" },
+  { label: "Mahindra", value: "Mahindra" },
+] as const;
+const carModelOptions = [
+  { label: "Swift", value: "Swift" },
+  { label: "Baleno", value: "Baleno" },
+  { label: "Brezza", value: "Brezza" },
+  { label: "WagonR", value: "WagonR" },
+] as const;
+const budgetOptions = [
+  { label: "Under 5 Lakh", value: "Under 5 Lakh" },
+  { label: "5 - 8 Lakh", value: "5 - 8 Lakh" },
+  { label: "8 - 12 Lakh", value: "8 - 12 Lakh" },
+  { label: "12+ Lakh", value: "12+ Lakh" },
+] as const;
 
 interface LeadInputFiledData {
   budget: string;
@@ -29,7 +62,6 @@ interface LeadInputFiledData {
   initialNote: string;
   phoneNumber: string;
   source: string;
-  variant: string;
 }
 
 const initialLeadInputFiledData: LeadInputFiledData = {
@@ -41,12 +73,14 @@ const initialLeadInputFiledData: LeadInputFiledData = {
   initialNote: "",
   phoneNumber: "",
   source: "",
-  variant: "",
 };
 
-/** Add Lead Page Component */
+/**
+ * Renders lead create form and submits API request.
+ */
 export default function AddLeadPage() {
   // Define Navigation
+  const router = useRouter();
 
   // Define Context
 
@@ -56,31 +90,84 @@ export default function AddLeadPage() {
   const [leadInputFiled, setLeadInputField] = useState<LeadInputFiledData>(
     initialLeadInputFiledData,
   );
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Helper Functions
-  /** Function to Update input Fields */
+  /**
+   * Updates one create-lead input field.
+   */
   const updateLeadInputFiled = (
     field: keyof LeadInputFiledData,
     value: string,
   ): void => {
-    setLeadInputField((previousInputField) => ({
-      ...previousInputField,
+    setLeadInputField((previousInputFieldItem) => ({
+      ...previousInputFieldItem,
       [field]: value,
     }));
   };
 
   const canCreateLead =
     leadInputFiled.fullName.trim().length > 0 &&
-    leadInputFiled.phoneNumber.trim().length > 0;
+    leadInputFiled.phoneNumber.trim().length > 0 &&
+    leadInputFiled.source.trim().length > 0 &&
+    !isSubmitting;
 
-  /** Handles the create lead action. */
+  /**
+   * Maps local form state to create-lead API payload.
+   */
+  const createLeadPayload = {
+    budget: leadInputFiled.budget || null,
+    carBrand: leadInputFiled.carBrand || null,
+    carModel: leadInputFiled.carModel || null,
+    email: leadInputFiled.email.trim(),
+    fullName: leadInputFiled.fullName,
+    initialNote: leadInputFiled.initialNote.trim() || undefined,
+    phone: leadInputFiled.phoneNumber,
+    source: leadInputFiled.source,
+  };
+
+  /**
+   * Handles the create lead action.
+   */
   const handleCreateLead = (): void => {
     if (!canCreateLead) {
       return;
     }
+
+    const phoneNumberValidationMessage = validatePhoneNumberValue(
+      leadInputFiled.phoneNumber,
+    );
+
+    if (phoneNumberValidationMessage) {
+      toast.error(phoneNumberValidationMessage);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    /**
+     * Call create lead API.
+     */
+    createLeadRequest(createLeadPayload)
+      .then((response: ApiResponseData<CreateLeadResponseData>) => {
+        if (response.status_code === 201 && response.data?.lead.id) {
+          toast.success(response.message);
+          router.push(ROUTES.sales.leadDetails(response.data.lead.id));
+        } else {
+          toast.error(response.error ?? response.message);
+        }
+      })
+      .catch(() => {
+        toast.error("Unable to create lead. Please try again.");
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
-  /** Function to clear all fields to their initial values */
+  /**
+   * Clears all fields to initial values.
+   */
   const handleCancel = (): void => {
     setLeadInputField(initialLeadInputFiledData);
   };
@@ -106,7 +193,7 @@ export default function AddLeadPage() {
                 className="mt-0.5 size-5 shrink-0"
               />
               <p className="font-secondary text-sm leading-normal font-medium text-blue-800">
-                Fill in at least Name and Phone number to create a lead.
+                Fill in Name, Phone number, and Source to create a lead.
               </p>
             </div>
 
@@ -120,17 +207,13 @@ export default function AddLeadPage() {
 
                 {/* Personal info fields */}
                 <div className="flex flex-col gap-4">
-                  {/* Full Name Input */}
                   <InputBox
                     label="FULL NAME *"
                     placeholder="e.g. Rahul Kumar"
                     value={leadInputFiled.fullName}
-                    onChange={(value) =>
-                      updateLeadInputFiled("fullName", value)
-                    }
+                    onChange={(value) => updateLeadInputFiled("fullName", value)}
                   />
 
-                  {/* Phone Input */}
                   <InputBox
                     label="PHONE NUMBER *"
                     placeholder="+91 XXXXXXXXXX"
@@ -140,7 +223,6 @@ export default function AddLeadPage() {
                     }
                   />
 
-                  {/* Email Input  */}
                   <InputBox
                     label="EMAIL (OPTIONAL)"
                     placeholder="email@example.com"
@@ -151,7 +233,6 @@ export default function AddLeadPage() {
                 </div>
               </div>
 
-              {/* Section divider */}
               <div className="bg-n-200 h-px w-full" />
 
               {/* Lead source section */}
@@ -160,70 +241,50 @@ export default function AddLeadPage() {
                   Lead Source
                 </p>
 
-                {/* Source Dropdown */}
                 <Dropdown
-                  label="SOURCE"
+                  label="SOURCE *"
                   required
                   title="Select Source"
-                  options={salesAddLeadSourceOptions}
+                  options={sourceOptions}
                   selectedOption={leadInputFiled.source}
                   onChange={(value) => updateLeadInputFiled("source", value)}
                 />
               </div>
 
-              {/* Section divider */}
               <div className="bg-n-200 h-px w-full" />
 
               {/* Car details section */}
               <div className="flex flex-col gap-3">
                 <p className="font-secondary text-n-600 text-xs leading-normal font-semibold tracking-wide uppercase">
-                  Lead Source
+                  Car Details
                 </p>
 
-                {/* Car details fields */}
                 <div className="flex flex-col gap-4">
-                  {/* Car Brand Dropdown */}
                   <Dropdown
                     label="CAR BRAND"
                     required
                     title="Select Brand"
-                    options={salesAddLeadCarBrandOptions}
+                    options={carBrandOptions}
                     selectedOption={leadInputFiled.carBrand}
-                    onChange={(value) =>
-                      updateLeadInputFiled("carBrand", value)
-                    }
+                    onChange={(value) => updateLeadInputFiled("carBrand", value)}
                   />
 
-                  {/* Car Model Dropdown */}
                   <Dropdown
                     label="MODEL"
                     title="Select Model"
-                    options={salesAddLeadCarModelOptions}
+                    options={carModelOptions}
                     selectedOption={leadInputFiled.carModel}
-                    onChange={(value) =>
-                      updateLeadInputFiled("carModel", value)
-                    }
+                    onChange={(value) => updateLeadInputFiled("carModel", value)}
                   />
 
-                  {/* Car Variant Dropdown */}
-                  <Dropdown
-                    label="VARIANT / CATEGORY"
-                    title="Select"
-                    options={salesAddLeadVariantOptions}
-                    selectedOption={leadInputFiled.variant}
-                    onChange={(value) => updateLeadInputFiled("variant", value)}
-                  />
-
-                  {/* Budget Range Dropdown */}
                   <Dropdown
                     label="BUDGET RANGE"
                     title="Select Budget"
-                    options={salesAddLeadBudgetOptions}
+                    options={budgetOptions}
                     selectedOption={leadInputFiled.budget}
                     onChange={(value) => updateLeadInputFiled("budget", value)}
                   />
 
-                  {/* Optional Textarea Component */}
                   <Textarea
                     label="INITIAL NOTE (OPTIONAL)"
                     value={leadInputFiled.initialNote}
@@ -241,7 +302,6 @@ export default function AddLeadPage() {
 
         {/* Sticky action bar */}
         <div className="border-n-200 bg-n-50 shrink-0 border-t-[1.6px] p-3.5">
-          {/* Action buttons */}
           <div className="flex flex-col gap-2">
             <Button
               type="button"

@@ -1,7 +1,7 @@
 "use client";
 
 // REACT //
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // COMPONENTS //
 import FilterDropdown from "@/components/common/FilterDropdown";
@@ -11,17 +11,24 @@ import HorizontalSlider2 from "@/components/icons/neevo-icons/HorizontalSlider2"
 import { LeadCard } from "@/components/sales/LeadCard";
 import { LeadsFilterDrawer } from "@/components/sales/LeadsFilterDrawer";
 
+// SERVICES //
+import { getSalesLeadsRequest } from "@/services/api/sales-leads.api.service";
+
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
 
-// DATA //
-import {
-  salesLeadFilterTags,
-  salesLeads,
-  salesSortOptions,
-} from "@/data/sales";
+// TYPES //
+import type { ApiResponseData } from "@/types/api";
+import type {
+  LeadListItemData,
+  LeadStatusData,
+} from "@/types/leads";
 
-/** Leads Page Component */
+const salesSortOptions = ["Newest", "Oldest"] as const;
+
+/**
+ * Renders sales leads listing with API data.
+ */
 export default function LeadsPage() {
   // Define Navigation
 
@@ -30,19 +37,111 @@ export default function LeadsPage() {
   // Define Refs
 
   // Define States
-  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-  const [leadSearchValue, setLeadSearchValue] = useState("");
-  const [selectedFilterTag, setSelectedFilterTag] = useState<string>(
-    salesLeadFilterTags[0].key,
-  );
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState<boolean>(false);
+  const [leadSearchValue, setLeadSearchValue] = useState<string>("");
   const [selectedSort, setSelectedSort] = useState<string>(salesSortOptions[0]);
+  const [isLeadsLoading, setIsLeadsLoading] = useState<boolean>(true);
+  const [salesLeads, setSalesLeads] = useState<LeadListItemData[]>([]);
 
   // Helper Functions
   const handleOpenFilterDrawer = (): void => {
     setIsFilterDrawerOpen(true);
   };
 
+  /**
+   * Resolves status label from API enum value.
+   */
+  const getStatusLabelService = (statusValue: LeadStatusData): string => {
+    if (statusValue === "TEST_DRIVE") {
+      return "Test Drive";
+    }
+
+    if (statusValue === "VEHICLE_NA") {
+      return "Vehicle NA";
+    }
+
+    return statusValue.charAt(0) + statusValue.slice(1).toLowerCase();
+  };
+
+  /**
+   * Resolves lead card tone from API status value.
+   */
+  const getStatusToneService = (
+    statusValue: LeadStatusData,
+  ): "amber" | "blue" | "green" | "purple" | "red" => {
+    if (statusValue === "NEW") {
+      return "blue";
+    }
+
+    if (statusValue === "CONTACTED") {
+      return "amber";
+    }
+
+    if (statusValue === "WON") {
+      return "green";
+    }
+
+    if (statusValue === "LOST" || statusValue === "VEHICLE_NA") {
+      return "red";
+    }
+
+    return "purple";
+  };
+
+  /**
+   * Builds display vehicle title from API fields.
+   */
+  const getVehicleNameService = (leadItem: LeadListItemData): string => {
+    const vehicleValues = [
+      leadItem.carBrand,
+      leadItem.carModel,
+      leadItem.variantName,
+    ].filter((valueItem): valueItem is string => Boolean(valueItem));
+
+    return vehicleValues.length > 0 ? vehicleValues.join(" ") : "Not specified";
+  };
+
+  /**
+   * Fetches leads list payload.
+   */
+  const fetchSalesLeadsService = (): void => {
+    /**
+     * Call get sales leads API.
+     */
+    getSalesLeadsRequest()
+      .then((response: ApiResponseData<LeadListItemData[]>) => {
+        if (response.status_code === 200) {
+          setSalesLeads(response.data ?? []);
+        } else {
+          setSalesLeads([]);
+        }
+      })
+      .catch(() => {
+        setSalesLeads([]);
+      })
+      .finally(() => {
+        setIsLeadsLoading(false);
+      });
+  };
+
+  const normalizedSearchValue = leadSearchValue.trim().toLowerCase();
+  const filteredLeads = salesLeads.filter((leadItem) => {
+    if (!normalizedSearchValue) {
+      return true;
+    }
+
+    return (
+      leadItem.fullName.toLowerCase().includes(normalizedSearchValue) ||
+      leadItem.phone.includes(normalizedSearchValue) ||
+      leadItem.source.toLowerCase().includes(normalizedSearchValue) ||
+      getVehicleNameService(leadItem).toLowerCase().includes(normalizedSearchValue)
+    );
+  });
+
   // Use Effects
+  useEffect(() => {
+    fetchSalesLeadsService();
+  }, []);
 
   return (
     <section className="bg-n-100 h-full">
@@ -50,7 +149,6 @@ export default function LeadsPage() {
       <div className="flex h-full flex-col">
         {/* Leads header container */}
         <div className="shrink-0">
-          {/* Leads header */}
           <Header
             title="My Leads"
             rightIcon={
@@ -65,51 +163,23 @@ export default function LeadsPage() {
 
         {/* Leads scroll content */}
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
-          {/* Leads content stack */}
           <div className="flex flex-col gap-6">
-            {/* Search and filter tags */}
+            {/* Search controls */}
             <div className="flex flex-col gap-2">
-              {/* Search field */}
               <SearchInput
                 value={leadSearchValue}
                 onChange={setLeadSearchValue}
                 placeholder="Search by name, phone, car..."
               />
-
-              {/* Filter tags */}
-              <div className="scrollbar-hide flex gap-1.5 overflow-x-auto">
-                {salesLeadFilterTags.map((filterTagItem) => {
-                  const isSelected = selectedFilterTag === filterTagItem.key;
-
-                  return (
-                    /* Lead filter tag */
-                    <button
-                      key={filterTagItem.key}
-                      type="button"
-                      aria-pressed={isSelected}
-                      onClick={() => setSelectedFilterTag(filterTagItem.key)}
-                      className={`font-secondary h-9 shrink-0 rounded-[20px] px-4 text-sm ${
-                        isSelected
-                          ? "text-n-50 border-2 border-blue-600 bg-blue-600 font-bold"
-                          : "border-n-200 bg-n-50 text-n-600 border"
-                      }`}
-                    >
-                      {filterTagItem.label} ({filterTagItem.count})
-                    </button>
-                  );
-                })}
-              </div>
             </div>
 
             {/* Leads list section */}
             <div className="flex flex-col gap-2">
-              {/* Leads count and sort */}
               <div className="flex items-center justify-between gap-3">
                 <p className="font-secondary text-n-500 text-xs">
-                  Showing {salesLeadFilterTags[0].count} leads
+                  Showing {filteredLeads.length} leads
                 </p>
 
-                {/* Sort dropdown */}
                 <FilterDropdown
                   title={salesSortOptions[0]}
                   prefix="Sort: "
@@ -121,18 +191,32 @@ export default function LeadsPage() {
 
               {/* Leads list */}
               <div className="flex flex-col gap-3">
-                {salesLeads.map((leadItem) => (
-                  <LeadCard
-                    key={leadItem.key}
-                    href={ROUTES.sales.leadDetails(leadItem.key)}
-                    name={leadItem.name}
-                    phoneNumber={leadItem.phoneNumber}
-                    source={leadItem.source}
-                    statusLabel={leadItem.statusLabel}
-                    statusTone={leadItem.statusTone}
-                    vehicleName={leadItem.vehicleName}
-                  />
-                ))}
+                {isLeadsLoading ? (
+                  <p className="font-secondary text-n-600 py-6 text-center text-sm">
+                    Loading leads...
+                  </p>
+                ) : null}
+
+                {!isLeadsLoading && filteredLeads.length === 0 ? (
+                  <p className="font-secondary text-n-600 py-6 text-center text-sm">
+                    No leads found.
+                  </p>
+                ) : null}
+
+                {!isLeadsLoading
+                  ? filteredLeads.map((leadItem) => (
+                      <LeadCard
+                        key={leadItem.id}
+                        href={ROUTES.sales.leadDetails(leadItem.id)}
+                        name={leadItem.fullName}
+                        phoneNumber={leadItem.phone}
+                        source={leadItem.source}
+                        statusLabel={getStatusLabelService(leadItem.status)}
+                        statusTone={getStatusToneService(leadItem.status)}
+                        vehicleName={getVehicleNameService(leadItem)}
+                      />
+                    ))
+                  : null}
               </div>
             </div>
           </div>
@@ -147,3 +231,4 @@ export default function LeadsPage() {
     </section>
   );
 }
+
