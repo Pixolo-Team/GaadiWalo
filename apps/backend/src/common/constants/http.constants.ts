@@ -1,6 +1,7 @@
 export const HEALTH_ROUTE_PATH = "/health";
 export const AUTH_ROUTE_BASE_PATH = "/auth";
 export const SALES_LEADS_ROUTE_BASE_PATH = "/sales/leads";
+export const SALES_PROFILE_ROUTE_BASE_PATH = "/sales/profile";
 export const ADMIN_DASHBOARD_ROUTE_BASE_PATH = "/admin/dashboard";
 export const ADMIN_REFERRERS_ROUTE_BASE_PATH = "/admin/referrers";
 export const ADMIN_REPORTS_ROUTE_BASE_PATH = "/admin/reports";

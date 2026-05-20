@@ -3,6 +3,7 @@ import type { AuthServiceErrorData } from "./auth.types.js";
 import {
   forgotPasswordRequestSchema,
   loginRequestSchema,
+  refreshTokenRequestSchema,
   resendOtpRequestSchema,
   resetPasswordRequestSchema,
   verifyOtpRequestSchema,
@@ -14,10 +15,12 @@ import {
   INVALID_FORGOT_PASSWORD_REQUEST_MESSAGE,
   INVALID_LOGIN_REQUEST_MESSAGE,
   INVALID_REQUEST_BODY_MESSAGE,
+  INVALID_REFRESH_TOKEN_REQUEST_MESSAGE,
   INVALID_RESET_PASSWORD_REQUEST_MESSAGE,
   INVALID_RESEND_OTP_REQUEST_MESSAGE,
   INVALID_VERIFY_OTP_REQUEST_MESSAGE,
   LOGIN_SUCCESS_MESSAGE,
+  REFRESH_TOKEN_SUCCESS_MESSAGE,
   RESEND_OTP_SUCCESS_MESSAGE,
   RESET_PASSWORD_SUCCESS_MESSAGE,
   VERIFY_OTP_SUCCESS_MESSAGE,
@@ -149,6 +152,55 @@ export const loginController = async (context: Context): Promise<Response> => {
     status: "success",
     message: LOGIN_SUCCESS_MESSAGE,
     data: loginResult.data,
+  });
+};
+
+/**
+ * Handles POST /auth/refresh and issues a new authenticated session from a refresh token.
+ */
+export const refreshTokenController = async (
+  context: Context,
+): Promise<Response> => {
+  const { requestBody, errorResponse } = await parseRequestBody(context);
+
+  if (errorResponse) {
+    return errorResponse;
+  }
+
+  const requestParseResult = refreshTokenRequestSchema.safeParse(requestBody);
+
+  if (!requestParseResult.success) {
+    return sendResponse({
+      context,
+      statusCode: HTTP_STATUS_CODES.badRequest,
+      status: "error",
+      message: INVALID_REFRESH_TOKEN_REQUEST_MESSAGE,
+      error: requestParseResult.error.message,
+    });
+  }
+
+  const refreshTokenResult = await authService.refreshTokenService(
+    requestParseResult.data,
+  );
+
+  if (refreshTokenResult.error || !refreshTokenResult.data) {
+    const mappedError = mapAuthError(refreshTokenResult.error);
+
+    return sendResponse({
+      context,
+      statusCode: mappedError.statusCode,
+      status: "error",
+      message: mappedError.message,
+      error: mappedError.errorDetail,
+    });
+  }
+
+  return sendResponse({
+    context,
+    statusCode: HTTP_STATUS_CODES.ok,
+    status: "success",
+    message: REFRESH_TOKEN_SUCCESS_MESSAGE,
+    data: refreshTokenResult.data,
   });
 };
 

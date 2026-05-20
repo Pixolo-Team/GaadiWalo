@@ -295,7 +295,17 @@ Request:
 { "refreshToken": "<token>" }
 
 Response 200:
-{ "accessToken": "<new-jwt>" }
+{
+  "accessToken": "<new-jwt>",
+  "refreshToken": "<rotated-refresh-token>",
+  "expiresIn": 3600,
+  "user": {
+    "id": "SP001",
+    "name": "Sales Person",
+    "email": "sales@example.com",
+    "role": "sales"
+  }
+}
 
 Response 401:
 { "error": "Refresh token expired" }
@@ -308,8 +318,8 @@ Response 401:
 | Concern | Decision |
 |---------|----------|
 | Access token storage | Client stores only the backend-returned auth context needed by the current flow. |
-| Refresh token storage | Not implemented in the current backend auth phase. |
-| Token refresh strategy | Deferred until refresh/logout endpoints are implemented. |
+| Refresh token storage | Store the backend-issued refresh token securely and replace it whenever `/auth/refresh` returns a new one. |
+| Token refresh strategy | Use `/auth/refresh` silently on app mount and after `401` responses caused by expired access tokens. |
 | Logout | Deferred until backend logout support is added. |
 
 ---

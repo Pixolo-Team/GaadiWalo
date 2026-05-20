@@ -7,6 +7,8 @@ import {
   getCarBrandsController,
   getCarModelsController,
   getAllLeadsController,
+  getLeadSourcesController,
+  getLeadStatusesController,
   getLeadActivitiesController,
   getLeadDetailsController,
   getLeadNotesController,
@@ -20,11 +22,19 @@ export const salesLeadsRoutes = new Hono();
 
 salesLeadsRoutes.get(`${SALES_LEADS_ROUTE_BASE_PATH}`, getAllLeadsController);
 salesLeadsRoutes.get(
+  `${SALES_LEADS_ROUTE_BASE_PATH}/statuses`,
+  getLeadStatusesController,
+);
+salesLeadsRoutes.get(
+  `${SALES_LEADS_ROUTE_BASE_PATH}/lead-sources`,
+  getLeadSourcesController,
+);
+salesLeadsRoutes.get(
   `${SALES_LEADS_ROUTE_BASE_PATH}/car-brands`,
   getCarBrandsController,
 );
 salesLeadsRoutes.get(
-  `${SALES_LEADS_ROUTE_BASE_PATH}/car-brands/:carBrandId/car-models`,
+  `${SALES_LEADS_ROUTE_BASE_PATH}/car-brands/:carBrandName/car-models`,
   getCarModelsController,
 );
 salesLeadsRoutes.get(`${SALES_LEADS_ROUTE_BASE_PATH}/:leadId`, getLeadDetailsController);

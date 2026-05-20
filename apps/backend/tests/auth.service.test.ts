@@ -16,10 +16,20 @@ describe("auth.service", () => {
         is_active: true,
       }),
       getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
       signInWithPassword: async () => ({
         access_token: "access-token",
         refresh_token: "refresh-token",
         expires_in: 3600,
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+        refresh_token: "new-refresh-token",
+        expires_in: 3600,
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
       }),
       sendRecoveryOtp: async () => undefined,
       verifyRecoveryOtp: async () => ({
@@ -50,12 +60,123 @@ describe("auth.service", () => {
     assert.equal(loginResult.data?.user.id, "SP001");
   });
 
+  it("returns a refreshed session payload for a valid refresh token", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => ({
+        user_id: "SP001",
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+      }),
+      getUserByAuthIdentifier: async () => ({
+        user_id: "SP001",
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+      }),
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+        refresh_token: "new-refresh-token",
+        expires_in: 3600,
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => ({
+        email: "sales@example.com",
+        recoveryAccessToken: "recovery-access-token",
+        exp: Date.now() + 300000,
+      }),
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const refreshResult = await authService.refreshTokenService({
+      refreshToken: "valid-refresh-token",
+    });
+
+    assert.equal(refreshResult.error, null);
+    assert.equal(refreshResult.data?.accessToken, "new-access-token");
+    assert.equal(refreshResult.data?.refreshToken, "new-refresh-token");
+    assert.equal(refreshResult.data?.user.id, "SP001");
+  });
+
+  it("maps an expired refresh token to an unauthorized auth error", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => {
+        throw new Error("Refresh token has expired");
+      },
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => null,
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const refreshResult = await authService.refreshTokenService({
+      refreshToken: "expired-refresh-token",
+    });
+
+    assert.equal(refreshResult.data, null);
+    assert.equal(
+      refreshResult.error?.message,
+      "Refresh token is invalid or expired.",
+    );
+    assert.equal(
+      (refreshResult.error as AuthServiceErrorData | null)?.code,
+      "INVALID_REFRESH_TOKEN",
+    );
+  });
+
   it("returns an identifier-not-found error for an unknown forgot password email", async () => {
     const authService = createAuthService({
       getUserByLoginIdentifier: async () => null,
       getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
       signInWithPassword: async () => ({
         access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
       }),
       sendRecoveryOtp: async () => undefined,
       verifyRecoveryOtp: async () => ({
@@ -97,8 +218,16 @@ describe("auth.service", () => {
         is_active: true,
         user_id: "SP001",
       }),
+      getUserByAuthIdentifier: async () => null,
       signInWithPassword: async () => ({
         access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
       }),
       sendRecoveryOtp: async () => {
         throw new Error(
@@ -144,8 +273,16 @@ describe("auth.service", () => {
         is_active: true,
         user_id: "SP001",
       }),
+      getUserByAuthIdentifier: async () => null,
       signInWithPassword: async () => ({
         access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
       }),
       sendRecoveryOtp: async () => undefined,
       verifyRecoveryOtp: async () => ({
@@ -179,8 +316,16 @@ describe("auth.service", () => {
     const authService = createAuthService({
       getUserByLoginIdentifier: async () => null,
       getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
       signInWithPassword: async () => ({
         access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
       }),
       sendRecoveryOtp: async () => undefined,
       verifyRecoveryOtp: async () => ({
@@ -217,8 +362,16 @@ describe("auth.service", () => {
     const authService = createAuthService({
       getUserByLoginIdentifier: async () => null,
       getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
       signInWithPassword: async () => ({
         access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
       }),
       sendRecoveryOtp: async () => undefined,
       verifyRecoveryOtp: async () => ({

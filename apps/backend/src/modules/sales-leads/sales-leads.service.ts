@@ -8,6 +8,8 @@ import type {
   CreateLeadNoteRequestData,
   CreateLeadRequestData,
   CreateLeadResponseData,
+  LeadSourceData,
+  LeadStatusOptionData,
   LeadActivityData,
   LeadDetailsData,
   LeadListItemData,
@@ -82,6 +84,10 @@ interface CarModelRecordData extends NamedEntityRecordData {
   car_brand_id: string;
 }
 
+interface LeadSourceRecordData extends NamedEntityRecordData {
+  description: string | null;
+}
+
 interface SalesLeadActivityRecordData {
   lead_id: string;
   from_status_id: string | null;
@@ -108,6 +114,7 @@ interface CreateLeadRecordInputData {
   budget: string | null;
   is_used: boolean | null;
   lost_reason?: string | null;
+  lost_reason_id?: string | null;
 }
 
 interface UpdateLeadRecordInputData {
@@ -152,6 +159,9 @@ interface CreateLeadActivityRecordInputData {
 
 interface SalesLeadsServiceDependenciesData {
   getLeadRecords?: () => Promise<SalesLeadRecordData[]>;
+  getStatusRecords?: () => Promise<NamedEntityRecordData[]>;
+  getLostReasonRecords?: () => Promise<NamedEntityRecordData[]>;
+  getLeadSourceRecords?: () => Promise<LeadSourceRecordData[]>;
   getCarBrandRecords?: () => Promise<NamedEntityRecordData[]>;
   getCarModelRecordsByBrandId?: (
     carBrandId: string,
@@ -541,6 +551,28 @@ const createDefaultSalesLeadsServiceDependencies =
 
         return executeReadRequest<SalesLeadRecordData[]>(requestUrl);
       },
+      getStatusRecords: async () => {
+        const requestUrl = createSupabaseTableUrl("statuses");
+        requestUrl.searchParams.set("select", "id,name");
+        requestUrl.searchParams.set("order", "name.asc");
+
+        return executeReadRequest<NamedEntityRecordData[]>(requestUrl);
+      },
+      getLostReasonRecords: async () => {
+        const requestUrl = createSupabaseTableUrl("lost_reasons");
+        requestUrl.searchParams.set("select", "id,name");
+        requestUrl.searchParams.set("order", "name.asc");
+
+        return executeReadRequest<NamedEntityRecordData[]>(requestUrl);
+      },
+      getLeadSourceRecords: async () => {
+        const requestUrl = createSupabaseTableUrl("lead_sources");
+        requestUrl.searchParams.set("select", "id,name,description");
+        requestUrl.searchParams.set("is_active", "eq.true");
+        requestUrl.searchParams.set("order", "name.asc");
+
+        return executeReadRequest<LeadSourceRecordData[]>(requestUrl);
+      },
       getCarBrandRecords: async () => {
         const requestUrl = createSupabaseTableUrl("car_brands");
         requestUrl.searchParams.set("select", "id,name");
@@ -817,12 +849,18 @@ export interface SalesLeadsServiceData {
   getAllLeadsService: (
     authenticatedUser: AuthenticatedUserData,
   ) => Promise<QueryResponseData<LeadListItemData[]>>;
+  getLeadStatusesService: (
+    authenticatedUser: AuthenticatedUserData,
+  ) => Promise<QueryResponseData<LeadStatusOptionData[]>>;
+  getLeadSourcesService: (
+    authenticatedUser: AuthenticatedUserData,
+  ) => Promise<QueryResponseData<LeadSourceData[]>>;
   getCarBrandsService: (
     authenticatedUser: AuthenticatedUserData,
   ) => Promise<QueryResponseData<CarBrandData[]>>;
   getCarModelsService: (
     authenticatedUser: AuthenticatedUserData,
-    carBrandId: string,
+    carBrandName: string,
   ) => Promise<QueryResponseData<CarModelData[]>>;
   getLeadDetailsService: (
     authenticatedUser: AuthenticatedUserData,
@@ -1294,16 +1332,25 @@ export const createSalesLeadsService = (
         };
       }
     },
-    getCarBrandsService: async (_authenticatedUser) => {
+    getLeadStatusesService: async (_authenticatedUser) => {
       try {
-        const carBrandRecords = dependencies.getCarBrandRecords
-          ? await dependencies.getCarBrandRecords()
-          : [];
+        const [statusRecords, lostReasonRecords] = await Promise.all([
+          dependencies.getStatusRecords
+            ? dependencies.getStatusRecords()
+            : Promise.resolve([]),
+          dependencies.getLostReasonRecords
+            ? dependencies.getLostReasonRecords()
+            : Promise.resolve([]),
+        ]);
+        const lostReasonNames = lostReasonRecords.map(
+          (lostReasonItem) => lostReasonItem.name,
+        );
 
         return {
-          data: carBrandRecords.map((carBrandItem) => ({
-            id: carBrandItem.id,
-            name: carBrandItem.name,
+          data: statusRecords.map((statusItem) => ({
+            id: statusItem.id,
+            name: statusItem.name as LeadStatusData,
+            reason: statusItem.name === "LOST" ? lostReasonNames : [],
           })),
           error: null,
         };
@@ -1314,14 +1361,64 @@ export const createSalesLeadsService = (
         };
       }
     },
-    getCarModelsService: async (_authenticatedUser, carBrandId) => {
+    getLeadSourcesService: async (_authenticatedUser) => {
       try {
-        const carBrandName = await dependencies.getCarBrandNameById(carBrandId);
+        const leadSourceRecords = dependencies.getLeadSourceRecords
+          ? await dependencies.getLeadSourceRecords()
+          : [];
 
-        if (!carBrandName) {
+        return {
+          data: leadSourceRecords.map((leadSourceItem) => ({
+            id: leadSourceItem.id,
+            name: leadSourceItem.name,
+            description: leadSourceItem.description,
+          })),
+          error: null,
+        };
+      } catch (error) {
+        return {
+          data: null,
+          error: mapServiceError(error),
+        };
+      }
+    },
+    getCarBrandsService: async (_authenticatedUser) => {
+      try {
+        const carBrandRecords = dependencies.getCarBrandRecords
+          ? await dependencies.getCarBrandRecords()
+          : [];
+
+        return {
+          data: await Promise.all(
+            carBrandRecords.map(async (carBrandItem) => {
+              const carModelRecords = dependencies.getCarModelRecordsByBrandId
+                ? await dependencies.getCarModelRecordsByBrandId(carBrandItem.id)
+                : [];
+
+              return {
+                id: carBrandItem.id,
+                name: carBrandItem.name,
+                models: carModelRecords.map((carModelItem) => carModelItem.name),
+              };
+            }),
+          ),
+          error: null,
+        };
+      } catch (error) {
+        return {
+          data: null,
+          error: mapServiceError(error),
+        };
+      }
+    },
+    getCarModelsService: async (_authenticatedUser, carBrandName) => {
+      try {
+        const carBrandId = await dependencies.getCarBrandIdByName(carBrandName);
+
+        if (!carBrandId) {
           throw createSalesLeadServiceError(
             "NOT_FOUND",
-            `Car brand not found: ${carBrandId}.`,
+            `Car brand not found: ${carBrandName}.`,
           );
         }
 
@@ -1513,10 +1610,6 @@ export const createSalesLeadsService = (
     },
     createLeadService: async (authenticatedUser, payload) => {
       try {
-        console.log("[sales-leads] createLeadService:start", {
-          authenticatedUser,
-          payload,
-        });
         const existingLeadRecord = await dependencies.getLeadByPhone(payload.phone);
 
         if (existingLeadRecord) {
@@ -1529,14 +1622,31 @@ export const createSalesLeadsService = (
           };
         }
 
+        const selectedStatus = payload.status ?? "NEW";
         const resolvedReferenceIds = await resolveLeadReferenceIds(
           payload,
-          "NEW",
+          selectedStatus,
         );
+        const lostReasonId =
+          selectedStatus === "LOST" && payload.lostReason
+            ? await dependencies.getLostReasonIdByName(payload.lostReason)
+            : null;
+
+        if (selectedStatus === "LOST" && payload.lostReason && !lostReasonId) {
+          return {
+            data: null,
+            error: createSalesLeadServiceError(
+              "NOT_FOUND",
+              `Lost reason not found: ${payload.lostReason}.`,
+            ),
+          };
+        }
+
         const leadRecord = await dependencies.createLeadRecord({
           ...createLeadMutationPayload(payload, resolvedReferenceIds),
           lead_source_id: resolvedReferenceIds.leadSourceId,
           status_id: resolvedReferenceIds.statusId,
+          lost_reason_id: selectedStatus === "LOST" ? lostReasonId : null,
           creator_user_id: authenticatedUser.recordId,
           full_name: payload.fullName,
           phone: payload.phone,
@@ -1584,11 +1694,6 @@ export const createSalesLeadsService = (
           error: null,
         };
       } catch (error) {
-        console.error("[sales-leads] createLeadService:error", {
-          authenticatedUser,
-          payload,
-          error,
-        });
         return {
           data: null,
           error: mapServiceError(error),

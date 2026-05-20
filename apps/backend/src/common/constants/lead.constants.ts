@@ -23,9 +23,13 @@ export const ADMIN_ROLE_VALUE = "admin";
 export const INVALID_LEAD_ID_MESSAGE = "Invalid lead identifier.";
 export const INVALID_LEAD_STATUS_REQUEST_MESSAGE =
   "Invalid lead status update request.";
+export const INVALID_LEAD_STATUS_OPTIONS_REQUEST_MESSAGE =
+  "Invalid lead status options request.";
+export const INVALID_LOST_REASON_OPTIONS_REQUEST_MESSAGE =
+  "Invalid lost reason options request.";
 export const INVALID_LEAD_DETAILS_REQUEST_MESSAGE =
   "Invalid lead details update request.";
-export const INVALID_CAR_BRAND_ID_MESSAGE = "Invalid car brand identifier.";
+export const INVALID_CAR_BRAND_NAME_MESSAGE = "Invalid car brand name.";
 export const INVALID_CREATE_LEAD_REQUEST_MESSAGE =
   "Invalid create lead request.";
 export const INVALID_CREATE_LEAD_NOTE_REQUEST_MESSAGE =
@@ -36,6 +40,12 @@ export const LEAD_DETAILS_SUCCESS_MESSAGE =
 export const LEADS_SUCCESS_MESSAGE = "Leads fetched successfully.";
 export const CAR_BRANDS_SUCCESS_MESSAGE =
   "Car brands fetched successfully.";
+export const LEAD_SOURCES_SUCCESS_MESSAGE =
+  "Lead sources fetched successfully.";
+export const LEAD_STATUS_OPTIONS_SUCCESS_MESSAGE =
+  "Lead statuses fetched successfully.";
+export const LOST_REASON_OPTIONS_SUCCESS_MESSAGE =
+  "Lost reasons fetched successfully.";
 export const CAR_MODELS_SUCCESS_MESSAGE =
   "Car models fetched successfully.";
 export const LEAD_ACTIVITIES_SUCCESS_MESSAGE =

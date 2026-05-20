@@ -4,6 +4,7 @@ import { AUTH_ROUTE_BASE_PATH } from "../../common/constants/http.constants.js";
 import {
   forgotPasswordController,
   loginController,
+  refreshTokenController,
   resendOtpController,
   resetPasswordController,
   verifyOtpController,
@@ -16,6 +17,9 @@ export const authRoutes = new Hono();
 
 // Keeps route files thin so auth business logic stays inside the controller and service layers.
 authRoutes.post(`${AUTH_ROUTE_BASE_PATH}/login`, loginController);
+
+// Renews an authenticated session without asking the user to log in again.
+authRoutes.post(`${AUTH_ROUTE_BASE_PATH}/refresh`, refreshTokenController);
 
 // Starts the password recovery flow without exposing Supabase details to callers.
 authRoutes.post(

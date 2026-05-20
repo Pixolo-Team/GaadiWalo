@@ -7,6 +7,8 @@ import type {
   ForgotPasswordResponseData,
   LoginRequestData,
   LoginResponseData,
+  RefreshTokenRequestData,
+  RefreshTokenResponseData,
   ResetPasswordRequestData,
   ResetPasswordResponseData,
   ResendOtpRequestData,
@@ -18,8 +20,11 @@ import type { SupabaseUserRecordData } from "../../config/supabase.js";
 // CONFIG //
 import { environmentConfig, isAuthEnvironmentConfigured } from "../../config/environment.js";
 import {
+  getAuthUserByAccessToken,
+  getUserByAuthIdentifier,
   getUserByEmailIdentifier,
   getUserByLoginIdentifier,
+  refreshSessionWithToken,
   sendRecoveryOtp,
   signInWithPassword,
   updatePasswordWithRecoveryToken,
@@ -31,6 +36,7 @@ import {
   AUTH_IDENTIFIER_NOT_FOUND_MESSAGE,
   AUTH_INACTIVE_USER_MESSAGE,
   AUTH_INVALID_OTP_MESSAGE,
+  AUTH_INVALID_REFRESH_TOKEN_MESSAGE,
   AUTH_INVALID_RESET_TOKEN_MESSAGE,
   AUTH_RATE_LIMIT_MESSAGE,
   AUTH_WEAK_PASSWORD_MESSAGE,
@@ -52,6 +58,9 @@ interface AuthServiceDependenciesData {
   getUserByEmailIdentifier: (
     email: string,
   ) => Promise<SupabaseUserRecordData | null>;
+  getUserByAuthIdentifier: (
+    authId: string,
+  ) => Promise<SupabaseUserRecordData | null>;
   signInWithPassword: (payload: {
     email: string;
     password: string;
@@ -59,6 +68,17 @@ interface AuthServiceDependenciesData {
     access_token: string;
     refresh_token?: string;
     expires_in?: number;
+  }>;
+  refreshSessionWithToken: (payload: {
+    refreshToken: string;
+  }) => Promise<{
+    access_token: string;
+    refresh_token?: string;
+    expires_in?: number;
+  }>;
+  getAuthUserByAccessToken: (accessToken: string) => Promise<{
+    id: string;
+    email: string;
   }>;
   sendRecoveryOtp: (email: string) => Promise<void>;
   verifyRecoveryOtp: (payload: {
@@ -124,6 +144,35 @@ const createEmailResponse = (
 };
 
 /**
+ * Builds the shared authenticated session payload returned by login and refresh flows.
+ */
+const createAuthenticatedUserResponse = ({
+  accessToken,
+  refreshToken,
+  expiresIn,
+  userRecord,
+  fallbackUserId,
+}: {
+  accessToken: string;
+  refreshToken: string | null;
+  expiresIn: number | null;
+  userRecord: SupabaseUserRecordData;
+  fallbackUserId: string;
+}): LoginResponseData => {
+  return {
+    accessToken,
+    refreshToken,
+    expiresIn,
+    user: {
+      id: userRecord.user_id ?? fallbackUserId,
+      name: userRecord.full_name ?? userRecord.email,
+      email: userRecord.email,
+      role: userRecord.role ?? "sales",
+    },
+  };
+};
+
+/**
  * Maps Supabase auth failures to the project-specific auth errors used across the module.
  */
 const mapSupabaseError = (error: Error): AuthServiceErrorData => {
@@ -157,6 +206,27 @@ const mapSupabaseError = (error: Error): AuthServiceErrorData => {
   }
 
   return createAuthServiceError("INTERNAL", error.message);
+};
+
+/**
+ * Converts refresh-token failures into clearer session-renewal errors when possible.
+ */
+const mapRefreshTokenError = (error: Error): AuthServiceErrorData => {
+  const errorMessage = error.message.toLowerCase();
+
+  if (
+    errorMessage.includes("refresh token") ||
+    errorMessage.includes("invalid token") ||
+    errorMessage.includes("invalid refresh token") ||
+    errorMessage.includes("expired")
+  ) {
+    return createAuthServiceError(
+      "INVALID_REFRESH_TOKEN",
+      AUTH_INVALID_REFRESH_TOKEN_MESSAGE,
+    );
+  }
+
+  return mapSupabaseError(error);
 };
 
 /**
@@ -202,7 +272,10 @@ const createDefaultAuthServiceDependencies = (): AuthServiceDependenciesData => 
   return {
     getUserByLoginIdentifier,
     getUserByEmailIdentifier,
+    getUserByAuthIdentifier,
     signInWithPassword,
+    refreshSessionWithToken,
+    getAuthUserByAccessToken,
     sendRecoveryOtp,
     verifyRecoveryOtp,
     updatePasswordWithRecoveryToken,
@@ -218,6 +291,9 @@ export interface AuthServiceData {
   loginService: (
     payload: LoginRequestData,
   ) => Promise<QueryResponseData<LoginResponseData>>;
+  refreshTokenService: (
+    payload: RefreshTokenRequestData,
+  ) => Promise<QueryResponseData<RefreshTokenResponseData>>;
   forgotPasswordService: (
     payload: ForgotPasswordRequestData,
   ) => Promise<QueryResponseData<ForgotPasswordResponseData>>;
@@ -348,17 +424,13 @@ export const createAuthService = (
 
         // The response exposes only the session fields the frontend needs for authenticated requests.
         return {
-          data: {
+          data: createAuthenticatedUserResponse({
             accessToken: authSession.access_token,
             refreshToken: authSession.refresh_token ?? null,
             expiresIn: authSession.expires_in ?? null,
-            user: {
-              id: userRecord.user_id ?? payload.userId.trim(),
-              name: userRecord.full_name ?? userRecord.email,
-              email: userRecord.email,
-              role: userRecord.role ?? "sales",
-            },
-          },
+            userRecord,
+            fallbackUserId: payload.userId.trim(),
+          }),
           error: null,
         };
       } catch (error) {
@@ -377,6 +449,70 @@ export const createAuthService = (
             error instanceof Error
               ? mapSupabaseError(error)
               : createAuthServiceError("INTERNAL", "Login failed."),
+        };
+      }
+    },
+    /**
+     * Exchanges a refresh token for a new session and resolves the latest user context.
+     */
+    refreshTokenService: async (payload) => {
+      try {
+        const configurationError = ensureConfigured();
+
+        if (configurationError) {
+          return { data: null, error: configurationError };
+        }
+
+        const refreshedSession = await dependencies.refreshSessionWithToken({
+          refreshToken: payload.refreshToken.trim(),
+        });
+        const authUser = await dependencies.getAuthUserByAccessToken(
+          refreshedSession.access_token,
+        );
+        const userRecord =
+          (await dependencies.getUserByAuthIdentifier(authUser.id)) ??
+          (await dependencies.getUserByEmailIdentifier(authUser.email));
+
+        if (!userRecord) {
+          return {
+            data: null,
+            error: createAuthServiceError(
+              "INVALID_REFRESH_TOKEN",
+              AUTH_INVALID_REFRESH_TOKEN_MESSAGE,
+            ),
+          };
+        }
+
+        if (userRecord.is_active === false) {
+          return {
+            data: null,
+            error: createAuthServiceError(
+              "INACTIVE_USER",
+              AUTH_INACTIVE_USER_MESSAGE,
+            ),
+          };
+        }
+
+        return {
+          data: createAuthenticatedUserResponse({
+            accessToken: refreshedSession.access_token,
+            refreshToken: refreshedSession.refresh_token ?? null,
+            expiresIn: refreshedSession.expires_in ?? null,
+            userRecord,
+            fallbackUserId: userRecord.user_id ?? authUser.email,
+          }),
+          error: null,
+        };
+      } catch (error) {
+        return {
+          data: null,
+          error:
+            error instanceof Error
+              ? mapRefreshTokenError(error)
+              : createAuthServiceError(
+                  "INTERNAL",
+                  "Session refresh failed.",
+                ),
         };
       }
     },

@@ -131,8 +131,10 @@ Examples:
 | Endpoint | Method | Purpose |
 | --- | --- | --- |
 | `/sales/leads` | `GET` | Fetch all accessible Leads for the logged-in user |
-| `/sales/leads/car-brands` | `GET` | Fetch available car brands for Lead forms |
-| `/sales/leads/car-brands/:carBrandId/car-models` | `GET` | Fetch available car models for the selected car brand |
+| `/sales/leads/statuses` | `GET` | Fetch available Lead statuses for create/update dropdowns, including lost reason names for `LOST` |
+| `/sales/leads/lead-sources` | `GET` | Fetch active Lead sources for lead create/edit dropdowns |
+| `/sales/leads/car-brands` | `GET` | Fetch available car brands for Lead forms, including model names for each brand |
+| `/sales/leads/car-brands/:carBrandName/car-models` | `GET` | Fetch available car models for the selected car brand |
 | `/sales/leads/:leadId` | `GET` | Fetch one Lead with detail fields |
 | `/sales/leads/:leadId/activities` | `GET` | Fetch Lead activity timeline |
 | `/sales/leads/:leadId/notes` | `GET` | Fetch Lead notes |
@@ -201,6 +203,77 @@ interface LeadListItemData {
   assignedTo: LeadUserSummaryData | null;
   createdAt: string | null;
   updatedAt: string | null;
+}
+```
+
+## 1A. Get Lead Status Options
+
+### Endpoint Name
+
+| Item | Value |
+| --- | --- |
+| HTTP Method | `GET` |
+| Endpoint URL | `/sales/leads/statuses` |
+| Description | Returns the status options from the `statuses` table for Lead creation and status update dropdowns. The `reason` field is populated from the `lost_reasons.name` values for the `LOST` status. |
+
+### Sample Success Response
+
+```json
+{
+  "data": [
+    {
+      "id": "status-new",
+      "name": "NEW",
+      "reason": []
+    },
+    {
+      "id": "status-contacted",
+      "name": "CONTACTED",
+      "reason": []
+    },
+    {
+      "id": "status-lost",
+      "name": "LOST",
+      "reason": ["Budget issue", "Bought elsewhere"]
+    }
+  ],
+  "status": "success",
+  "status_code": 200,
+  "message": "Lead statuses fetched successfully.",
+  "error": null
+}
+```
+
+## 1B. Get Lead Source Options
+
+### Endpoint Name
+
+| Item | Value |
+| --- | --- |
+| HTTP Method | `GET` |
+| Endpoint URL | `/sales/leads/lead-sources` |
+| Description | Returns active Lead sources from the `lead_sources` table for Lead create and edit dropdowns. Only rows where `is_active = true` are returned. |
+
+### Sample Success Response
+
+```json
+{
+  "data": [
+    {
+      "id": "source-1",
+      "name": "CarWale",
+      "description": "Marketplace lead source"
+    },
+    {
+      "id": "source-2",
+      "name": "Walk-in",
+      "description": "Direct showroom visit"
+    }
+  ],
+  "status": "success",
+  "status_code": 200,
+  "message": "Lead sources fetched successfully.",
+  "error": null
 }
 ```
 
@@ -1235,6 +1308,8 @@ interface CreateLeadRequestData {
   phone: string;
   email: string | null;
   source: string;
+  status?: "NEW" | "CONTACTED" | "INTERESTED" | "TEST_DRIVE" | "NEGOTIATION" | "WON" | "LOST" | "VEHICLE_NA";
+  lostReason?: string | null;
   referrerName?: string | null;
   referrerPhone?: string | null;
   carBrand?: string | null;
@@ -1255,6 +1330,8 @@ interface CreateLeadRequestData {
 | `phone` | `string` | Yes | Exactly 10 digits | Must be unique across Leads |
 | `email` | `string \| null` | Yes | Valid email, empty string normalized to `null` | Customer email |
 | `source` | `string` | Yes | Trimmed, minimum 1 character | Lead source |
+| `status` | `LeadStatusData` | No | Valid status enum, defaults to `NEW` | Selected value should come from `GET /sales/leads/statuses` |
+| `lostReason` | `string \| null` | No | Required when `status = LOST`; otherwise must be omitted or `null` | Selected value should come from the `reason` array in `GET /sales/leads/statuses` |
 | `referrerName` | `string \| null` | No | Trimmed, empty string normalized to `null` | Referrer name |
 | `referrerPhone` | `string \| null` | No | Exactly 10 digits if provided | Referrer phone |
 | `carBrand` | `string \| null` | No | Trimmed, empty string normalized to `null` | Vehicle brand |
@@ -1273,6 +1350,7 @@ interface CreateLeadRequestData {
   "phone": "9876543210",
   "email": "rahul@example.com",
   "source": "CarWale",
+  "status": "CONTACTED",
   "referrerName": "Amit Verma",
   "referrerPhone": "9988776655",
   "carBrand": "Hyundai",
@@ -1287,9 +1365,11 @@ interface CreateLeadRequestData {
 
 #### Vehicle Catalog Endpoints For Dropdowns
 
-- Use `GET /sales/leads/car-brands` to populate the Car Brand dropdown.
-- Use `GET /sales/leads/car-brands/:carBrandId/car-models` after a Brand is selected to populate the Car Model dropdown.
-- The create-lead payload continues to accept `carBrand` and `carModel` as display names.
+- Use `GET /sales/leads/statuses` to populate the Status dropdown.
+- Use the `reason` array from the `LOST` item in `GET /sales/leads/statuses` to populate the Lost Reason dropdown.
+- Use `GET /sales/leads/car-brands` to populate the Car Brand dropdown and read the nested `models` array for each brand.
+- `GET /sales/leads/car-brands/:carBrandName/car-models` is still available when the frontend wants to fetch models separately after Brand selection.
+- The create-lead payload accepts `status`, `lostReason`, `carBrand`, and `carModel` as display names.
 
 ### Response
 
@@ -1377,7 +1457,9 @@ interface CreateLeadResponseData {
 
 ### Business Rules
 
-- New Leads are always created with `status = NEW`.
+- New Leads default to `status = NEW` when the frontend does not send `status`.
+- If the frontend sends `status`, backend resolves the matching `status_id` from the `statuses` table and stores it on create.
+- If `status = LOST`, frontend must also send a valid `lostReason` name and backend resolves the matching `lost_reason_id`.
 - `assigned_to` and `created_by` are both set to the authenticated Sales user's internal record id.
 - Phone number uniqueness is enforced before insert.
 - A successful Lead create always attempts to create a `system` activity with description `Lead created.`
@@ -1388,7 +1470,9 @@ interface CreateLeadResponseData {
 
 ### Frontend Notes
 
-- Do not send `status`, `assignedTo`, or `createdBy`; backend derives them.
+- Send the selected status name from `GET /sales/leads/statuses` when the create form includes a status dropdown.
+- Send `lostReason` only when the selected status is `LOST`.
+- Do not send `assignedTo` or `createdBy`; backend derives them.
 - Use returned `data.lead.id` for post-create navigation.
 - Handle `data.note` as nullable.
 - On create success, the frontend can immediately hydrate the detail page from the returned `lead` object instead of forcing a refetch.
@@ -1401,7 +1485,9 @@ interface CreateLeadResponseData {
 - Attempt duplicate phone and verify `409`.
 - Attempt invalid email, invalid phone, or invalid referrer phone and verify `400`.
 - Verify created Lead is assigned to and created by the authenticated Sales user.
-- Verify initial Lead status is always `NEW` regardless of frontend intent.
+- Verify omitted `status` defaults to `NEW`.
+- Verify selected `status` is stored when sent during create.
+- Verify `status = LOST` requires a valid `lostReason`.
 - Verify concurrent duplicate create attempts for the same phone do not create two valid Leads.
 
 ## Authentication & Authorization
@@ -1620,12 +1706,12 @@ flowchart TD
 
 | Endpoint | Validation |
 | --- | --- |
-| `GET /sales/leads/car-brands/:carBrandId/car-models` | `carBrandId` must be a non-empty trimmed string |
+| `GET /sales/leads/car-brands/:carBrandName/car-models` | `carBrandName` must be a non-empty trimmed string |
 | All `:leadId` endpoints | `leadId` must be a non-empty trimmed string |
 | `PATCH /:leadId/status` | `status` enum required; `lostReason` conditional |
 | `PATCH /:leadId` | Required `fullName`, `phone`, `email`, `source`; optional normalized fields; `carModel` requires `carBrand` |
 | `POST /:leadId/notes` | `content` required, trimmed, max 2000 |
-| `POST /sales/leads` | Same validation as update details plus optional `initialNote`; `carModel` must belong to `carBrand` |
+| `POST /sales/leads` | Same validation as update details plus optional `status`, conditional `lostReason`, and optional `initialNote`; `carModel` must belong to `carBrand` |
 
 ## Postman / Swagger References
 

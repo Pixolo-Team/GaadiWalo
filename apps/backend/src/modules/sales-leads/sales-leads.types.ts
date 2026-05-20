@@ -18,6 +18,19 @@ export type LeadActivityTypeData = (typeof LEAD_ACTIVITY_TYPE_VALUES)[number];
 export interface CarBrandData {
   id: string;
   name: string;
+  models: string[];
+}
+
+export interface LeadSourceData {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+export interface LeadStatusOptionData {
+  id: string;
+  name: LeadStatusData;
+  reason: string[];
 }
 
 export interface CarModelData {
@@ -103,8 +116,8 @@ export const leadIdParamsSchema = z.object({
   leadId: z.string().trim().min(1),
 });
 
-export const carBrandIdParamsSchema = z.object({
-  carBrandId: z.string().trim().min(1),
+export const carBrandNameParamsSchema = z.object({
+  carBrandName: z.string().trim().min(1),
 });
 
 export const updateLeadStatusRequestSchema = z
@@ -177,6 +190,8 @@ export const createLeadNoteRequestSchema = z.object({
 
 export const createLeadRequestSchema = leadDetailsMutationBaseSchema
   .extend({
+    status: z.enum(LEAD_STATUS_VALUES).optional().default("NEW"),
+    lostReason: optionalTrimmedStringSchema,
     initialNote: optionalTrimmedStringSchema,
   })
   .superRefine((value, context) => {
@@ -185,6 +200,22 @@ export const createLeadRequestSchema = leadDetailsMutationBaseSchema
         code: z.ZodIssueCode.custom,
         path: ["carBrand"],
         message: "Car brand is required when car model is provided.",
+      });
+    }
+
+    if (value.status === "LOST" && !value.lostReason) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["lostReason"],
+        message: "Lost reason is required when status is LOST.",
+      });
+    }
+
+    if (value.status !== "LOST" && value.lostReason) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["lostReason"],
+        message: "Lost reason is allowed only when status is LOST.",
       });
     }
   });

@@ -14,6 +14,7 @@ import { adminTeamRoutes } from "./modules/admin-team/admin-team.routes.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { healthRoutes } from "./modules/health/health.routes.js";
 import { salesLeadsRoutes } from "./modules/sales-leads/sales-leads.routes.js";
+import { salesProfileRoutes } from "./modules/sales-profile/sales-profile.routes.js";
 // LIBRARIES //
 import { Hono } from "hono";
 import type { Context, Next } from "hono";
@@ -36,6 +37,7 @@ app.use("*", requestLoggerMiddleware);
 app.route("/", healthRoutes);
 app.route("/", authRoutes);
 app.route("/", salesLeadsRoutes);
+app.route("/", salesProfileRoutes);
 app.route("/", adminDashboardRoutes);
 app.route("/", adminReferrersRoutes);
 app.route("/", adminReportsRoutes);

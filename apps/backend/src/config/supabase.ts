@@ -61,8 +61,29 @@ interface SupabaseAdminUserCreateResponseData {
   email?: string;
 }
 
-const normalizeRoleValue = (roleValue: string): string => {
-  return roleValue.trim().toLowerCase();
+/**
+ * Normalizes raw role labels from the database into the backend's canonical auth roles.
+ */
+export const normalizeRoleValue = (roleValue: string): string => {
+  const normalizedRoleValue = roleValue
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, " ");
+
+  if (normalizedRoleValue.includes("admin")) {
+    return "admin";
+  }
+
+  if (
+    normalizedRoleValue.includes("sales") ||
+    normalizedRoleValue === "se" ||
+    normalizedRoleValue.endsWith(" se") ||
+    normalizedRoleValue.includes("executive")
+  ) {
+    return "sales";
+  }
+
+  return normalizedRoleValue;
 };
 
 const resolveRoleNameByIdentifier = async (
@@ -654,6 +675,36 @@ export const signInWithPassword = async ({
       body: JSON.stringify({
         email,
         password,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+
+  return (await response.json()) as SupabaseSessionData;
+};
+
+/**
+ * Exchanges a refresh token for a new Supabase session.
+ */
+export const refreshSessionWithToken = async ({
+  refreshToken,
+}: {
+  refreshToken: string;
+}): Promise<SupabaseSessionData> => {
+  assertSupabaseConfiguration();
+
+  const response = await fetch(
+    `${environmentConfig.supabaseUrl}/auth/v1/token?grant_type=refresh_token`,
+    {
+      method: "POST",
+      headers: buildSupabaseHeaders({
+        apiKey: environmentConfig.supabaseAnonKey,
+      }),
+      body: JSON.stringify({
+        refresh_token: refreshToken,
       }),
     },
   );

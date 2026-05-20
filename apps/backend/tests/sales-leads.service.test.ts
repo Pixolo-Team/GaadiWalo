@@ -45,6 +45,27 @@ const baseLeadRecord = {
 
 const createDependencies = () => {
   return {
+    getStatusRecords: async () => [
+      { id: "status-contacted", name: "CONTACTED" },
+      { id: "status-lost", name: "LOST" },
+      { id: "status-new", name: "NEW" },
+    ],
+    getLostReasonRecords: async () => [
+      { id: "lost-reason-1", name: "Budget issue" },
+      { id: "lost-reason-2", name: "Bought elsewhere" },
+    ],
+    getLeadSourceRecords: async () => [
+      {
+        id: "source-1",
+        name: "CarWale",
+        description: "Marketplace lead source",
+      },
+      {
+        id: "source-2",
+        name: "Walk-in",
+        description: "Direct showroom visit",
+      },
+    ],
     getCarBrandRecords: async () => [
       { id: "brand-1", name: "Hyundai" },
       { id: "brand-2", name: "Maruti Suzuki" },
@@ -250,9 +271,48 @@ describe("sales-leads.service", () => {
 
     assert.equal(carBrandsResult.error, null);
     assert.deepEqual(carBrandsResult.data, [
-      { id: "brand-1", name: "Hyundai" },
-      { id: "brand-2", name: "Maruti Suzuki" },
-      { id: "brand-3", name: "Tata" },
+      { id: "brand-1", name: "Hyundai", models: ["i10"] },
+      { id: "brand-2", name: "Maruti Suzuki", models: ["Swift"] },
+      { id: "brand-3", name: "Tata", models: ["Nexon"] },
+    ]);
+  });
+
+  it("returns lead statuses for the create-lead dropdown", async () => {
+    const salesLeadsService = createSalesLeadsService(createDependencies());
+
+    const leadStatusesResult =
+      await salesLeadsService.getLeadStatusesService(authenticatedSalesUser);
+
+    assert.equal(leadStatusesResult.error, null);
+    assert.deepEqual(leadStatusesResult.data, [
+      { id: "status-contacted", name: "CONTACTED", reason: [] },
+      {
+        id: "status-lost",
+        name: "LOST",
+        reason: ["Budget issue", "Bought elsewhere"],
+      },
+      { id: "status-new", name: "NEW", reason: [] },
+    ]);
+  });
+
+  it("returns active lead sources for the create-lead dropdown", async () => {
+    const salesLeadsService = createSalesLeadsService(createDependencies());
+
+    const leadSourcesResult =
+      await salesLeadsService.getLeadSourcesService(authenticatedSalesUser);
+
+    assert.equal(leadSourcesResult.error, null);
+    assert.deepEqual(leadSourcesResult.data, [
+      {
+        id: "source-1",
+        name: "CarWale",
+        description: "Marketplace lead source",
+      },
+      {
+        id: "source-2",
+        name: "Walk-in",
+        description: "Direct showroom visit",
+      },
     ]);
   });
 
@@ -261,7 +321,7 @@ describe("sales-leads.service", () => {
 
     const carModelsResult = await salesLeadsService.getCarModelsService(
       authenticatedSalesUser,
-      "brand-2",
+      "Maruti Suzuki",
     );
 
     assert.equal(carModelsResult.error, null);
@@ -510,6 +570,7 @@ describe("sales-leads.service", () => {
         phone: "9999999999",
         email: "rahul@example.com",
         source: "CarWale",
+        status: "NEW",
         referrerName: null,
         referrerPhone: null,
         carBrand: "Hyundai",
@@ -538,6 +599,53 @@ describe("sales-leads.service", () => {
     ]);
   });
 
+  it("creates a lead with the selected status and lost reason id", async () => {
+    let createdLeadStatusId: string | undefined;
+    let createdLeadLostReasonId: string | null | undefined;
+    const salesLeadsService = createSalesLeadsService({
+      ...createDependencies(),
+      createLeadRecord: async (payload) => {
+        createdLeadStatusId = payload.status_id;
+        createdLeadLostReasonId = payload.lost_reason_id;
+
+        return {
+          ...baseLeadRecord,
+          ...payload,
+          id: "lead-created-with-status",
+          status_id: "status-lost",
+          lost_reason_id: "lost-reason-1",
+        };
+      },
+    });
+
+    const createLeadResult = await salesLeadsService.createLeadService(
+      authenticatedSalesUser,
+      {
+        fullName: "Rahul Sharma",
+        phone: "9999999995",
+        email: "rahul@example.com",
+        source: "CarWale",
+        status: "LOST",
+        lostReason: "Budget issue",
+        referrerName: null,
+        referrerPhone: null,
+        carBrand: "Hyundai",
+        carModel: "i10",
+        variantName: "Sportz",
+        colorPreference: "Red",
+        budget: "6-8 Lakh",
+        isUsed: true,
+        initialNote: null,
+      },
+    );
+
+    assert.equal(createLeadResult.error, null);
+    assert.equal(createLeadResult.data?.lead.status, "LOST");
+    assert.equal(createLeadResult.data?.lead.lostReason, "Budget issue");
+    assert.equal(createdLeadStatusId, "status-lost");
+    assert.equal(createdLeadLostReasonId, "lost-reason-1");
+  });
+
   it("creates a lead without inserting a note when initialNote is omitted", async () => {
     let createdNoteCount = 0;
     const salesLeadsService = createSalesLeadsService({
@@ -561,6 +669,7 @@ describe("sales-leads.service", () => {
         phone: "9999999998",
         email: "rahul@example.com",
         source: "CarWale",
+        status: "NEW",
         referrerName: null,
         referrerPhone: null,
         carBrand: "Hyundai",
@@ -589,6 +698,7 @@ describe("sales-leads.service", () => {
         phone: "9999999996",
         email: "rahul@example.com",
         source: "CarWale",
+        status: "NEW",
         referrerName: null,
         referrerPhone: null,
         carBrand: "Maruti Suzuki",
@@ -636,6 +746,7 @@ describe("sales-leads.service", () => {
         phone: "9999999997",
         email: "rahul@example.com",
         source: "CarWale",
+        status: "NEW",
         referrerName: null,
         referrerPhone: null,
         carBrand: "Hyundai",

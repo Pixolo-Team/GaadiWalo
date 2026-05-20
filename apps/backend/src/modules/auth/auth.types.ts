@@ -31,6 +31,19 @@ export interface LoginResponseData {
   user: AuthenticatedUserData;
 }
 
+// Client payload for exchanging a refresh token for a fresh authenticated session.
+export interface RefreshTokenRequestData {
+  refreshToken: string;
+}
+
+// Safe session payload returned after a successful refresh.
+export interface RefreshTokenResponseData {
+  accessToken: string;
+  refreshToken: string | null;
+  expiresIn: number | null;
+  user: AuthenticatedUserData;
+}
+
 // Client payload for starting the password recovery flow.
 export interface ForgotPasswordRequestData {
   email: string;
@@ -78,6 +91,7 @@ export interface ResetPasswordResponseData {
 export type AuthServiceErrorCodeData =
   | "CONFIGURATION"
   | "INVALID_CREDENTIALS"
+  | "INVALID_REFRESH_TOKEN"
   | "IDENTIFIER_NOT_FOUND"
   | "INVALID_OTP"
   | "INVALID_RESET_TOKEN"
@@ -103,6 +117,13 @@ export const loginRequestSchema = zod
 export const forgotPasswordRequestSchema = zod
   .object({
     email: zod.string().trim().email(),
+  })
+  .strict();
+
+// Validates refresh requests before they reach the service layer.
+export const refreshTokenRequestSchema = zod
+  .object({
+    refreshToken: zod.string().trim().min(1),
   })
   .strict();
 

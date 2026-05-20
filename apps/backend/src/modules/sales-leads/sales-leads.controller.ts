@@ -2,7 +2,7 @@
 import type { Context } from "hono";
 import type { SalesLeadServiceErrorData } from "./sales-leads.types.js";
 import {
-  carBrandIdParamsSchema,
+  carBrandNameParamsSchema,
   createLeadNoteRequestSchema,
   createLeadRequestSchema,
   leadDetailsMutationSchema,
@@ -15,10 +15,12 @@ import {
   CAR_MODELS_SUCCESS_MESSAGE,
   INVALID_CREATE_LEAD_NOTE_REQUEST_MESSAGE,
   INVALID_CREATE_LEAD_REQUEST_MESSAGE,
-  INVALID_CAR_BRAND_ID_MESSAGE,
+  INVALID_CAR_BRAND_NAME_MESSAGE,
   INVALID_LEAD_DETAILS_REQUEST_MESSAGE,
   INVALID_LEAD_ID_MESSAGE,
   INVALID_LEAD_STATUS_REQUEST_MESSAGE,
+  LEAD_SOURCES_SUCCESS_MESSAGE,
+  LEAD_STATUS_OPTIONS_SUCCESS_MESSAGE,
   LEADS_SUCCESS_MESSAGE,
   LEAD_ACTIVITIES_SUCCESS_MESSAGE,
   LEAD_CREATED_SUCCESS_MESSAGE,
@@ -147,28 +149,28 @@ const parseLeadIdParams = (
 };
 
 /**
- * Validates and extracts the car brand id route parameter.
+ * Validates and extracts the car brand name route parameter.
  */
-const parseCarBrandIdParams = (
+const parseCarBrandNameParams = (
   context: Context,
-): { carBrandId: string | null; errorResponse: Response | null } => {
-  const paramsParseResult = carBrandIdParamsSchema.safeParse(context.req.param());
+): { carBrandName: string | null; errorResponse: Response | null } => {
+  const paramsParseResult = carBrandNameParamsSchema.safeParse(context.req.param());
 
   if (!paramsParseResult.success) {
     return {
-      carBrandId: null,
+      carBrandName: null,
       errorResponse: sendResponse({
         context,
         statusCode: HTTP_STATUS_CODES.badRequest,
         status: "error",
-        message: INVALID_CAR_BRAND_ID_MESSAGE,
+        message: INVALID_CAR_BRAND_NAME_MESSAGE,
         error: paramsParseResult.error.message,
       }),
     };
   }
 
   return {
-    carBrandId: paramsParseResult.data.carBrandId,
+    carBrandName: decodeURIComponent(paramsParseResult.data.carBrandName),
     errorResponse: null,
   };
 };
@@ -232,6 +234,82 @@ export const getAllLeadsController = async (
 };
 
 /**
+ * Handles GET /sales/leads/statuses and returns available Lead statuses.
+ */
+export const getLeadStatusesController = async (
+  context: Context,
+): Promise<Response> => {
+  const { authenticatedUser, errorResponse } =
+    await resolveAuthenticatedUser(context);
+
+  if (errorResponse || !authenticatedUser) {
+    return errorResponse as Response;
+  }
+
+  const leadStatusesResult = await getSalesLeadsService().getLeadStatusesService(
+    authenticatedUser,
+  );
+
+  if (leadStatusesResult.error || !leadStatusesResult.data) {
+    const mappedError = mapServiceError(leadStatusesResult.error);
+
+    return sendResponse({
+      context,
+      statusCode: mappedError.statusCode,
+      status: "error",
+      message: mappedError.message,
+      error: mappedError.errorDetail,
+    });
+  }
+
+  return sendResponse({
+    context,
+    statusCode: HTTP_STATUS_CODES.ok,
+    status: "success",
+    message: LEAD_STATUS_OPTIONS_SUCCESS_MESSAGE,
+    data: leadStatusesResult.data,
+  });
+};
+
+/**
+ * Handles GET /sales/leads/lead-sources and returns active Lead sources.
+ */
+export const getLeadSourcesController = async (
+  context: Context,
+): Promise<Response> => {
+  const { authenticatedUser, errorResponse } =
+    await resolveAuthenticatedUser(context);
+
+  if (errorResponse || !authenticatedUser) {
+    return errorResponse as Response;
+  }
+
+  const leadSourcesResult = await getSalesLeadsService().getLeadSourcesService(
+    authenticatedUser,
+  );
+
+  if (leadSourcesResult.error || !leadSourcesResult.data) {
+    const mappedError = mapServiceError(leadSourcesResult.error);
+
+    return sendResponse({
+      context,
+      statusCode: mappedError.statusCode,
+      status: "error",
+      message: mappedError.message,
+      error: mappedError.errorDetail,
+    });
+  }
+
+  return sendResponse({
+    context,
+    statusCode: HTTP_STATUS_CODES.ok,
+    status: "success",
+    message: LEAD_SOURCES_SUCCESS_MESSAGE,
+    data: leadSourcesResult.data,
+  });
+};
+
+/**
  * Handles GET /sales/leads/car-brands and returns available car brands.
  */
 export const getCarBrandsController = async (
@@ -270,7 +348,7 @@ export const getCarBrandsController = async (
 };
 
 /**
- * Handles GET /sales/leads/car-brands/:carBrandId/car-models and returns models for the given brand.
+ * Handles GET /sales/leads/car-brands/:carBrandName/car-models and returns models for the given brand.
  */
 export const getCarModelsController = async (
   context: Context,
@@ -282,16 +360,16 @@ export const getCarModelsController = async (
     return errorResponse as Response;
   }
 
-  const { carBrandId, errorResponse: paramsErrorResponse } =
-    parseCarBrandIdParams(context);
+  const { carBrandName, errorResponse: paramsErrorResponse } =
+    parseCarBrandNameParams(context);
 
-  if (paramsErrorResponse || !carBrandId) {
+  if (paramsErrorResponse || !carBrandName) {
     return paramsErrorResponse as Response;
   }
 
   const carModelsResult = await getSalesLeadsService().getCarModelsService(
     authenticatedUser,
-    carBrandId,
+    carBrandName,
   );
 
   if (carModelsResult.error || !carModelsResult.data) {

@@ -68,23 +68,28 @@ This is the normal testing flow for Sales Leads APIs:
 
 1. Login and get `accessToken`.
 2. Fetch the leads list using `GET /sales/leads`.
-3. Fetch brand options using `GET /sales/leads/car-brands`.
-4. Fetch model options using `GET /sales/leads/car-brands/:carBrandId/car-models`.
-5. If you already have a lead, open that lead using `GET /sales/leads/:leadId`.
-6. Check activity history using `GET /sales/leads/:leadId/activities`.
-7. Check notes using `GET /sales/leads/:leadId/notes`.
-8. Update the lead status using `PATCH /sales/leads/:leadId/status`.
-9. Update customer details using `PATCH /sales/leads/:leadId`.
-10. Add a note using `POST /sales/leads/:leadId/notes`.
-11. Create a fresh lead using `POST /sales/leads`.
+3. Fetch status options using `GET /sales/leads/statuses`.
+4. Fetch lead source options using `GET /sales/leads/lead-sources`.
+5. Read the `reason` array from the `LOST` status item when testing the lost-reason flow.
+6. Fetch brand options using `GET /sales/leads/car-brands`.
+7. Fetch model options using `GET /sales/leads/car-brands/:carBrandName/car-models`.
+8. If you already have a lead, open that lead using `GET /sales/leads/:leadId`.
+9. Check activity history using `GET /sales/leads/:leadId/activities`.
+10. Check notes using `GET /sales/leads/:leadId/notes`.
+11. Update the lead status using `PATCH /sales/leads/:leadId/status`.
+12. Update customer details using `PATCH /sales/leads/:leadId`.
+13. Add a note using `POST /sales/leads/:leadId/notes`.
+14. Create a fresh lead using `POST /sales/leads`.
 
 ## Endpoint Summary
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | `GET` | `/sales/leads` | Get all accessible leads |
-| `GET` | `/sales/leads/car-brands` | Get car brands for the create-lead dropdown |
-| `GET` | `/sales/leads/car-brands/:carBrandId/car-models` | Get models for the selected car brand |
+| `GET` | `/sales/leads/statuses` | Get statuses for lead create/update dropdowns, with lost reasons inside the `LOST` item |
+| `GET` | `/sales/leads/lead-sources` | Get active lead sources for lead create/update dropdowns |
+| `GET` | `/sales/leads/car-brands` | Get car brands for the create-lead dropdown, with nested model names |
+| `GET` | `/sales/leads/car-brands/:carBrandName/car-models` | Get models for the selected car brand |
 | `GET` | `/sales/leads/:leadId` | Get one lead's full details |
 | `GET` | `/sales/leads/:leadId/activities` | Get lead activity timeline |
 | `GET` | `/sales/leads/:leadId/notes` | Get notes added on the lead |
@@ -539,7 +544,7 @@ POST /sales/leads
 }
 ```
 
-Use `GET /sales/leads/car-brands` for Brand options and `GET /sales/leads/car-brands/:carBrandId/car-models` for the dependent Model dropdown before submitting this payload.
+Use `GET /sales/leads/car-brands` for Brand options and the nested `models` array for the dependent Model dropdown. `GET /sales/leads/car-brands/:carBrandName/car-models` remains available if the frontend wants a separate model fetch.
 
 ### Important Validation Rules
 

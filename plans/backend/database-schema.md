@@ -8,15 +8,13 @@
 ## Core Entities (MVP)
 
 - `users`
-  - id, full_name, phone, email, role (`sales|admin`), branch, status, joined_at
+  - id, full_name, phone, email, role (`sales|admin`), branch, status, joined_at, optional `language_preference`, optional `notification_preferences_json`
 - `leads`
   - id, full_name, phone, email, source, status, assigned_to, created_by, created_at, updated_at
 - `lead_notes`
   - id, lead_id, author_id, content, created_at
 - `lead_activities`
   - id, lead_id, type, description, meta_json, created_at
-- `sales_profiles`
-  - user_id, language_preference, notification_preferences_json
 - `referrers`
   - id, full_name, phone, source_notes, created_at
 - `cars_catalogue`

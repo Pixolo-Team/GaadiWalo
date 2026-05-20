@@ -11,6 +11,7 @@ const createMockAuthService = (
 ): AuthServiceData => {
   return {
     loginService: async () => ({ data: null, error: null }),
+    refreshTokenService: async () => ({ data: null, error: null }),
     forgotPasswordService: async () => ({ data: null, error: null }),
     verifyOtpService: async () => ({ data: null, error: null }),
     resendOtpService: async () => ({ data: null, error: null }),
@@ -86,6 +87,91 @@ describe("auth routes", () => {
     assert.equal(response.status, 401);
     assert.equal(responseBody.status, "error");
     assert.equal(responseBody.message, "Invalid User ID or password.");
+  });
+
+  it("returns 400 for an invalid refresh token payload", async () => {
+    const response = await app.request("/auth/refresh", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        refreshToken: "",
+      }),
+    });
+
+    assert.equal(response.status, 400);
+  });
+
+  it("returns 200 for a successful refresh token request", async () => {
+    setAuthService(
+      createMockAuthService({
+        refreshTokenService: async () => ({
+          data: {
+            accessToken: "new-access-token",
+            refreshToken: "new-refresh-token",
+            expiresIn: 3600,
+            user: {
+              id: "SP001",
+              name: "Sales Person",
+              email: "sales@example.com",
+              role: "sales",
+            },
+          },
+          error: null,
+        }),
+      }),
+    );
+
+    const response = await app.request("/auth/refresh", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        refreshToken: "valid-refresh-token",
+      }),
+    });
+    const responseBody = (await response.json()) as {
+      status: string;
+      message: string;
+      data: {
+        accessToken: string;
+      };
+    };
+
+    assert.equal(response.status, 200);
+    assert.equal(responseBody.status, "success");
+    assert.equal(responseBody.message, "Session refreshed successfully.");
+    assert.equal(responseBody.data.accessToken, "new-access-token");
+  });
+
+  it("returns 401 for an expired refresh token", async () => {
+    setAuthService(
+      createMockAuthService({
+        refreshTokenService: async () => ({
+          data: null,
+          error: Object.assign(
+            new Error("Refresh token is invalid or expired."),
+            {
+              code: "INVALID_REFRESH_TOKEN",
+            },
+          ),
+        }),
+      }),
+    );
+
+    const response = await app.request("/auth/refresh", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        refreshToken: "expired-refresh-token",
+      }),
+    });
+
+    assert.equal(response.status, 401);
   });
 
   it("returns 200 for a successful forgot password request", async () => {
