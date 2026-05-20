@@ -38,6 +38,7 @@ export default function ProfilePage() {
         <ProfileTopSummary
           avatarLabel={salesProfileSummaryData.avatarLabel}
           branch={salesProfileSummaryData.branch}
+          detailsClassName="items-center"
           joined={salesProfileSummaryData.joined}
           name={salesProfileSummaryData.name}
           role={salesProfileSummaryData.role}
@@ -53,6 +54,7 @@ export default function ProfilePage() {
               {salesProfileMetrics.map((metricItem) => (
                 <MetricItem
                   key={metricItem.key}
+                  className="items-center"
                   helper={metricItem.helper}
                   label={metricItem.label}
                   tone={metricItem.tone}
@@ -75,6 +77,7 @@ export default function ProfilePage() {
                 }
                 label="Edit Profile"
               />
+
               {/* Change password action item */}
               <ProfileMenuItem
                 href={ROUTES.sales.profileChangePassword}
@@ -87,6 +90,7 @@ export default function ProfilePage() {
                 }
                 label="Change Password"
               />
+
               {/* Notification preferences action item */}
               <ProfileMenuItem
                 href={ROUTES.sales.profileNotifications}
@@ -99,8 +103,10 @@ export default function ProfilePage() {
                 }
                 label="Notification Preferences"
               />
+
               {/* Performance report action item */}
               <ProfileMenuItem
+                href={ROUTES.sales.profilePerformance}
                 iconBackgroundColor="bg-green-100"
                 iconNode={
                   <DesktopMonitorBrowseActivityPerformance

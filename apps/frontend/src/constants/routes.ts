@@ -12,7 +12,6 @@ export const ROUTES = {
   },
   sales: {
     leads: "/leads",
-    leadDetails: (leadId: string): string => `/leads/${leadId}`,
     addLead: "/leads/add",
     leadAdd: "/leads/add",
     leadImport: "/leads/import",
@@ -21,5 +20,7 @@ export const ROUTES = {
     profileEdit: "/profile/edit",
     profileChangePassword: "/profile/change-password",
     profileNotifications: "/profile/notifications",
+    profilePerformance: "/profile/performance",
+    leadDetails: (leadId: string): string => `/leads/${leadId}`,
   },
 } as const;

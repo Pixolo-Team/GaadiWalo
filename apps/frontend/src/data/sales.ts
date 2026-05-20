@@ -556,3 +556,47 @@ export const salesNotificationQuietHoursTimeOptions = [
   { label: "8:00 AM", value: "8-am" },
   { label: "9:00 AM", value: "9-am" },
 ] as const;
+
+/**
+ * Sales performance top metric cards dummy data.
+ */
+export const salesPerformanceTopMetrics = [
+  { helper: "", key: "total-leads", label: "TOTAL LEADS", tone: "neutral", value: "47" },
+  { helper: "", key: "calls-made", label: "CALLS MADE", tone: "neutral", value: "134" },
+  { helper: "19% rate", key: "won", label: "WON 🎉", tone: "green", value: "9" },
+  { helper: "25% lost", key: "lost", label: "LOST", tone: "red", value: "12" },
+] as const;
+
+/**
+ * Sales performance pipeline progress dummy data.
+ */
+export const salesPerformancePipelineProgress = [
+  { colorClassName: "bg-blue-600", count: 4, key: "new", label: "New", progress: 9 },
+  { colorClassName: "bg-amber-500", count: 12, key: "contacted", label: "Contacted", progress: 26 },
+  { colorClassName: "bg-purple-600", count: 8, key: "interested", label: "Interested", progress: 17 },
+  { colorClassName: "bg-sky-700", count: 2, key: "test-drive", label: "Test Drive", progress: 4 },
+  { colorClassName: "bg-green-500", count: 9, key: "won", label: "Won", progress: 19 },
+] as const;
+
+/**
+ * Sales performance weekly calls vs leads chart dummy data.
+ */
+export const salesPerformanceWeeklyCallsLeads = [
+  { calls: 15, day: "Mon", key: "mon", leads: 4 },
+  { calls: 22, day: "Tue", key: "tue", leads: 6 },
+  { calls: 18, day: "Wed", key: "wed", leads: 5 },
+  { calls: 20, day: "Thu", key: "thu", leads: 7 },
+  { calls: 14, day: "Fri", key: "fri", leads: 3 },
+  { calls: 10, day: "Sat", key: "sat", leads: 2 },
+  { calls: 6, day: "Sun", key: "sun", leads: 1 },
+] as const;
+
+/**
+ * Sales performance source breakdown dummy data.
+ */
+export const salesPerformanceSourceBreakdown = [
+  { colorClassName: "bg-blue-600", count: 18, key: "carwale", source: "CarWale" },
+  { colorClassName: "bg-green-500", count: 14, key: "cardekho", source: "CarDekho" },
+  { colorClassName: "bg-amber-500", count: 9, key: "walk-in", source: "Walk In" },
+  { colorClassName: "bg-purple-500", count: 6, key: "referral", source: "Referral" },
+] as const;

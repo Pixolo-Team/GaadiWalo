@@ -1,9 +1,13 @@
 "use client";
 
+// OTHERS //
+import { cn } from "@/lib/utils";
+
 // TYPES //
 interface ProfileTopSummaryPropsData {
   avatarLabel: string;
   branch: string;
+  detailsClassName?: "items-center" | "items-start";
   joined: string;
   name: string;
   role: string;
@@ -14,6 +18,7 @@ interface ProfileTopSummaryPropsData {
 export default function ProfileTopSummary({
   avatarLabel,
   branch,
+  detailsClassName = "items-start",
   joined,
   name,
   role,
@@ -43,15 +48,15 @@ export default function ProfileTopSummary({
         </div>
 
         {/* Name and metadata */}
-        <div className="flex flex-col gap-0.5">
+        <div className={cn("flex flex-col gap-0.5", detailsClassName)}>
           <p className="font-primary text-n-50 text-[1.125rem] font-bold">
             {name}
           </p>
           <p className="font-secondary text-sm font-medium text-white/75">
-            {role} · ID: {userId}
+            {role} | ID: {userId}
           </p>
           <p className="font-secondary text-xs text-white/50">
-            Joined: {joined} · {branch}
+            Joined: {joined} | {branch}
           </p>
         </div>
       </div>
