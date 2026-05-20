@@ -1,10 +1,12 @@
 "use client";
 
-// REACT //
-import { useMemo } from "react";
-
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
+import MetricItem from "@/components/sales/profile/MetricItem";
+import PipelineProgressCard from "@/components/sales/profile/PipelineProgressCard";
+import ProfileTopSummary from "@/components/sales/profile/ProfileTopSummary";
+import SourceBreakdownCard from "@/components/sales/profile/SourceBreakdownCard";
+import WeeklyCallsLeadsCard from "@/components/sales/profile/WeeklyCallsLeadsCard";
 
 // DATA //
 import {
@@ -28,53 +30,11 @@ export default function ProfilePerformancePage() {
   // Define States
 
   // Helper Functions
-  /**
-   * Finds max chart value for proportional weekly bar heights.
-   */
-  const maxWeeklyValue = useMemo<number>(() => {
-    return Math.max(
-      ...salesPerformanceWeeklyCallsLeads.flatMap((dayItem) => [
-        dayItem.calls,
-        dayItem.leads,
-      ]),
-    );
-  }, []);
-
-  /**
-   * Resolves metric value color by tone.
-   */
-  const getMetricValueColorClassName = (
-    tone: "green" | "red" | "neutral",
-  ): string => {
-    if (tone === "green") {
-      return "text-green-500";
-    }
-
-    if (tone === "red") {
-      return "text-red-500";
-    }
-
-    return "text-n-800";
-  };
-
-  /**
-   * Maps weekly calls/leads payload into bar heights.
-   */
-  const weeklyChartItems = useMemo(
-    () =>
-      salesPerformanceWeeklyCallsLeads.map((dayItem) => ({
-        callsHeight: (dayItem.calls / maxWeeklyValue) * 100,
-        day: dayItem.day,
-        key: dayItem.key,
-        leadsHeight: (dayItem.leads / maxWeeklyValue) * 100,
-      })),
-    [maxWeeklyValue],
-  );
 
   // Use Effects
 
   return (
-    <section className="h-full bg-n-100">
+    <section className="bg-n-100 h-full">
       {/* Performance page shell */}
       <div className="flex h-full flex-col">
         {/* Performance header */}
@@ -83,156 +43,35 @@ export default function ProfilePerformancePage() {
         {/* Performance scroll content */}
         <div className="min-h-0 flex-1 overflow-y-auto">
           {/* Profile summary */}
-          <div className="bg-linear-to-br from-blue-700 to-[#0d3b9e] px-6 py-7">
-            {/* Summary row */}
-            <div className="flex items-start gap-3.5">
-              {/* Avatar */}
-              <div className="flex size-[52px] items-center justify-center rounded-full bg-white/20">
-                <p className="font-primary text-n-50 text-xl font-semibold">
-                  {salesProfileSummaryData.avatarLabel}
-                </p>
-              </div>
-
-              {/* Summary text */}
-              <div className="flex flex-col gap-0.5">
-                <p className="font-primary text-n-50 text-[1.125rem] font-bold">
-                  {salesProfileSummaryData.name}
-                </p>
-                <p className="font-secondary text-sm font-medium text-white/75">
-                  {salesProfileSummaryData.role} | ID: {salesProfileSummaryData.userId}
-                </p>
-                <p className="font-secondary text-xs text-white/50">
-                  Joined: {salesProfileSummaryData.joined} | {salesProfileSummaryData.branch}
-                </p>
-              </div>
-            </div>
-          </div>
+          <ProfileTopSummary
+            avatarLabel={salesProfileSummaryData.avatarLabel}
+            branch={salesProfileSummaryData.branch}
+            detailsClassName="items-start"
+            joined={salesProfileSummaryData.joined}
+            name={salesProfileSummaryData.name}
+            role={salesProfileSummaryData.role}
+            userId={salesProfileSummaryData.userId}
+          />
 
           {/* Content stack */}
           <div className="flex flex-col gap-6 px-6 py-6">
             {/* Top metrics grid */}
             <div className="grid grid-cols-2 gap-2">
               {salesPerformanceTopMetrics.map((metricItem) => (
-                <div key={metricItem.key} className="bg-n-50 rounded-[14px] p-3.5">
-                  {/* Metric label */}
-                  <p className="font-secondary text-n-500 text-xs font-medium tracking-wide uppercase">
-                    {metricItem.label}
-                  </p>
-
-                  {/* Metric value */}
-                  <p
-                    className={`font-primary mt-0.5 text-[2.125rem] leading-none font-bold ${getMetricValueColorClassName(metricItem.tone)}`}
-                  >
-                    {metricItem.value}
-                  </p>
-
-                  {/* Metric helper */}
-                  {metricItem.helper ? (
-                    <p className="font-secondary text-n-600 mt-1 text-xs">
-                      {metricItem.helper}
-                    </p>
-                  ) : null}
-                </div>
+                <MetricItem
+                  key={metricItem.key}
+                  className="items-start px-3.5 py-3.5"
+                  helper={metricItem.helper}
+                  label={metricItem.label}
+                  tone={metricItem.tone}
+                  value={metricItem.value}
+                />
               ))}
             </div>
 
-            {/* Pipeline progress section */}
-            <div className="flex flex-col gap-1.5">
-              <p className="font-secondary text-n-600 text-xs font-medium tracking-wide uppercase">
-                Pipeline Progress
-              </p>
-              <div className="bg-n-50 rounded-[14px] p-5">
-                <div className="flex flex-col gap-3">
-                  {salesPerformancePipelineProgress.map((item) => (
-                    <div key={item.key} className="flex flex-col gap-1">
-                      {/* Pipeline row header */}
-                      <div className="flex items-center justify-between">
-                        <p className="font-secondary text-n-600 text-xs">{item.label}</p>
-                        <p
-                          className={`font-secondary text-xs font-bold ${item.key === "won" ? "text-green-500" : "text-n-950"}`}
-                        >
-                          {item.count}
-                        </p>
-                      </div>
-
-                      {/* Pipeline row progress */}
-                      <div className="bg-n-200 h-[5px] w-full rounded-[3px]">
-                        <div
-                          className={`${item.colorClassName} h-[5px] rounded-[3px]`}
-                          style={{ width: `${item.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Weekly calls vs leads section */}
-            <div className="flex flex-col gap-1.5">
-              <p className="font-secondary text-n-600 text-xs font-medium tracking-wide uppercase">
-                Weekly Calls vs Leads
-              </p>
-              <div className="bg-n-50 rounded-[14px] p-5">
-                {/* Chart */}
-                <div className="flex h-[150px] items-end justify-between gap-2">
-                  {weeklyChartItems.map((dayItem) => (
-                    <div key={dayItem.key} className="flex flex-1 flex-col items-center gap-2">
-                      {/* Bars */}
-                      <div className="flex h-[120px] items-end gap-1">
-                        <div
-                          className="w-2 rounded-t-sm bg-blue-200"
-                          style={{ height: `${dayItem.callsHeight}%` }}
-                        />
-                        <div
-                          className="w-2 rounded-t-sm bg-blue-600"
-                          style={{ height: `${dayItem.leadsHeight}%` }}
-                        />
-                      </div>
-
-                      {/* Day label */}
-                      <p className="font-secondary text-n-500 text-[10px]">{dayItem.day}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Source breakdown section */}
-            <div className="flex flex-col gap-1.5">
-              <p className="font-secondary text-n-600 text-xs font-medium tracking-wide uppercase">
-                Source Breakdown
-              </p>
-              <div className="bg-n-50 rounded-[14px] p-5">
-                <div className="flex flex-col gap-3">
-                  {salesPerformanceSourceBreakdown.map((sourceItem, index) => {
-                    const isLast = index === salesPerformanceSourceBreakdown.length - 1;
-
-                    return (
-                      <div key={sourceItem.key} className="flex flex-col gap-3">
-                        {/* Source row */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`${sourceItem.colorClassName} size-[9px] rounded-[4.5px]`}
-                            />
-                            <p className="font-secondary text-n-600 text-xs">
-                              {sourceItem.source}
-                            </p>
-                          </div>
-                          <p className="font-secondary text-n-950 text-xs font-semibold">
-                            {sourceItem.count}
-                          </p>
-                        </div>
-
-                        {/* Divider */}
-                        {isLast ? null : <div className="bg-n-200 h-px w-full" />}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+            <PipelineProgressCard items={salesPerformancePipelineProgress} />
+            <WeeklyCallsLeadsCard items={salesPerformanceWeeklyCallsLeads} />
+            <SourceBreakdownCard items={salesPerformanceSourceBreakdown} />
           </div>
         </div>
       </div>

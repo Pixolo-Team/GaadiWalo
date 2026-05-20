@@ -38,6 +38,7 @@ export default function ProfilePage() {
         <ProfileTopSummary
           avatarLabel={salesProfileSummaryData.avatarLabel}
           branch={salesProfileSummaryData.branch}
+          detailsClassName="items-center"
           joined={salesProfileSummaryData.joined}
           name={salesProfileSummaryData.name}
           role={salesProfileSummaryData.role}
@@ -53,6 +54,7 @@ export default function ProfilePage() {
               {salesProfileMetrics.map((metricItem) => (
                 <MetricItem
                   key={metricItem.key}
+                  className="items-center"
                   helper={metricItem.helper}
                   label={metricItem.label}
                   tone={metricItem.tone}
