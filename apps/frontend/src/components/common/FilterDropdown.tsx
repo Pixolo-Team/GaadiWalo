@@ -24,9 +24,7 @@ interface FilterDropdownPropsData {
   title: string;
 }
 
-/**
- * Renders a compact dropdown used for filters and sort controls.
- */
+/** Filter Dropdown Component */
 export default function FilterDropdown({
   className,
   onChange,
@@ -34,7 +32,7 @@ export default function FilterDropdown({
   prefix,
   selectedOption,
   title,
-}: Readonly<FilterDropdownPropsData>) {
+}: FilterDropdownPropsData) {
   // Define Navigation
 
   // Define Context
@@ -44,17 +42,12 @@ export default function FilterDropdown({
   // Define States
 
   // Helper Functions
-  const optionItemsData = options.map((optionItem) => ({
-    label: optionItem,
-    value: optionItem,
-  }));
 
   // Use Effects
 
   return (
     <Select
       value={selectedOption}
-      items={optionItemsData}
       onValueChange={(value) => {
         if (value) {
           onChange(value);
@@ -98,3 +91,4 @@ export default function FilterDropdown({
     </Select>
   );
 }
+

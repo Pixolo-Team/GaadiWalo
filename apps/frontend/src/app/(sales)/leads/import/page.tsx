@@ -19,9 +19,7 @@ import {
   salesImportLeadSourceTagOptions,
 } from "@/data/sales";
 
-/**
- * Renders the import leads from excel screen.
- */
+/** Import Leads Page Component */
 export default function ImportLeadsPage() {
   // Define Navigation
 
@@ -48,7 +46,7 @@ export default function ImportLeadsPage() {
   // Use Effects
 
   return (
-    <section className="h-full bg-n-100">
+    <section className="bg-n-100 h-full">
       {/* Import leads page shell */}
       <div className="flex h-full flex-col">
         {/* Import leads header */}
@@ -79,11 +77,14 @@ export default function ImportLeadsPage() {
             </div>
 
             {/* Source selector card */}
-            <div className="border-blue-300 bg-blue-50 flex flex-col gap-3 rounded-[14px] border p-[25px]">
+            <div className="flex flex-col gap-3 rounded-[14px] border border-blue-300 bg-blue-50 p-[25px]">
               {/* Source selector heading */}
               <div className="flex items-center gap-2">
-                <AddTag primaryColor="var(--color-blue-600)" className="size-5" />
-                <p className="font-secondary text-blue-800 text-sm font-semibold">
+                <AddTag
+                  primaryColor="var(--color-blue-600)"
+                  className="size-5"
+                />
+                <p className="font-secondary text-sm font-semibold text-blue-800">
                   Where is this data from?
                 </p>
               </div>
@@ -104,7 +105,8 @@ export default function ImportLeadsPage() {
 
               {/* Source selector helper */}
               <p className="font-secondary text-n-500 text-xs leading-tight font-light">
-                If your file has a "Source" column, leave blank and we&apos;ll read it from there.
+                If your file has a "Source" column, leave blank and we&apos;ll
+                read it from there.
               </p>
             </div>
 
@@ -168,7 +170,7 @@ export default function ImportLeadsPage() {
                 primaryColor="var(--color-blue-600)"
                 className="size-3.5"
               />
-              <span className="font-secondary text-blue-600 text-sm font-bold">
+              <span className="font-secondary text-sm font-bold text-blue-600">
                 Download Sample Template
               </span>
             </Link>

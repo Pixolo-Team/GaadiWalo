@@ -33,7 +33,7 @@ export function LeadDetailsProfile({
   phoneNumber,
   status,
   statusTone,
-}: Readonly<LeadDetailsProfilePropsData>) {
+}: LeadDetailsProfilePropsData) {
   // Define Navigation
 
   // Define Context
@@ -48,7 +48,7 @@ export function LeadDetailsProfile({
   // Use Effects
 
   return (
-    <div className="flex flex-col gap-3.5 bg-n-50 p-5">
+    <div className="bg-n-50 flex flex-col gap-3.5 p-6">
       {/* Lead profile row */}
       <div className="flex items-center gap-3.5">
         {/* Lead avatar */}
@@ -60,16 +60,16 @@ export function LeadDetailsProfile({
 
         {/* Lead profile text */}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p className="text-lg font-bold text-n-800">{name}</p>
+          <p className="text-n-800 text-lg font-bold">{name}</p>
 
           {/* Lead status row */}
           <div className="flex items-center gap-2">
             <Badge
-              className={`h-auto rounded-3xl px-3 py-1 font-secondary text-xs tracking-[-0.2px] ${statusClassName}`}
+              className={`font-secondary h-auto rounded-3xl px-3 py-1 text-xs tracking-[-0.2px] ${statusClassName}`}
             >
               {status}
             </Badge>
-            <span className="font-secondary text-xs text-n-500">{age}</span>
+            <span className="font-secondary text-n-500 text-xs">{age}</span>
           </div>
         </div>
       </div>

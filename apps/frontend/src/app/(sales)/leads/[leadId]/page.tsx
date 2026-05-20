@@ -6,11 +6,11 @@ import { useState } from "react";
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
 import HorizontalSlider2 from "@/components/icons/neevo-icons/HorizontalSlider2";
-import { LeadActivityTimeline } from "@/components/sales/LeadActivityTimeline";
 import { LeadDetailsProfile } from "@/components/sales/LeadDetailsProfile";
 import { LeadDetailsTabs } from "@/components/sales/LeadDetailsTabs";
-import { LeadInfoTab } from "@/components/sales/LeadInfoTab";
-import { LeadNotesPanel } from "@/components/sales/LeadNotesPanel";
+import { ActivityTab } from "@/components/sales/leads/ActivityTab";
+import { InfoTab } from "@/components/sales/leads/InfoTab";
+import { NotesTab } from "@/components/sales/leads/NotesTab";
 
 // DATA //
 import {
@@ -22,9 +22,7 @@ import {
   salesLeadStatusOptions,
 } from "@/data/sales";
 
-/**
- * Renders the sales lead details screen.
- */
+/** Lead Details Page Component */
 export default function LeadDetailsPage() {
   // Define Navigation
 
@@ -33,7 +31,9 @@ export default function LeadDetailsPage() {
   // Define Refs
 
   // Define States
-  const [selectedTab, setSelectedTab] = useState<string>(salesLeadDetailTabs[0]);
+  const [selectedTab, setSelectedTab] = useState<string>(
+    salesLeadDetailTabs[0],
+  );
   const [selectedLeadStatus, setSelectedLeadStatus] = useState<string>(
     salesLeadStatusOptions[0].value,
   );
@@ -50,22 +50,14 @@ export default function LeadDetailsPage() {
   // Use Effects
 
   return (
-    <section className="h-full bg-n-100">
+    <section className="bg-n-100">
       {/* Lead details page shell */}
-      <div className="flex h-full flex-col">
+      <div className="flex flex-col">
         {/* Lead details header */}
-        <Header
-          title="Lead Details"
-          rightIcon={
-            <HorizontalSlider2
-              primaryColor="var(--color-n-700)"
-              className="size-5"
-            />
-          }
-        />
+        <Header title="Lead Details" />
 
         {/* Lead details scroll content */}
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto">
           {/* Lead profile */}
           <LeadDetailsProfile
             age={leadDetailsData.age}
@@ -87,7 +79,7 @@ export default function LeadDetailsPage() {
 
             {/* Info tab */}
             {isInfoTabSelected ? (
-              <LeadInfoTab
+              <InfoTab
                 contactInfoRows={salesLeadDetails.contactInfo}
                 carInterestRows={salesLeadDetails.carInterest}
                 leadStatusOptions={salesLeadStatusOptions}
@@ -101,11 +93,11 @@ export default function LeadDetailsPage() {
 
             {/* Activity tab */}
             {isActivityTabSelected ? (
-              <LeadActivityTimeline activities={salesLeadActivities} />
+              <ActivityTab activities={salesLeadActivities} />
             ) : null}
 
             {/* Notes tab */}
-            {isNotesTabSelected ? <LeadNotesPanel notes={salesLeadNotes} /> : null}
+            {isNotesTabSelected ? <NotesTab notes={salesLeadNotes} /> : null}
           </div>
         </div>
       </div>

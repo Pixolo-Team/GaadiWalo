@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// UTILS //
+// OTHERS //
 import { cn } from "@/lib/utils";
 
 interface DropdownOptionData {
@@ -30,9 +30,7 @@ interface DropdownPropsData {
   title?: string;
 }
 
-/**
- * Renders a reusable select dropdown field.
- */
+/** Dropdown Component */
 export default function Dropdown({
   className,
   error,
@@ -43,7 +41,7 @@ export default function Dropdown({
   required,
   selectedOption,
   title,
-}: Readonly<DropdownPropsData>) {
+}: DropdownPropsData) {
   // Define Navigation
 
   // Define Context
@@ -53,10 +51,6 @@ export default function Dropdown({
   // Define States
 
   // Helper Functions
-  const optionItemsData = options.map((optionItem) => ({
-    label: optionItem.label,
-    value: optionItem.value,
-  }));
 
   // Use Effects
 
@@ -65,7 +59,7 @@ export default function Dropdown({
       {/* Dropdown label */}
       {label ? (
         <div className="relative flex">
-          <label className="text-n-700 text-sm">
+          <label className="font-secondary text-n-600 text-xs font-semibold uppercase">
             {label}
             {required ? (
               <span className="absolute top-0 ml-0.5 text-red-500">*</span>
@@ -76,15 +70,7 @@ export default function Dropdown({
 
       {/* Dropdown field */}
       <div className="flex flex-col gap-0.5">
-        <Select
-          value={selectedOption}
-          items={optionItemsData}
-          onValueChange={(value) => {
-            if (value) {
-              onChange(value);
-            }
-          }}
-        >
+        <Select value={selectedOption} onValueChange={onChange}>
           <SelectTrigger
             className={cn(
               "border-n-200 bg-n-50 font-secondary text-n-800 data-placeholder:text-n-400 h-[50px] w-full min-w-0 rounded-lg border px-3 text-sm font-normal",
@@ -104,7 +90,6 @@ export default function Dropdown({
           {/* Dropdown options */}
           <SelectContent className="border-n-200 bg-n-50 rounded-lg border p-1 shadow-sm">
             {options.map((optionItem) => (
-              /* Dropdown option */
               <SelectItem
                 key={optionItem.value}
                 value={optionItem.value}

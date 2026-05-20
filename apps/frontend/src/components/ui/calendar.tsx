@@ -2,8 +2,6 @@
 
 // REACT //
 import * as React from "react";
-
-// LIBRARIES //
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import {
   DayPicker,
@@ -14,12 +12,12 @@ import {
 // COMPONENTS //
 import TaillessLineArrowDown1 from "@/components/icons/neevo-icons/TaillessLineArrowDown1";
 
-// UTILS //
+// OTHERS //
 import { cn } from "@/lib/utils";
 
-/**
- * Renders a shadcn-style calendar powered by react-day-picker.
- */
+// LIBRARIES //
+
+/** Calendar Component */
 function Calendar({
   className,
   classNames,
@@ -59,7 +57,7 @@ function Calendar({
           "select-none text-sm font-medium text-n-900",
           defaultClassNames.caption_label,
         ),
-        table: "w-full border-collapse",
+        month_grid: "w-full border-collapse",
         weekdays: cn("flex", defaultClassNames.weekdays),
         weekday: cn(
           "flex-1 select-none rounded-md text-xs font-normal text-n-500",
@@ -136,7 +134,7 @@ function CalendarDayButton({
       data-day={day.date.toLocaleDateString()}
       data-selected-single={modifiers.selected}
       className={cn(
-        "flex size-8 items-center justify-center rounded-md text-sm text-n-800 hover:bg-n-100 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:outline-none data-[selected-single=true]:bg-blue-600 data-[selected-single=true]:text-n-50",
+        "text-n-800 hover:bg-n-100 data-[selected-single=true]:text-n-50 flex size-8 items-center justify-center rounded-md text-sm focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:outline-none data-[selected-single=true]:bg-blue-600",
         className,
       )}
       {...props}

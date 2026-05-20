@@ -9,6 +9,8 @@ import Dropdown from "@/components/common/Dropdown";
 import FilterDrawer from "@/components/common/FilterDrawer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+
+// DATA //
 import {
   salesBranchOptions,
   salesCarBrandOptions,
@@ -21,13 +23,11 @@ interface LeadsFilterDrawerPropsData {
   onOpenChange: (open: boolean) => void;
 }
 
-/**
- * Renders lead-specific filters inside the shared filter drawer.
- */
+/** Leads filter Drawer Component */
 export function LeadsFilterDrawer({
   isOpen,
   onOpenChange,
-}: Readonly<LeadsFilterDrawerPropsData>) {
+}: LeadsFilterDrawerPropsData) {
   // Define Navigation
 
   // Define Context
@@ -146,21 +146,14 @@ export function LeadsFilterDrawer({
           </div>
         </div>
 
-        {/* Branch filter */}
-        <div className="flex flex-col gap-2">
-          {/* Filter group label */}
-          <p className="font-secondary text-n-600 text-xs font-semibold uppercase">
-            Branch
-          </p>
-
-          {/* Branch dropdown */}
-          <Dropdown
-            options={salesBranchOptions}
-            selectedOption={selectedBranch}
-            onChange={setSelectedBranch}
-            placeholder={salesBranchOptions[0].label}
-          />
-        </div>
+        {/* Branch dropdown */}
+        <Dropdown
+          label="Branch"
+          options={salesBranchOptions}
+          selectedOption={selectedBranch}
+          onChange={setSelectedBranch}
+          placeholder={salesBranchOptions[0].label}
+        />
 
         {/* Date range filter */}
         <div className="flex flex-col gap-2">
@@ -185,21 +178,14 @@ export function LeadsFilterDrawer({
           </div>
         </div>
 
-        {/* Car brand filter */}
-        <div className="flex flex-col gap-2">
-          {/* Filter group label */}
-          <p className="font-secondary text-n-600 text-xs font-semibold uppercase">
-            Car Brand
-          </p>
-
-          {/* Car brand dropdown */}
-          <Dropdown
-            options={salesCarBrandOptions}
-            selectedOption={selectedCarBrand}
-            onChange={setSelectedCarBrand}
-            placeholder={salesCarBrandOptions[0].label}
-          />
-        </div>
+        {/* Car brand dropdown */}
+        <Dropdown
+          label="Car Brand"
+          placeholder="Choose car brand"
+          options={salesCarBrandOptions}
+          selectedOption={selectedCarBrand}
+          onChange={setSelectedCarBrand}
+        />
 
         {/* Drawer actions */}
         <div className="grid grid-cols-2 gap-3">

@@ -1,7 +1,7 @@
 // REACT //
 import type { ReactNode } from "react";
 
-// LIBRARIES //
+// COMPONENTS //
 import Link from "next/link";
 
 interface QuickActionCardPropsData {
@@ -10,14 +10,12 @@ interface QuickActionCardPropsData {
   label: string;
 }
 
-/**
- * Renders a quick action tile with icon and label.
- */
+/** Quick Action Card Component */
 export function QuickActionCard({
   href,
   icon,
   label,
-}: Readonly<QuickActionCardPropsData>) {
+}: QuickActionCardPropsData) {
   // Define Navigation
 
   // Define Context
@@ -30,37 +28,18 @@ export function QuickActionCard({
 
   // Use Effects
 
-  // Render link-style action card
-  if (href) {
-    return (
-      <Link
-        href={href}
-        className="flex flex-1 flex-col items-center gap-2 rounded-2xl bg-n-50 p-4"
-      >
-        {/* Action icon */}
-        <div className="size-6">{icon}</div>
-
-        {/* Action label */}
-        <span className="font-secondary text-sm font-semibold text-n-800">
-          {label}
-        </span>
-      </Link>
-    );
-  }
-
-  // Render button-style action card
   return (
-    <button
-      type="button"
-      className="flex flex-1 flex-col items-center gap-2 rounded-2xl bg-n-50 p-4"
+    <Link
+      href={href || "#"}
+      className="bg-n-50 flex flex-1 flex-col items-center gap-2 rounded-2xl p-4"
     >
       {/* Action icon */}
       <div className="size-6">{icon}</div>
 
       {/* Action label */}
-      <span className="font-secondary text-sm font-semibold text-n-800">
+      <span className="font-secondary text-n-800 text-sm font-semibold">
         {label}
       </span>
-    </button>
+    </Link>
   );
 }

@@ -1,5 +1,8 @@
 "use client";
 
+// REACT //
+import { useMemo } from "react";
+
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
 
@@ -28,17 +31,21 @@ export default function ProfilePerformancePage() {
   /**
    * Finds max chart value for proportional weekly bar heights.
    */
-  const maxWeeklyValue = Math.max(
-    ...salesPerformanceWeeklyCallsLeads.flatMap((dayItem) => [
-      dayItem.calls,
-      dayItem.leads,
-    ]),
-  );
+  const maxWeeklyValue = useMemo<number>(() => {
+    return Math.max(
+      ...salesPerformanceWeeklyCallsLeads.flatMap((dayItem) => [
+        dayItem.calls,
+        dayItem.leads,
+      ]),
+    );
+  }, []);
 
   /**
    * Resolves metric value color by tone.
    */
-  const getMetricValueColorClassName = (tone: string): string => {
+  const getMetricValueColorClassName = (
+    tone: "green" | "red" | "neutral",
+  ): string => {
     if (tone === "green") {
       return "text-green-500";
     }
@@ -49,6 +56,20 @@ export default function ProfilePerformancePage() {
 
     return "text-n-800";
   };
+
+  /**
+   * Maps weekly calls/leads payload into bar heights.
+   */
+  const weeklyChartItems = useMemo(
+    () =>
+      salesPerformanceWeeklyCallsLeads.map((dayItem) => ({
+        callsHeight: (dayItem.calls / maxWeeklyValue) * 100,
+        day: dayItem.day,
+        key: dayItem.key,
+        leadsHeight: (dayItem.leads / maxWeeklyValue) * 100,
+      })),
+    [maxWeeklyValue],
+  );
 
   // Use Effects
 
@@ -78,12 +99,10 @@ export default function ProfilePerformancePage() {
                   {salesProfileSummaryData.name}
                 </p>
                 <p className="font-secondary text-sm font-medium text-white/75">
-                  {salesProfileSummaryData.role} · ID:{" "}
-                  {salesProfileSummaryData.userId}
+                  {salesProfileSummaryData.role} | ID: {salesProfileSummaryData.userId}
                 </p>
                 <p className="font-secondary text-xs text-white/50">
-                  Joined: {salesProfileSummaryData.joined} ·{" "}
-                  {salesProfileSummaryData.branch}
+                  Joined: {salesProfileSummaryData.joined} | {salesProfileSummaryData.branch}
                 </p>
               </div>
             </div>
@@ -157,29 +176,24 @@ export default function ProfilePerformancePage() {
               <div className="bg-n-50 rounded-[14px] p-5">
                 {/* Chart */}
                 <div className="flex h-[150px] items-end justify-between gap-2">
-                  {salesPerformanceWeeklyCallsLeads.map((dayItem) => {
-                    const callsHeight = (dayItem.calls / maxWeeklyValue) * 100;
-                    const leadsHeight = (dayItem.leads / maxWeeklyValue) * 100;
-
-                    return (
-                      <div key={dayItem.key} className="flex flex-1 flex-col items-center gap-2">
-                        {/* Bars */}
-                        <div className="flex h-[120px] items-end gap-1">
-                          <div
-                            className="w-2 rounded-t-sm bg-blue-200"
-                            style={{ height: `${callsHeight}%` }}
-                          />
-                          <div
-                            className="w-2 rounded-t-sm bg-blue-600"
-                            style={{ height: `${leadsHeight}%` }}
-                          />
-                        </div>
-
-                        {/* Day label */}
-                        <p className="font-secondary text-n-500 text-[10px]">{dayItem.day}</p>
+                  {weeklyChartItems.map((dayItem) => (
+                    <div key={dayItem.key} className="flex flex-1 flex-col items-center gap-2">
+                      {/* Bars */}
+                      <div className="flex h-[120px] items-end gap-1">
+                        <div
+                          className="w-2 rounded-t-sm bg-blue-200"
+                          style={{ height: `${dayItem.callsHeight}%` }}
+                        />
+                        <div
+                          className="w-2 rounded-t-sm bg-blue-600"
+                          style={{ height: `${dayItem.leadsHeight}%` }}
+                        />
                       </div>
-                    );
-                  })}
+
+                      {/* Day label */}
+                      <p className="font-secondary text-n-500 text-[10px]">{dayItem.day}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

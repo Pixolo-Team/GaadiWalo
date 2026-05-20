@@ -2,8 +2,6 @@
 
 // REACT //
 import type { ReactNode } from "react";
-
-// LIBRARIES //
 import { useRouter } from "next/navigation";
 
 // COMPONENTS //
@@ -28,7 +26,7 @@ export function Header({
   rightLabel = "Open filters",
   showBack = true,
   title,
-}: Readonly<HeaderPropsData>) {
+}: HeaderPropsData) {
   // Define Navigation
   const router = useRouter();
 
@@ -39,6 +37,7 @@ export function Header({
   // Define States
 
   // Helper Functions
+  /** Function to handle back navigation */
   const handleBackNavigation = (): void => {
     router.back();
   };
@@ -55,7 +54,7 @@ export function Header({
             type="button"
             aria-label="Go back"
             onClick={handleBackNavigation}
-            className="border-n-200 bg-n-50 flex size-9 items-center justify-center rounded-full border"
+            className="border-n-200 bg-n-50 hover:bg-n-100 active:bg-n-100 flex size-9 items-center justify-center rounded-full border"
           >
             <LineArrowLeft1
               primaryColor="var(--color-n-700)"
