@@ -2,10 +2,16 @@
  * Defines user payload.
  */
 export interface UserData {
+  branch?: string | null;
   email: string;
   id: string;
+  joined?: string | null;
+  languagePreference?: string | null;
   name: string;
+  phoneNumber?: string | null;
   role: string;
+  userCode?: string | null;
+  userId?: string | null;
 }
 
 /**

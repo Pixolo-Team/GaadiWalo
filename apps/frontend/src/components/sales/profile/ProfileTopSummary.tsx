@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 interface ProfileTopSummaryPropsData {
   avatarLabel: string;
   branch: string;
-  detailsClassName?: "items-center" | "items-start";
   joined: string;
   name: string;
   role: string;
@@ -18,7 +17,6 @@ interface ProfileTopSummaryPropsData {
 export default function ProfileTopSummary({
   avatarLabel,
   branch,
-  detailsClassName = "items-start",
   joined,
   name,
   role,
@@ -48,7 +46,7 @@ export default function ProfileTopSummary({
         </div>
 
         {/* Name and metadata */}
-        <div className={cn("flex flex-col gap-0.5", detailsClassName)}>
+        <div className={"flex flex-col gap-0.5"}>
           <p className="font-primary text-n-50 text-[1.125rem] font-bold">
             {name}
           </p>

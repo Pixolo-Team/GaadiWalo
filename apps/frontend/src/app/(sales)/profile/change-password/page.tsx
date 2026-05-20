@@ -8,6 +8,16 @@ import { Header } from "@/components/common/Header";
 import InputBox from "@/components/common/InputBox";
 import { Button } from "@/components/ui/button";
 
+// SERVICES //
+import { changeSalesPasswordRequest } from "@/services/api/sales-profile.api.service";
+
+// TYPES //
+import type { ApiResponseData } from "@/types/api";
+
+// OTHERS //
+import { useAuthContext } from "@/context/AuthContext";
+import { toast } from "sonner";
+
 interface ChangePasswordInputFiledData {
   confirmPassword: string;
   currentPassword: string;
@@ -19,6 +29,7 @@ export default function ChangePasswordPage() {
   // Define Navigation
 
   // Define Context
+  const { user } = useAuthContext();
 
   // Define Refs
 
@@ -29,6 +40,7 @@ export default function ChangePasswordPage() {
       currentPassword: "",
       newPassword: "",
     });
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Helper Functions
   /**
@@ -48,7 +60,10 @@ export default function ChangePasswordPage() {
   const canSubmit =
     changePasswordInputFiled.currentPassword.trim().length > 0 &&
     changePasswordInputFiled.newPassword.trim().length >= 8 &&
-    changePasswordInputFiled.confirmPassword.trim().length > 0;
+    changePasswordInputFiled.confirmPassword.trim().length > 0 &&
+    !isSubmitting;
+
+  const userCode = user?.userCode ?? user?.userId ?? user?.id ?? "";
 
   /**
    * Handles the change password action when input validation passes.
@@ -57,6 +72,53 @@ export default function ChangePasswordPage() {
     if (!canSubmit) {
       return;
     }
+
+    if (
+      changePasswordInputFiled.newPassword.trim() !==
+      changePasswordInputFiled.confirmPassword.trim()
+    ) {
+      toast.error("New password and confirm password must match.");
+      return;
+    }
+
+    if (!userCode) {
+      toast.error("User code is missing. Please login again.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    /**
+     * Call change sales password API.
+     */
+    changeSalesPasswordRequest(userCode, {
+      currentPassword: changePasswordInputFiled.currentPassword.trim(),
+      newPassword: changePasswordInputFiled.newPassword.trim(),
+    })
+      .then((response: ApiResponseData<{ success: boolean }>) => {
+        if (response.status_code === 200) {
+          // Clear form state
+          setChangePasswordInputField({
+            confirmPassword: "",
+            currentPassword: "",
+            newPassword: "",
+          });
+
+          // Success toast
+          toast.success(response.message);
+        } else {
+          // Error toast
+          toast.error(response.error ?? response.message);
+        }
+      })
+      .catch(() => {
+        // Error toast
+        toast.error("Unable to change password. Please try again.");
+      })
+      .finally(() => {
+        // Reset submitting state
+        setIsSubmitting(false);
+      });
   };
 
   // Use Effects

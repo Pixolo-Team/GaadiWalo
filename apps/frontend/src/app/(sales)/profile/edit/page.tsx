@@ -1,7 +1,7 @@
 "use client";
 
 // REACT //
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // COMPONENTS //
 import Dropdown from "@/components/common/Dropdown";
@@ -11,11 +11,25 @@ import { LeadDetailsInfoCard } from "@/components/sales/LeadDetailsInfoCard";
 import { Button } from "@/components/ui/button";
 import ImageUpload from "@/components/common/ImageUpload";
 
+// SERVICES //
+import {
+  getSalesProfileRequest,
+  updateSalesProfileRequest,
+} from "@/services/api/sales-profile.api.service";
+
 // DATA //
 import {
   salesProfileLanguageOptions,
   salesProfileSummaryData,
 } from "@/data/sales";
+
+// TYPES //
+import type { ApiResponseData } from "@/types/api";
+import type { SalesProfileData } from "@/types/profile";
+
+// OTHERS //
+import { useAuthContext } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 interface EditProfileInputFieldsData {
   email: string;
@@ -29,20 +43,24 @@ export default function EditProfilePage() {
   // Define Navigation
 
   // Define Context
+  const { user } = useAuthContext();
 
   // Define Refs
 
   // Define States
   const initialEditProfileInputFieldsData: EditProfileInputFieldsData = {
-    email: salesProfileSummaryData.email,
-    fullName: salesProfileSummaryData.name,
-    languagePreference: salesProfileSummaryData.languagePreference,
-    phoneNumber: salesProfileSummaryData.phoneNumber,
+    email: "",
+    fullName: "",
+    languagePreference: "",
+    phoneNumber: "",
   };
 
   const [editProfileInputFields, setEditProfileInputFields] =
     useState<EditProfileInputFieldsData>(initialEditProfileInputFieldsData);
 
+  const [salesProfile, setSalesProfile] = useState<SalesProfileData | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState<boolean>(true);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [profileImage, setProfileImage] = useState<string>("");
 
   // Helper Functions
@@ -64,31 +82,76 @@ export default function EditProfilePage() {
       isHighlighted: false,
       key: "user-id",
       label: "User ID",
-      value: salesProfileSummaryData.userId,
+      value: salesProfile?.userId ?? salesProfileSummaryData.userId,
     },
     {
       isHighlighted: false,
       key: "role",
       label: "Role",
-      value: salesProfileSummaryData.role,
+      value: salesProfile?.role ?? salesProfileSummaryData.role,
     },
     {
       isHighlighted: false,
       key: "branch",
       label: "Branch",
-      value: salesProfileSummaryData.branch,
+      value: salesProfile?.branch ?? salesProfileSummaryData.branch,
     },
     {
       isHighlighted: false,
       key: "joined",
       label: "Joined",
-      value: salesProfileSummaryData.joined,
+      value:
+        (salesProfile?.joinedAt
+          ? new Date(salesProfile.joinedAt).toLocaleDateString()
+          : "") || salesProfileSummaryData.joined,
     },
   ] as const;
 
   const canSaveProfile =
     editProfileInputFields.fullName.trim().length > 0 &&
-    editProfileInputFields.phoneNumber.trim().length > 0;
+    editProfileInputFields.phoneNumber.trim().length > 0 &&
+    !isSubmitting;
+
+  const userCode = user?.userCode ?? user?.userId ?? user?.id ?? "";
+
+  /**
+   * Fetches sales profile for edit screen.
+   */
+  const getSalesProfile = (): void => {
+    if (!userCode) {
+      setIsProfileLoading(false);
+      return;
+    }
+
+    /**
+     * Call get sales profile API.
+     */
+    getSalesProfileRequest(userCode)
+      .then((response: ApiResponseData<SalesProfileData>) => {
+        if (response.status_code === 200 && response.data) {
+          // Set sales profile state
+          setSalesProfile(response.data);
+
+          // Set editable field state
+          setEditProfileInputFields({
+            email: response.data.email ?? "",
+            fullName: response.data.fullName ?? "",
+            languagePreference: response.data.languagePreference ?? "English",
+            phoneNumber: response.data.phone ?? "",
+          });
+        } else {
+          setSalesProfile(null);
+        }
+      })
+      .catch(() => {
+        // Error toast
+        toast.error("Unable to load profile right now.");
+      })
+      .finally(() => {
+        // Set profile loading false
+        setIsProfileLoading(false);
+      });
+  };
 
   /**
    * Handles profile save action.
@@ -97,16 +160,71 @@ export default function EditProfilePage() {
     if (!canSaveProfile) {
       return;
     }
+
+    if (!userCode) {
+      toast.error("User code is missing. Please login again.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    /**
+     * Call update sales profile API.
+     */
+    updateSalesProfileRequest(userCode, {
+      email: editProfileInputFields.email.trim(),
+      fullName: editProfileInputFields.fullName.trim(),
+      languagePreference: editProfileInputFields.languagePreference.trim(),
+      phone: editProfileInputFields.phoneNumber.trim(),
+    })
+      .then((response: ApiResponseData<SalesProfileData>) => {
+        if (response.status_code === 200 && response.data) {
+          // Set updated sales profile state
+          setSalesProfile(response.data);
+
+          // Success toast
+          toast.success(response.message);
+        } else {
+          // Error toast
+          toast.error(response.error ?? response.message);
+        }
+      })
+      .catch(() => {
+        // Error toast
+        toast.error("Unable to update profile. Please try again.");
+      })
+      .finally(() => {
+        // Reset submitting state
+        setIsSubmitting(false);
+      });
   };
 
   /**
    * Resets edit form fields back to initial values.
    */
   const handleCancelProfileEdit = (): void => {
-    setEditProfileInputFields(initialEditProfileInputFieldsData);
+    setEditProfileInputFields({
+      email: salesProfile?.email ?? "",
+      fullName: salesProfile?.fullName ?? "",
+      languagePreference: salesProfile?.languagePreference ?? "English",
+      phoneNumber: salesProfile?.phone ?? "",
+    });
   };
 
   // Use Effects
+  useEffect(() => {
+    getSalesProfile();
+  }, [userCode]);
+
+  if (isProfileLoading) {
+    return (
+      <section className="bg-n-100 h-full">
+        <div className="flex h-full items-center justify-center">
+          <p className="font-secondary text-n-600 text-sm">Loading profile...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-n-100 h-full">
@@ -122,7 +240,13 @@ export default function EditProfilePage() {
             {/* Profile Photo */}
             <ImageUpload
               imageUrl={profileImage}
-              avatarLabel={salesProfileSummaryData.avatarLabel}
+              avatarLabel={
+                salesProfile?.fullName
+                  ?.split(" ")
+                  .slice(0, 2)
+                  .map((wordItem) => wordItem.charAt(0).toUpperCase())
+                  .join("") ?? salesProfileSummaryData.avatarLabel
+              }
               onImageCropped={(croppedBase64Image: string) => {
                 setProfileImage(croppedBase64Image);
               }}
