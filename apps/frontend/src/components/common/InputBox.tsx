@@ -4,7 +4,7 @@
 import type { HTMLInputTypeAttribute, ReactNode } from "react";
 
 // COMPONENTS //
-import { FieldDescription, FieldLabel } from "@/components/ui/field";
+import { FieldDescription } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
 // OTHERS //
@@ -22,6 +22,7 @@ interface InputBoxPropsData {
   placeholder: string;
   type?: HTMLInputTypeAttribute;
   value?: string;
+  isRequired?: boolean;
 }
 
 /** Input Box Component */
@@ -37,6 +38,7 @@ export default function InputBox({
   placeholder,
   type = "text",
   value,
+  isRequired,
 }: InputBoxPropsData) {
   // Define Navigation
 
@@ -54,15 +56,14 @@ export default function InputBox({
     <div className={cn("flex w-full flex-col gap-1", className)}>
       {/* Label */}
       {label !== "" && (
-        <FieldLabel
-          htmlFor={id}
-          className={cn(
-            "font-secondary text-n-600 text-xs leading-normal font-medium tracking-wide uppercase",
-            labelClassName,
-          )}
-        >
-          {label}
-        </FieldLabel>
+        <div className="relative flex">
+          <label className="font-secondary text-n-600 text-xs leading-normal font-medium tracking-wide uppercase">
+            {label}
+            {isRequired && (
+              <span className="absolute top-0 ml-0.5 text-red-500">*</span>
+            )}
+          </label>
+        </div>
       )}
 
       {/* Input container with optional right icon */}
@@ -73,7 +74,7 @@ export default function InputBox({
           placeholder={placeholder}
           value={value}
           className={cn(
-            "border-n-200 bg-n-50 font-secondary text-n-800 placeholder:font-secondary placeholder:text-n-400 focus-visible:border-n-300 h-[50px] rounded-lg border p-3.5 text-base font-normal placeholder:text-base placeholder:font-normal focus-visible:ring-0 focus-visible:ring-offset-0",
+            "border-n-200 bg-n-50 font-secondary text-n-800 placeholder:font-secondary placeholder:text-n-400 focus-visible:border-n-300 h-[50px] rounded-lg border p-3.5 text-base font-normal placeholder:text-base placeholder:font-normal focus-visible:ring-[0.5px] focus-visible:ring-offset-0",
             iconRight ? "pr-12" : "",
             inputClassName,
           )}
@@ -90,7 +91,6 @@ export default function InputBox({
           </div>
         ) : null}
       </div>
-
       {/* Caption */}
       {caption ? (
         <FieldDescription className="font-secondary text-n-500 text-xs leading-[1.35]">

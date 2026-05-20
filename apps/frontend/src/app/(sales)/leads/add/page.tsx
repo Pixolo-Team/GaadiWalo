@@ -297,7 +297,8 @@ export default function AddLeadPage() {
                 {/* Personal info fields */}
                 <div className="flex flex-col gap-4">
                   <InputBox
-                    label="FULL NAME *"
+                    label="FULL NAME"
+                    isRequired
                     placeholder="e.g. Rahul Kumar"
                     value={leadInputFiled.fullName}
                     onChange={(value) =>
@@ -306,7 +307,8 @@ export default function AddLeadPage() {
                   />
 
                   <InputBox
-                    label="PHONE NUMBER *"
+                    label="PHONE NUMBER"
+                    isRequired
                     placeholder="+91 XXXXXXXXXX"
                     value={leadInputFiled.phoneNumber}
                     onChange={(value) =>
@@ -333,8 +335,8 @@ export default function AddLeadPage() {
                 </p>
 
                 <Dropdown
-                  label="SOURCE *"
-                  required
+                  label="SOURCE"
+                  isRequired
                   title="Select Source"
                   options={leadSourceOptions}
                   selectedOption={leadInputFiled.source}
@@ -353,7 +355,7 @@ export default function AddLeadPage() {
                 <div className="flex flex-col gap-4">
                   <Dropdown
                     label="CAR BRAND"
-                    required
+                    isRequired
                     title="Select Brand"
                     options={carBrandOptions}
                     selectedOption={leadInputFiled.carBrandId}
@@ -385,7 +387,7 @@ export default function AddLeadPage() {
                       updateLeadInputFiled("initialNote", event.target.value)
                     }
                     placeholder="Any additional info about this lead..."
-                    className="border-n-200 bg-n-50 font-secondary text-n-800 placeholder:text-n-400 min-h-[120px] w-full resize-y rounded-lg border p-3.5 text-base leading-normal outline-none"
+                    className="min-h-[120px] w-full resize-y"
                   />
                 </div>
               </div>
