@@ -1,8 +1,17 @@
 "use client";
 
 // REACT //
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+// TYPES //
+import type { ApiResponseData } from "@/types/api";
+import type { DropdownOptionData } from "@/types/dropdown";
+import type {
+  CreateLeadResponseData,
+  LeadCarBrandData,
+  LeadSourceData,
+} from "@/types/leads";
 
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
@@ -12,15 +21,18 @@ import ContentInsightIdeaTrivia from "@/components/icons/neevo-icons/ContentInsi
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-// SERVICES //
-import { createLeadRequest } from "@/services/api/sales-leads.api.service";
+// API SERVICES //
+import {
+  createLeadRequest,
+  getCarBrandsRequest,
+  getLeadSourcesRequest,
+} from "@/services/api/sales-leads.api.service";
+
+// DATA //
+import { salesLeadBudgetOptions } from "@/data/sales";
 
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
-
-// TYPES //
-import type { ApiResponseData } from "@/types/api";
-import type { CreateLeadResponseData } from "@/types/leads";
 
 // UTILS //
 import { validatePhoneNumberValue } from "@/utils/validations";
@@ -28,34 +40,9 @@ import { validatePhoneNumberValue } from "@/utils/validations";
 // OTHERS //
 import { toast } from "sonner";
 
-const sourceOptions = [
-  { label: "CarWale", value: "CarWale" },
-  { label: "CarDekho", value: "CarDekho" },
-  { label: "Walk In", value: "Walk In" },
-  { label: "Referral", value: "Referral" },
-] as const;
-const carBrandOptions = [
-  { label: "Maruti Suzuki", value: "Maruti Suzuki" },
-  { label: "Hyundai", value: "Hyundai" },
-  { label: "Tata", value: "Tata" },
-  { label: "Mahindra", value: "Mahindra" },
-] as const;
-const carModelOptions = [
-  { label: "Swift", value: "Swift" },
-  { label: "Baleno", value: "Baleno" },
-  { label: "Brezza", value: "Brezza" },
-  { label: "WagonR", value: "WagonR" },
-] as const;
-const budgetOptions = [
-  { label: "Under 5 Lakh", value: "Under 5 Lakh" },
-  { label: "5 - 8 Lakh", value: "5 - 8 Lakh" },
-  { label: "8 - 12 Lakh", value: "8 - 12 Lakh" },
-  { label: "12+ Lakh", value: "12+ Lakh" },
-] as const;
-
 interface LeadInputFiledData {
   budget: string;
-  carBrand: string;
+  carBrandId: string;
   carModel: string;
   email: string;
   fullName: string;
@@ -66,7 +53,7 @@ interface LeadInputFiledData {
 
 const initialLeadInputFiledData: LeadInputFiledData = {
   budget: "",
-  carBrand: "",
+  carBrandId: "",
   carModel: "",
   email: "",
   fullName: "",
@@ -75,9 +62,7 @@ const initialLeadInputFiledData: LeadInputFiledData = {
   source: "",
 };
 
-/**
- * Renders lead create form and submits API request.
- */
+/** Add Lead Page Component */
 export default function AddLeadPage() {
   // Define Navigation
   const router = useRouter();
@@ -91,6 +76,10 @@ export default function AddLeadPage() {
     initialLeadInputFiledData,
   );
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [carBrands, setCarBrands] = useState<LeadCarBrandData[]>([]);
+  const [leadSourceOptions, setLeadSourceOptions] = useState<
+    DropdownOptionData[]
+  >([]);
 
   // Helper Functions
   /**
@@ -112,18 +101,105 @@ export default function AddLeadPage() {
     leadInputFiled.source.trim().length > 0 &&
     !isSubmitting;
 
+  const selectedCarBrand = carBrands.find(
+    (carBrandItem) => carBrandItem.id === leadInputFiled.carBrandId,
+  );
+
+  // Car Brands
+  const carBrandOptions: DropdownOptionData[] = carBrands.map(
+    (carBrandItem) => ({
+      label: carBrandItem.name,
+      value: carBrandItem.id,
+    }),
+  );
+
+  // Car Models from specific Brand
+  const carModelOptions: DropdownOptionData[] =
+    selectedCarBrand?.models.map((carModelItem) => ({
+      label: carModelItem,
+      value: carModelItem,
+    })) ?? [];
+
   /**
    * Maps local form state to create-lead API payload.
    */
   const createLeadPayload = {
     budget: leadInputFiled.budget || null,
-    carBrand: leadInputFiled.carBrand || null,
+    carBrand: selectedCarBrand?.name ?? null,
     carModel: leadInputFiled.carModel || null,
     email: leadInputFiled.email.trim(),
     fullName: leadInputFiled.fullName,
     initialNote: leadInputFiled.initialNote.trim() || undefined,
     phone: leadInputFiled.phoneNumber,
     source: leadInputFiled.source,
+  };
+
+  /**
+   * Handles car brand selection and model reset.
+   */
+  const handleCarBrandChange = (carBrandId: string): void => {
+    setLeadInputField((previousInputFieldItem) => ({
+      ...previousInputFieldItem,
+      carBrandId,
+      carModel: "",
+    }));
+  };
+
+  /**
+   * Fetches all car brands for add-lead dropdown.
+   */
+  const getAllCarBrands = (): void => {
+    /**
+     * Call get car brands API.
+     */
+    getCarBrandsRequest()
+      .then((response: ApiResponseData<LeadCarBrandData[]>) => {
+        if (response.status_code === 200) {
+          // Set all car brands state
+          setCarBrands(response.data ?? []);
+        } else {
+          // Reset car brands state
+          setCarBrands([]);
+        }
+      })
+      .catch(() => {
+        // Error toast
+        toast.error("Unable to load car brands right now.");
+
+        // Reset car brands state
+        setCarBrands([]);
+      });
+  };
+
+  /**
+   * Fetches all lead sources for source dropdown.
+   */
+  const getAllLeadSources = (): void => {
+    /**
+     * Call get lead sources API.
+     */
+    getLeadSourcesRequest()
+      .then((response: ApiResponseData<LeadSourceData[]>) => {
+        if (response.status_code === 200) {
+          const sourceOptions = (response.data ?? []).map((leadSourceItem) => ({
+            label: leadSourceItem.name,
+            value: leadSourceItem.name,
+          }));
+
+          // Set Lead Source state
+          setLeadSourceOptions(sourceOptions);
+        } else {
+          // Reset lead source options state
+          setLeadSourceOptions([]);
+        }
+      })
+      .catch(() => {
+        // Error toast
+        toast.error("Unable to load lead sources right now.");
+
+        // Reset lead source options state
+        setLeadSourceOptions([]);
+      });
   };
 
   /**
@@ -146,21 +222,27 @@ export default function AddLeadPage() {
     setIsSubmitting(true);
 
     /**
-     * Call create lead API.
+     * Call create lead API
      */
     createLeadRequest(createLeadPayload)
       .then((response: ApiResponseData<CreateLeadResponseData>) => {
         if (response.status_code === 201 && response.data?.lead.id) {
+          // Success toast
           toast.success(response.message);
+
+          // Navigate to lead details page
           router.push(ROUTES.sales.leadDetails(response.data.lead.id));
         } else {
+          // Error toast
           toast.error(response.error ?? response.message);
         }
       })
       .catch(() => {
+        // Error toast
         toast.error("Unable to create lead. Please try again.");
       })
       .finally(() => {
+        // Reset submitting state
         setIsSubmitting(false);
       });
   };
@@ -173,6 +255,13 @@ export default function AddLeadPage() {
   };
 
   // Use Effects
+  useEffect(() => {
+    /** Get all Car Brands */
+    getAllCarBrands();
+
+    /** Get all lead sources */
+    getAllLeadSources();
+  }, []);
 
   return (
     <section className="bg-n-100 h-full">
@@ -211,7 +300,9 @@ export default function AddLeadPage() {
                     label="FULL NAME *"
                     placeholder="e.g. Rahul Kumar"
                     value={leadInputFiled.fullName}
-                    onChange={(value) => updateLeadInputFiled("fullName", value)}
+                    onChange={(value) =>
+                      updateLeadInputFiled("fullName", value)
+                    }
                   />
 
                   <InputBox
@@ -245,7 +336,7 @@ export default function AddLeadPage() {
                   label="SOURCE *"
                   required
                   title="Select Source"
-                  options={sourceOptions}
+                  options={leadSourceOptions}
                   selectedOption={leadInputFiled.source}
                   onChange={(value) => updateLeadInputFiled("source", value)}
                 />
@@ -265,8 +356,8 @@ export default function AddLeadPage() {
                     required
                     title="Select Brand"
                     options={carBrandOptions}
-                    selectedOption={leadInputFiled.carBrand}
-                    onChange={(value) => updateLeadInputFiled("carBrand", value)}
+                    selectedOption={leadInputFiled.carBrandId}
+                    onChange={handleCarBrandChange}
                   />
 
                   <Dropdown
@@ -274,13 +365,15 @@ export default function AddLeadPage() {
                     title="Select Model"
                     options={carModelOptions}
                     selectedOption={leadInputFiled.carModel}
-                    onChange={(value) => updateLeadInputFiled("carModel", value)}
+                    onChange={(value) =>
+                      updateLeadInputFiled("carModel", value)
+                    }
                   />
 
                   <Dropdown
                     label="BUDGET RANGE"
                     title="Select Budget"
-                    options={budgetOptions}
+                    options={salesLeadBudgetOptions}
                     selectedOption={leadInputFiled.budget}
                     onChange={(value) => updateLeadInputFiled("budget", value)}
                   />

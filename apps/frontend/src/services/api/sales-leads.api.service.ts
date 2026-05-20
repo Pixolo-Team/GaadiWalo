@@ -9,9 +9,12 @@ import type {
   CreateLeadRequestData,
   CreateLeadResponseData,
   LeadActivityData,
+  LeadCarBrandData,
   LeadDetailsData,
   LeadListItemData,
   LeadNoteData,
+  LeadSourceData,
+  LeadStatusOptionData,
   UpdateLeadDetailsRequestData,
   UpdateLeadStatusRequestData,
 } from "@/types/leads";
@@ -32,6 +35,56 @@ const getAuthHeadersService = (): Record<string, string> => {
     Authorization: `Bearer ${accessToken ?? ""}`,
     "Content-Type": "application/json",
   };
+};
+
+/**
+ * Fetches all car brand options.
+ */
+export const getCarBrandsRequest = async (): Promise<
+  ApiResponseData<LeadCarBrandData[]>
+> => {
+  const config: AxiosRequestConfig = {
+    headers: getAuthHeadersService(),
+    method: "get",
+    url: `${CONSTANTS.API_URL}/sales/leads/car-brands`,
+  };
+
+  const response =
+    await axios.request<ApiResponseData<LeadCarBrandData[]>>(config);
+  return response.data;
+};
+
+/**
+ * Fetches all lead source options.
+ */
+export const getLeadSourcesRequest = async (): Promise<
+  ApiResponseData<LeadSourceData[]>
+> => {
+  const config: AxiosRequestConfig = {
+    headers: getAuthHeadersService(),
+    method: "get",
+    url: `${CONSTANTS.API_URL}/sales/leads/lead-sources`,
+  };
+
+  const response = await axios.request<ApiResponseData<LeadSourceData[]>>(config);
+  return response.data;
+};
+
+/**
+ * Fetches all lead statuses and reason options.
+ */
+export const getLeadStatusesRequest = async (): Promise<
+  ApiResponseData<LeadStatusOptionData[]>
+> => {
+  const config: AxiosRequestConfig = {
+    headers: getAuthHeadersService(),
+    method: "get",
+    url: `${CONSTANTS.API_URL}/sales/leads/statuses`,
+  };
+
+  const response =
+    await axios.request<ApiResponseData<LeadStatusOptionData[]>>(config);
+  return response.data;
 };
 
 /**

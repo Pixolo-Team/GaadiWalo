@@ -24,6 +24,9 @@ import type {
   LeadStatusData,
 } from "@/types/leads";
 
+// OTHERS //
+import { toast } from "sonner";
+
 const salesSortOptions = ["Newest", "Oldest"] as const;
 
 /**
@@ -111,15 +114,22 @@ export default function LeadsPage() {
     getSalesLeadsRequest()
       .then((response: ApiResponseData<LeadListItemData[]>) => {
         if (response.status_code === 200) {
+          // Set sales leads state
           setSalesLeads(response.data ?? []);
         } else {
+          // Reset sales leads state
           setSalesLeads([]);
         }
       })
       .catch(() => {
+        // Error toast
+        toast.error("Unable to load leads right now. Please try again.");
+
+        // Reset sales leads state
         setSalesLeads([]);
       })
       .finally(() => {
+        // Set loading state to false
         setIsLeadsLoading(false);
       });
   };
@@ -231,4 +241,3 @@ export default function LeadsPage() {
     </section>
   );
 }
-

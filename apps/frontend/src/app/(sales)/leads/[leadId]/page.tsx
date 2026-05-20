@@ -12,14 +12,27 @@ import { ActivityTab } from "@/components/sales/leads/ActivityTab";
 import { InfoTab } from "@/components/sales/leads/InfoTab";
 import { NotesTab } from "@/components/sales/leads/NotesTab";
 
+// DATA //
+import { salesLeadDetailTabs } from "@/data/sales";
+
 // SERVICES //
 import {
   createLeadNoteRequest,
   getLeadActivitiesRequest,
   getLeadDetailsRequest,
   getLeadNotesRequest,
+  getLeadStatusesRequest,
   updateLeadStatusRequest,
 } from "@/services/api/sales-leads.api.service";
+import {
+  getLeadActivityViews,
+  getLeadCarInterestRows,
+  getLeadContactInfoRows,
+  getLeadNoteViews,
+  getLeadProfileView,
+  getLeadStatusOptions,
+  getLostReasonOptions,
+} from "@/services/leads.service";
 
 // TYPES //
 import type { ApiResponseData } from "@/types/api";
@@ -27,33 +40,17 @@ import type {
   LeadActivityData,
   LeadDetailsData,
   LeadNoteData,
+  LeadRequestStateData,
+  LeadStatusFormStateData,
   LeadStatusData,
+  SalesLeadDetailsTabData,
+  LeadStatusOptionData,
 } from "@/types/leads";
 
 // OTHERS //
 import { toast } from "sonner";
 
-const salesLeadDetailTabs = ["Info", "Activity", "Notes"] as const;
-const salesLeadStatusOptions = [
-  { label: "New", value: "NEW" },
-  { label: "Contacted", value: "CONTACTED" },
-  { label: "Interested", value: "INTERESTED" },
-  { label: "Test Drive", value: "TEST_DRIVE" },
-  { label: "Negotiation", value: "NEGOTIATION" },
-  { label: "Won", value: "WON" },
-  { label: "Lost", value: "LOST" },
-  { label: "Vehicle NA", value: "VEHICLE_NA" },
-] as const;
-const salesLeadLostReasonOptions = [
-  { label: "Price Issue", value: "Price Issue" },
-  { label: "No Response", value: "No Response" },
-  { label: "Bought Elsewhere", value: "Bought Elsewhere" },
-  { label: "Budget Mismatch", value: "Budget Mismatch" },
-] as const;
-
-/**
- * Renders the sales lead details flow with API-backed data.
- */
+/** Lead Details Page */
 export default function LeadDetailsPage() {
   // Define Navigation
   const params = useParams<{ leadId: string }>();
@@ -63,67 +60,61 @@ export default function LeadDetailsPage() {
   // Define Refs
 
   // Define States
-  const [selectedTab, setSelectedTab] = useState<string>(
+  const [selectedTab, setSelectedTab] = useState<SalesLeadDetailsTabData>(
     salesLeadDetailTabs[0],
   );
   const [leadDetails, setLeadDetails] = useState<LeadDetailsData | null>(null);
   const [leadActivities, setLeadActivities] = useState<LeadActivityData[]>([]);
   const [leadNotes, setLeadNotes] = useState<LeadNoteData[]>([]);
-  const [selectedLeadStatus, setSelectedLeadStatus] = useState<string>("NEW");
-  const [selectedLostReason, setSelectedLostReason] = useState<string>("");
+  const [leadStatusFormState, setLeadStatusFormState] =
+    useState<LeadStatusFormStateData>({
+      selectedLeadStatus: "NEW",
+      selectedLostReason: "",
+    });
+  const [leadStatusItems, setLeadStatusItems] = useState<
+    LeadStatusOptionData[]
+  >([]);
   const [noteInputValue, setNoteInputValue] = useState<string>("");
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
-  const [isSendingNote, setIsSendingNote] = useState<boolean>(false);
-  const [isLeadLoading, setIsLeadLoading] = useState<boolean>(true);
+  const [leadRequestState, setLeadRequestState] =
+    useState<LeadRequestStateData>({
+      isLeadLoading: true,
+      isSendingNote: false,
+      isUpdatingStatus: false,
+    });
 
   // Helper Functions
   const leadId = String(params.leadId ?? "");
-  const isInfoTabSelected = selectedTab === "Info";
-  const isActivityTabSelected = selectedTab === "Activity";
-  const isNotesTabSelected = selectedTab === "Notes";
+  const isInfoTabSelected = selectedTab === salesLeadDetailTabs[0];
+  const isActivityTabSelected = selectedTab === salesLeadDetailTabs[1];
+  const isNotesTabSelected = selectedTab === salesLeadDetailTabs[2];
 
   /**
-   * Formats API datetime value into short UI text.
+   * Handles lead detail tab switch.
    */
-  const getFormattedDateValueService = (dateValue: string | null): string => {
-    if (!dateValue) {
-      return "";
-    }
-
-    const dateObject = new Date(dateValue);
-    return dateObject.toLocaleString();
+  const handleLeadDetailsTabChange = (
+    tabValue: SalesLeadDetailsTabData,
+  ): void => {
+    setSelectedTab(tabValue);
   };
 
   /**
-   * Resolves display tone class key from lead status.
+   * Handles lead status value change.
    */
-  const getLeadStatusToneService = (
-    statusValue: LeadStatusData,
-  ): "amber" | "blue" | "green" | "purple" | "red" => {
-    if (statusValue === "NEW") {
-      return "blue";
-    }
-
-    if (statusValue === "CONTACTED") {
-      return "amber";
-    }
-
-    if (statusValue === "WON") {
-      return "green";
-    }
-
-    if (statusValue === "LOST" || statusValue === "VEHICLE_NA") {
-      return "red";
-    }
-
-    return "purple";
+  const handleLeadStatusChange = (value: string): void => {
+    setLeadStatusFormState({
+      selectedLeadStatus: value as LeadStatusData,
+      selectedLostReason: "",
+    });
   };
 
   /**
-   * Maps API lead status to user-facing label.
+   * Handles lost reason value change.
    */
-  const getLeadStatusLabelService = (statusValue: LeadStatusData): string => {
-    return statusValue.replace("_", " ");
+  const handleLostReasonChange = (value: string): void => {
+    setLeadStatusFormState((previousStateItem) => ({
+      ...previousStateItem,
+      selectedLostReason: value,
+    }));
   };
 
   /**
@@ -136,14 +127,25 @@ export default function LeadDetailsPage() {
     getLeadDetailsRequest(leadId)
       .then((response: ApiResponseData<LeadDetailsData>) => {
         if (response.status_code === 200 && response.data) {
+          // Set Lead Details
           setLeadDetails(response.data);
-          setSelectedLeadStatus(response.data.status);
-          setSelectedLostReason(response.data.lostReason ?? "");
+
+          // Set Lead Status
+          setLeadStatusFormState({
+            selectedLeadStatus: response.data.status,
+            selectedLostReason: response.data.lostReason ?? "",
+          });
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        // Error toast
+        toast.error("Unable to load lead details. Please refresh and try again.");
+      })
       .finally(() => {
-        setIsLeadLoading(false);
+        setLeadRequestState((previousRequestStateItem) => ({
+          ...previousRequestStateItem,
+          isLeadLoading: false,
+        }));
       });
   }, [leadId]);
 
@@ -157,10 +159,14 @@ export default function LeadDetailsPage() {
     getLeadActivitiesRequest(leadId)
       .then((response: ApiResponseData<LeadActivityData[]>) => {
         if (response.status_code === 200) {
+          // Set lead activities state
           setLeadActivities(response.data ?? []);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        // Error toast
+        toast.error("Unable to load lead activity right now.");
+      });
   }, [leadId]);
 
   /**
@@ -173,11 +179,35 @@ export default function LeadDetailsPage() {
     getLeadNotesRequest(leadId)
       .then((response: ApiResponseData<LeadNoteData[]>) => {
         if (response.status_code === 200) {
+          // Set lead notes state
           setLeadNotes(response.data ?? []);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        // Error toast
+        toast.error("Unable to load lead notes right now.");
+      });
   }, [leadId]);
+
+  /**
+   * Fetches lead statuses and reason mappings.
+   */
+  const fetchLeadStatusesService = useCallback((): void => {
+    /**
+     * Call get lead statuses API.
+     */
+    getLeadStatusesRequest()
+      .then((response: ApiResponseData<LeadStatusOptionData[]>) => {
+        if (response.status_code === 200) {
+          // Set lead status options state
+          setLeadStatusItems(response.data ?? []);
+        }
+      })
+      .catch(() => {
+        // Error toast
+        toast.error("Unable to load lead status options right now.");
+      });
+  }, []);
 
   /**
    * Handles lead status update action.
@@ -187,28 +217,47 @@ export default function LeadDetailsPage() {
       return;
     }
 
-    if (selectedLeadStatus === "LOST" && !selectedLostReason.trim()) {
+    if (
+      leadStatusFormState.selectedLeadStatus === "LOST" &&
+      !leadStatusFormState.selectedLostReason.trim()
+    ) {
       toast.error("Please select a lost reason.");
       return;
     }
 
-    setIsUpdatingStatus(true);
+    setLeadRequestState((previousRequestStateItem) => ({
+      ...previousRequestStateItem,
+      isUpdatingStatus: true,
+    }));
 
     /**
      * Call update lead status API.
      */
     updateLeadStatusRequest(leadDetails.id, {
-      lostReason: selectedLeadStatus === "LOST" ? selectedLostReason : null,
-      status: selectedLeadStatus as LeadStatusData,
+      lostReason:
+        leadStatusFormState.selectedLeadStatus === "LOST"
+          ? leadStatusFormState.selectedLostReason
+          : null,
+      status: leadStatusFormState.selectedLeadStatus,
     })
       .then((response: ApiResponseData<LeadDetailsData>) => {
         if (response.status_code === 200 && response.data) {
+          // Set updated lead details state
           setLeadDetails(response.data);
-          setSelectedLeadStatus(response.data.status);
-          setSelectedLostReason(response.data.lostReason ?? "");
+
+          // Set updated lead status state
+          setLeadStatusFormState({
+            selectedLeadStatus: response.data.status,
+            selectedLostReason: response.data.lostReason ?? "",
+          });
+
+          // Success toast
           toast.success(response.message);
+
+          // Refresh activities after status update
           fetchLeadActivitiesService();
         } else {
+          // Error toast
           toast.error(response.error ?? response.message);
         }
       })
@@ -216,7 +265,10 @@ export default function LeadDetailsPage() {
         toast.error("Unable to update lead status. Please try again.");
       })
       .finally(() => {
-        setIsUpdatingStatus(false);
+        setLeadRequestState((previousRequestStateItem) => ({
+          ...previousRequestStateItem,
+          isUpdatingStatus: false,
+        }));
       });
   };
 
@@ -228,7 +280,10 @@ export default function LeadDetailsPage() {
       return;
     }
 
-    setIsSendingNote(true);
+    setLeadRequestState((previousRequestStateItem) => ({
+      ...previousRequestStateItem,
+      isSendingNote: true,
+    }));
 
     /**
      * Call create lead note API.
@@ -238,11 +293,17 @@ export default function LeadDetailsPage() {
     })
       .then((response: ApiResponseData<LeadNoteData>) => {
         if (response.status_code === 201) {
+          // Clear note input
           setNoteInputValue("");
+
+          // Success toast
           toast.success(response.message);
+
+          // Refresh notes and activities after adding note
           fetchLeadNotesService();
           fetchLeadActivitiesService();
         } else {
+          // Error toast
           toast.error(response.error ?? response.message);
         }
       })
@@ -250,7 +311,10 @@ export default function LeadDetailsPage() {
         toast.error("Unable to send note. Please try again.");
       })
       .finally(() => {
-        setIsSendingNote(false);
+        setLeadRequestState((previousRequestStateItem) => ({
+          ...previousRequestStateItem,
+          isSendingNote: false,
+        }));
       });
   };
 
@@ -263,127 +327,27 @@ export default function LeadDetailsPage() {
     fetchLeadDetailsService();
     fetchLeadActivitiesService();
     fetchLeadNotesService();
+    fetchLeadStatusesService();
   }, [
     leadId,
     fetchLeadActivitiesService,
     fetchLeadDetailsService,
     fetchLeadNotesService,
+    fetchLeadStatusesService,
   ]);
 
-  const leadProfileView = leadDetails
-    ? {
-        age: "",
-        avatarLabel: leadDetails.fullName
-          .split(" ")
-          .slice(0, 2)
-          .map((wordItem) => wordItem.charAt(0).toUpperCase())
-          .join(""),
-        name: leadDetails.fullName,
-        phoneNumber: leadDetails.phone,
-        status: getLeadStatusLabelService(leadDetails.status),
-        statusTone: getLeadStatusToneService(leadDetails.status),
-      }
-    : null;
+  const leadStatusOptions = getLeadStatusOptions(leadStatusItems);
+  const lostReasonOptions = getLostReasonOptions(
+    leadStatusItems,
+    leadStatusFormState.selectedLeadStatus,
+  );
+  const leadProfileView = getLeadProfileView(leadDetails);
+  const contactInfoRows = getLeadContactInfoRows(leadDetails);
+  const carInterestRows = getLeadCarInterestRows(leadDetails);
+  const activities = getLeadActivityViews(leadActivities);
+  const notes = getLeadNoteViews(leadNotes);
 
-  const contactInfoRows = leadDetails
-    ? [
-        {
-          isHighlighted: true,
-          key: "phone",
-          label: "Phone",
-          value: leadDetails.phone,
-        },
-        {
-          isHighlighted: false,
-          key: "email",
-          label: "Email",
-          value: leadDetails.email ?? "-",
-        },
-        {
-          isHighlighted: false,
-          key: "source",
-          label: "Source",
-          value: leadDetails.source,
-        },
-        {
-          isHighlighted: false,
-          key: "updated-at",
-          label: "Updated",
-          value: getFormattedDateValueService(leadDetails.updatedAt) || "-",
-        },
-      ]
-    : [];
-
-  const carInterestRows = leadDetails
-    ? [
-        {
-          isHighlighted: true,
-          key: "car-brand",
-          label: "Car Brand",
-          value: leadDetails.carBrand ?? "-",
-        },
-        {
-          isHighlighted: false,
-          key: "car-model",
-          label: "Car Model",
-          value: leadDetails.carModel ?? "-",
-        },
-        {
-          isHighlighted: false,
-          key: "variant-name",
-          label: "Variant",
-          value: leadDetails.variantName ?? "-",
-        },
-        {
-          isHighlighted: false,
-          key: "budget",
-          label: "Budget",
-          value: leadDetails.budget ?? "-",
-        },
-      ]
-    : [];
-
-  const activities = leadActivities.map((activityItem) => {
-    const tone: "amber" | "blue" | "green" | "neutral" | "purple" =
-      activityItem.type === "status_change"
-        ? "purple"
-        : activityItem.type === "note"
-          ? "blue"
-          : activityItem.type === "system"
-            ? "green"
-            : activityItem.type === "call"
-              ? "amber"
-              : "neutral";
-
-    const type: "calendar" | "call" | "lead" | "status" | "whatsapp" =
-      activityItem.type === "status_change"
-        ? "status"
-        : activityItem.type === "note"
-          ? "calendar"
-          : activityItem.type === "system"
-            ? "lead"
-            : activityItem.type === "call"
-              ? "call"
-              : "whatsapp";
-
-    return {
-      description: activityItem.description,
-      key: activityItem.id,
-      meta: getFormattedDateValueService(activityItem.createdAt),
-      tone,
-      type,
-    };
-  });
-
-  const notes = leadNotes.map((noteItem) => ({
-    author: noteItem.author?.name ?? "Unknown",
-    key: noteItem.id,
-    message: noteItem.content,
-    meta: getFormattedDateValueService(noteItem.createdAt),
-    variant: "outgoing" as const,
-  }));
-
-  if (isLeadLoading || !leadProfileView) {
+  if (leadRequestState.isLeadLoading || !leadProfileView) {
     return (
       <section className="bg-n-100">
         <div className="flex min-h-screen items-center justify-center">
@@ -418,7 +382,7 @@ export default function LeadDetailsPage() {
             <LeadDetailsTabs
               tabs={salesLeadDetailTabs}
               selectedTab={selectedTab}
-              onChange={setSelectedTab}
+              onChange={handleLeadDetailsTabChange}
             />
 
             {/* Info tab */}
@@ -426,14 +390,14 @@ export default function LeadDetailsPage() {
               <InfoTab
                 contactInfoRows={contactInfoRows}
                 carInterestRows={carInterestRows}
-                leadStatusOptions={salesLeadStatusOptions}
-                lostReasonOptions={salesLeadLostReasonOptions}
-                selectedLeadStatus={selectedLeadStatus}
-                selectedLostReason={selectedLostReason}
-                onLeadStatusChange={setSelectedLeadStatus}
-                onLostReasonChange={setSelectedLostReason}
+                leadStatusOptions={leadStatusOptions}
+                lostReasonOptions={lostReasonOptions}
+                selectedLeadStatus={leadStatusFormState.selectedLeadStatus}
+                selectedLostReason={leadStatusFormState.selectedLostReason}
+                onLeadStatusChange={handleLeadStatusChange}
+                onLostReasonChange={handleLostReasonChange}
                 onUpdateStatus={handleUpdateLeadStatus}
-                isUpdatingStatus={isUpdatingStatus}
+                isUpdatingStatus={leadRequestState.isUpdatingStatus}
               />
             ) : null}
 
@@ -449,7 +413,7 @@ export default function LeadDetailsPage() {
                 noteInputValue={noteInputValue}
                 onNoteInputChange={setNoteInputValue}
                 onSendNote={handleSendLeadNote}
-                isSending={isSendingNote}
+                isSending={leadRequestState.isSendingNote}
               />
             ) : null}
           </div>

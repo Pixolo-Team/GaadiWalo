@@ -13,10 +13,8 @@ import {
 // OTHERS //
 import { cn } from "@/lib/utils";
 
-interface DropdownOptionData {
-  label: string;
-  value: string;
-}
+// TYPES //
+import type { DropdownOptionData } from "@/types/dropdown";
 
 interface DropdownPropsData {
   className?: string;
@@ -107,3 +105,4 @@ export default function Dropdown({
     </div>
   );
 }
+

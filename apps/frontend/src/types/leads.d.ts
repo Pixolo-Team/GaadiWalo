@@ -69,6 +69,99 @@ export interface LeadListItemData {
 }
 
 /**
+ * Defines car brand option payload.
+ */
+export interface LeadCarBrandData {
+  id: string;
+  models: string[];
+  name: string;
+}
+
+/**
+ * Defines lead source option payload.
+ */
+export interface LeadSourceData {
+  description: string;
+  id: string;
+  name: string;
+}
+
+/**
+ * Defines lead-details tab values.
+ */
+export type SalesLeadDetailsTabData = "Info" | "Activity" | "Notes";
+
+/**
+ * Defines local lead status form state shape.
+ */
+export interface LeadStatusFormStateData {
+  selectedLeadStatus: LeadStatusData;
+  selectedLostReason: string;
+}
+
+/**
+ * Defines local request loading/submission state shape.
+ */
+export interface LeadRequestStateData {
+  isLeadLoading: boolean;
+  isSendingNote: boolean;
+  isUpdatingStatus: boolean;
+}
+
+/**
+ * Defines info-card row shape for lead details UI.
+ */
+export interface LeadInfoRowData {
+  isHighlighted: boolean;
+  key: string;
+  label: string;
+  value: string;
+}
+
+/**
+ * Defines lead profile view model for lead details UI.
+ */
+export interface LeadProfileViewData {
+  age: string;
+  avatarLabel: string;
+  name: string;
+  phoneNumber: string;
+  status: string;
+  statusTone: "amber" | "blue" | "green" | "purple" | "red";
+}
+
+/**
+ * Defines lead activity timeline view item.
+ */
+export interface LeadActivityViewData {
+  description: string;
+  key: string;
+  meta: string;
+  tone: "amber" | "blue" | "green" | "neutral" | "purple";
+  type: "calendar" | "call" | "lead" | "status" | "whatsapp";
+}
+
+/**
+ * Defines lead note view item.
+ */
+export interface LeadNoteViewData {
+  author: string;
+  key: string;
+  message: string;
+  meta: string;
+  variant: "incoming" | "outgoing";
+}
+
+/**
+ * Defines lead status option payload from status master API.
+ */
+export interface LeadStatusOptionData {
+  id: string;
+  name: LeadStatusData;
+  reason: string[];
+}
+
+/**
  * Defines lead activity payload.
  */
 export interface LeadActivityData {

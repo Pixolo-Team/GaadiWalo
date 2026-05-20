@@ -1,7 +1,10 @@
+// TYPES //
+import type { SalesLeadDetailsTabData } from "@/types/leads";
+
 interface LeadDetailsTabsPropsData {
-  onChange: (tab: string) => void;
-  selectedTab: string;
-  tabs: ReadonlyArray<string>;
+  onChange: (tab: SalesLeadDetailsTabData) => void;
+  selectedTab: SalesLeadDetailsTabData;
+  tabs: ReadonlyArray<SalesLeadDetailsTabData>;
 }
 
 /**
