@@ -1,8 +1,5 @@
 "use client";
 
-// REACT //
-import { useState } from "react";
-
 // COMPONENTS //
 import { DatePicker } from "@/components/common/DatePicker";
 import Dropdown from "@/components/common/Dropdown";
@@ -10,23 +7,35 @@ import FilterDrawer from "@/components/common/FilterDrawer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-// DATA //
-import {
-  salesBranchOptions,
-  salesCarBrandOptions,
-  salesSourceFilterOptions,
-  salesStatusFilterOptions,
-} from "@/data/sales";
+// TYPES //
+import type { DropdownOptionData } from "@/types/dropdown";
+import type { LeadsFilterStateData } from "@/types/leads";
 
 interface LeadsFilterDrawerPropsData {
+  branchOptions: ReadonlyArray<DropdownOptionData>;
+  carBrandOptions: ReadonlyArray<DropdownOptionData>;
+  filterState: LeadsFilterStateData;
   isOpen: boolean;
+  onApplyFilters: () => void;
+  onClearFilters: () => void;
+  onFilterStateChange: (filterState: LeadsFilterStateData) => void;
   onOpenChange: (open: boolean) => void;
+  sourceFilterOptions: ReadonlyArray<string>;
+  statusFilterOptions: ReadonlyArray<string>;
 }
 
 /** Leads filter Drawer Component */
 export function LeadsFilterDrawer({
+  branchOptions,
+  carBrandOptions,
+  filterState,
   isOpen,
+  onApplyFilters,
+  onClearFilters,
+  onFilterStateChange,
   onOpenChange,
+  sourceFilterOptions,
+  statusFilterOptions,
 }: LeadsFilterDrawerPropsData) {
   // Define Navigation
 
@@ -34,33 +43,39 @@ export function LeadsFilterDrawer({
 
   // Define Refs
 
-  // Define States
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>(
-    salesStatusFilterOptions[0],
-  );
-  const [selectedSourceFilter, setSelectedSourceFilter] = useState<string>(
-    salesSourceFilterOptions[0],
-  );
-  const [selectedBranch, setSelectedBranch] = useState<string>(
-    salesBranchOptions[0].value,
-  );
-  const [selectedCarBrand, setSelectedCarBrand] = useState<string>(
-    salesCarBrandOptions[0].value,
-  );
-  const [selectedStartDate, setSelectedStartDate] = useState("");
-  const [selectedEndDate, setSelectedEndDate] = useState("");
-
   // Helper Functions
-  const handleClearFilters = (): void => {
-    setSelectedStatusFilter(salesStatusFilterOptions[0]);
-    setSelectedSourceFilter(salesSourceFilterOptions[0]);
-    setSelectedBranch(salesBranchOptions[0].value);
-    setSelectedCarBrand(salesCarBrandOptions[0].value);
-    setSelectedStartDate("");
-    setSelectedEndDate("");
+  const handleFilterStateChange = (
+    fieldName: keyof LeadsFilterStateData,
+    fieldValue: string | string[],
+  ): void => {
+    onFilterStateChange({
+      ...filterState,
+      [fieldName]: fieldValue,
+    });
+  };
+
+  /**
+   * Toggles one filter chip value in a multi-select field.
+   */
+  const handleMultiSelectToggle = (
+    fieldName: "selectedSourceFilters" | "selectedStatusFilters",
+    fieldValue: string,
+  ): void => {
+    if (fieldValue === "All") {
+      handleFilterStateChange(fieldName, []);
+      return;
+    }
+
+    const selectedItems = filterState[fieldName];
+    const nextSelectedItems = selectedItems.includes(fieldValue)
+      ? selectedItems.filter((selectedItem) => selectedItem !== fieldValue)
+      : [...selectedItems, fieldValue];
+
+    handleFilterStateChange(fieldName, nextSelectedItems);
   };
 
   const handleApplyFilters = (): void => {
+    onApplyFilters();
     onOpenChange(false);
   };
 
@@ -83,8 +98,11 @@ export function LeadsFilterDrawer({
 
           {/* Status options */}
           <div className="flex flex-wrap gap-2">
-            {salesStatusFilterOptions.map((statusFilterItem) => {
-              const isSelected = selectedStatusFilter === statusFilterItem;
+            {statusFilterOptions.map((statusFilterItem) => {
+              const isSelected =
+                statusFilterItem === "All"
+                  ? filterState.selectedStatusFilters.length === 0
+                  : filterState.selectedStatusFilters.includes(statusFilterItem);
 
               return (
                 /* Status filter chip */
@@ -92,7 +110,12 @@ export function LeadsFilterDrawer({
                   key={statusFilterItem}
                   type="button"
                   aria-pressed={isSelected}
-                  onClick={() => setSelectedStatusFilter(statusFilterItem)}
+                  onClick={() =>
+                    handleMultiSelectToggle(
+                      "selectedStatusFilters",
+                      statusFilterItem,
+                    )
+                  }
                   className="h-auto w-auto rounded-3xl p-0"
                 >
                   <Badge
@@ -119,8 +142,11 @@ export function LeadsFilterDrawer({
 
           {/* Source options */}
           <div className="flex flex-wrap gap-2">
-            {salesSourceFilterOptions.map((sourceFilterItem) => {
-              const isSelected = selectedSourceFilter === sourceFilterItem;
+            {sourceFilterOptions.map((sourceFilterItem) => {
+              const isSelected =
+                sourceFilterItem === "All"
+                  ? filterState.selectedSourceFilters.length === 0
+                  : filterState.selectedSourceFilters.includes(sourceFilterItem);
 
               return (
                 /* Source filter chip */
@@ -128,7 +154,12 @@ export function LeadsFilterDrawer({
                   key={sourceFilterItem}
                   type="button"
                   aria-pressed={isSelected}
-                  onClick={() => setSelectedSourceFilter(sourceFilterItem)}
+                  onClick={() =>
+                    handleMultiSelectToggle(
+                      "selectedSourceFilters",
+                      sourceFilterItem,
+                    )
+                  }
                   className="h-auto w-auto rounded-3xl p-0"
                 >
                   <Badge
@@ -149,10 +180,12 @@ export function LeadsFilterDrawer({
         {/* Branch dropdown */}
         <Dropdown
           label="Branch"
-          options={salesBranchOptions}
-          selectedOption={selectedBranch}
-          onChange={setSelectedBranch}
-          placeholder={salesBranchOptions[0].label}
+          options={branchOptions}
+          selectedOption={filterState.selectedBranch}
+          onChange={(value: string) =>
+            handleFilterStateChange("selectedBranch", value)
+          }
+          placeholder={branchOptions[0]?.label ?? "Choose branch"}
         />
 
         {/* Date range filter */}
@@ -165,14 +198,18 @@ export function LeadsFilterDrawer({
           {/* Date range fields */}
           <div className="grid grid-cols-2 gap-2">
             <DatePicker
-              value={selectedStartDate}
-              onChange={setSelectedStartDate}
+              value={filterState.selectedStartDate}
+              onChange={(value: string) =>
+                handleFilterStateChange("selectedStartDate", value)
+              }
               placeholder="Start Date"
             />
 
             <DatePicker
-              value={selectedEndDate}
-              onChange={setSelectedEndDate}
+              value={filterState.selectedEndDate}
+              onChange={(value: string) =>
+                handleFilterStateChange("selectedEndDate", value)
+              }
               placeholder="End Date"
             />
           </div>
@@ -182,9 +219,11 @@ export function LeadsFilterDrawer({
         <Dropdown
           label="Car Brand"
           placeholder="Choose car brand"
-          options={salesCarBrandOptions}
-          selectedOption={selectedCarBrand}
-          onChange={setSelectedCarBrand}
+          options={carBrandOptions}
+          selectedOption={filterState.selectedCarBrand}
+          onChange={(value: string) =>
+            handleFilterStateChange("selectedCarBrand", value)
+          }
         />
 
         {/* Drawer actions */}
@@ -192,7 +231,7 @@ export function LeadsFilterDrawer({
           {/* Clear filters action */}
           <Button
             type="button"
-            onClick={handleClearFilters}
+            onClick={onClearFilters}
             className="border-n-200 bg-n-100 font-secondary text-n-800 hover:bg-n-100 active:bg-n-200 h-12 rounded-md border text-sm font-semibold shadow-none"
           >
             Clear All

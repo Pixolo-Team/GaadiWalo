@@ -3,6 +3,9 @@
 // REACT //
 import { useEffect, useState } from "react";
 
+// LIBRARIES //
+import { useRouter, useSearchParams } from "next/navigation";
+
 // COMPONENTS //
 import FilterDropdown from "@/components/common/FilterDropdown";
 import { Header } from "@/components/common/Header";
@@ -12,30 +15,57 @@ import { LeadCard } from "@/components/sales/LeadCard";
 import { LeadsFilterDrawer } from "@/components/sales/LeadsFilterDrawer";
 
 // SERVICES //
-import { getSalesLeadsRequest } from "@/services/api/sales-leads.api.service";
+import {
+  getCarBrandsRequest,
+  getLeadBranchesRequest,
+  getLeadSourcesRequest,
+  getLeadStatusesRequest,
+  getSalesLeadsRequest,
+} from "@/services/api/sales-leads.api.service";
+import {
+  getStatusLabelService,
+  getStatusToneService,
+  getVehicleNameService,
+} from "@/services/sales-dashboard.service";
 
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
 
 // TYPES //
 import type { ApiResponseData } from "@/types/api";
+import type { DropdownOptionData } from "@/types/dropdown";
 import type {
+  LeadBranchData,
+  LeadCarBrandData,
   LeadListItemData,
-  LeadStatusData,
+  LeadSourceData,
+  LeadStatusOptionData,
+  LeadsFilterStateData,
 } from "@/types/leads";
 
 // OTHERS //
 import { toast } from "sonner";
 
 const salesSortOptions = ["Newest", "Oldest"] as const;
+const allFilterOptionData = { label: "All", value: "all" } as const;
+const initialLeadsFilterStateData: LeadsFilterStateData = {
+  selectedBranch: allFilterOptionData.value,
+  selectedCarBrand: allFilterOptionData.value,
+  selectedEndDate: "",
+  selectedSourceFilters: [],
+  selectedStartDate: "",
+  selectedStatusFilters: [],
+};
 
 /**
  * Renders sales leads listing with API data.
  */
 export default function LeadsPage() {
   // Define Navigation
+  const router = useRouter();
 
   // Define Context
+  const searchParams = useSearchParams();
 
   // Define Refs
 
@@ -44,64 +74,37 @@ export default function LeadsPage() {
   const [leadSearchValue, setLeadSearchValue] = useState<string>("");
   const [selectedSort, setSelectedSort] = useState<string>(salesSortOptions[0]);
   const [isLeadsLoading, setIsLeadsLoading] = useState<boolean>(true);
+  const [draftFilterState, setDraftFilterState] =
+    useState<LeadsFilterStateData>(initialLeadsFilterStateData);
+  const [appliedFilterState, setAppliedFilterState] =
+    useState<LeadsFilterStateData>(initialLeadsFilterStateData);
+  const [branchOptions, setBranchOptions] = useState<DropdownOptionData[]>([
+    allFilterOptionData,
+  ]);
+  const [carBrandOptions, setCarBrandOptions] = useState<DropdownOptionData[]>([
+    allFilterOptionData,
+  ]);
+  const [sourceFilterOptions, setSourceFilterOptions] = useState<string[]>([
+    "All",
+  ]);
+  const [leadStatusItems, setLeadStatusItems] = useState<LeadStatusOptionData[]>(
+    [],
+  );
   const [salesLeads, setSalesLeads] = useState<LeadListItemData[]>([]);
 
   // Helper Functions
   const handleOpenFilterDrawer = (): void => {
+    setDraftFilterState(appliedFilterState);
     setIsFilterDrawerOpen(true);
   };
 
-  /**
-   * Resolves status label from API enum value.
-   */
-  const getStatusLabelService = (statusValue: LeadStatusData): string => {
-    if (statusValue === "TEST_DRIVE") {
-      return "Test Drive";
-    }
-
-    if (statusValue === "VEHICLE_NA") {
-      return "Vehicle NA";
-    }
-
-    return statusValue.charAt(0) + statusValue.slice(1).toLowerCase();
+  const handleClearFilters = (): void => {
+    setDraftFilterState(initialLeadsFilterStateData);
+    setAppliedFilterState(initialLeadsFilterStateData);
   };
 
-  /**
-   * Resolves lead card tone from API status value.
-   */
-  const getStatusToneService = (
-    statusValue: LeadStatusData,
-  ): "amber" | "blue" | "green" | "purple" | "red" => {
-    if (statusValue === "NEW") {
-      return "blue";
-    }
-
-    if (statusValue === "CONTACTED") {
-      return "amber";
-    }
-
-    if (statusValue === "WON") {
-      return "green";
-    }
-
-    if (statusValue === "LOST" || statusValue === "VEHICLE_NA") {
-      return "red";
-    }
-
-    return "purple";
-  };
-
-  /**
-   * Builds display vehicle title from API fields.
-   */
-  const getVehicleNameService = (leadItem: LeadListItemData): string => {
-    const vehicleValues = [
-      leadItem.carBrand,
-      leadItem.carModel,
-      leadItem.variantName,
-    ].filter((valueItem): valueItem is string => Boolean(valueItem));
-
-    return vehicleValues.length > 0 ? vehicleValues.join(" ") : "Not specified";
+  const handleApplyFilters = (): void => {
+    setAppliedFilterState(draftFilterState);
   };
 
   /**
@@ -134,8 +137,174 @@ export default function LeadsPage() {
       });
   };
 
+  /**
+   * Fetches lead status master items.
+   */
+  const fetchLeadStatusesService = (): void => {
+    /**
+     * Call get lead statuses API.
+     */
+    getLeadStatusesRequest()
+      .then((response: ApiResponseData<LeadStatusOptionData[]>) => {
+        if (response.status_code === 200) {
+          // Set lead status items state
+          setLeadStatusItems(response.data ?? []);
+        } else {
+          // Reset lead status items state
+          setLeadStatusItems([]);
+        }
+      })
+      .catch(() => {
+        // Reset lead status items state
+        setLeadStatusItems([]);
+      });
+  };
+
+  /**
+   * Fetches lead source filter options.
+   */
+  const fetchLeadSourcesService = (): void => {
+    /**
+     * Call get lead sources API.
+     */
+    getLeadSourcesRequest()
+      .then((response: ApiResponseData<LeadSourceData[]>) => {
+        if (response.status_code === 200) {
+          // Set lead source options state
+          setSourceFilterOptions([
+            "All",
+            ...(response.data ?? []).map((leadSourceItem) =>
+              leadSourceItem.name.toUpperCase(),
+            ),
+          ]);
+        } else {
+          // Reset lead source options state
+          setSourceFilterOptions(["All"]);
+        }
+      })
+      .catch(() => {
+        // Reset lead source options state
+        setSourceFilterOptions(["All"]);
+      });
+  };
+
+  /**
+   * Fetches branch filter options.
+   */
+  const fetchLeadBranchesService = (): void => {
+    /**
+     * Call get lead branches API.
+     */
+    getLeadBranchesRequest()
+      .then((response: ApiResponseData<LeadBranchData[]>) => {
+        if (response.status_code === 200) {
+          // Set lead branch options state
+          setBranchOptions([
+            allFilterOptionData,
+            ...(response.data ?? []).map((leadBranchItem) => ({
+              label: leadBranchItem.name,
+              value: leadBranchItem.name,
+            })),
+          ]);
+        } else {
+          // Reset lead branch options state
+          setBranchOptions([allFilterOptionData]);
+        }
+      })
+      .catch(() => {
+        // Reset lead branch options state
+        setBranchOptions([allFilterOptionData]);
+      });
+  };
+
+  /**
+   * Fetches car brand filter options.
+   */
+  const fetchCarBrandsService = (): void => {
+    /**
+     * Call get car brands API.
+     */
+    getCarBrandsRequest()
+      .then((response: ApiResponseData<LeadCarBrandData[]>) => {
+        if (response.status_code === 200) {
+          // Set car brand options state
+          setCarBrandOptions([
+            allFilterOptionData,
+            ...(response.data ?? []).map((leadCarBrandItem) => ({
+              label: leadCarBrandItem.name,
+              value: leadCarBrandItem.name,
+            })),
+          ]);
+        } else {
+          // Reset car brand options state
+          setCarBrandOptions([allFilterOptionData]);
+        }
+      })
+      .catch(() => {
+        // Reset car brand options state
+        setCarBrandOptions([allFilterOptionData]);
+      });
+  };
+
   const normalizedSearchValue = leadSearchValue.trim().toLowerCase();
+  const selectedStatusParam = (searchParams.get("status") ?? "all").toUpperCase();
+  const leadStatusTabs = [
+    { count: salesLeads.length, key: "ALL", label: "All" },
+    ...leadStatusItems.map((leadStatusItem) => ({
+      count: salesLeads.filter(
+        (leadItem) => leadItem.status === leadStatusItem.name,
+      ).length,
+      key: leadStatusItem.name,
+      label: getStatusLabelService(leadStatusItem.name),
+    })),
+  ];
+
   const filteredLeads = salesLeads.filter((leadItem) => {
+    const matchesDrawerStatus =
+      appliedFilterState.selectedStatusFilters.length === 0 ||
+      appliedFilterState.selectedStatusFilters.some(
+        (selectedStatusFilterItem) =>
+          leadItem.status === selectedStatusFilterItem.toUpperCase(),
+      );
+    const matchesSource =
+      appliedFilterState.selectedSourceFilters.length === 0 ||
+      appliedFilterState.selectedSourceFilters.some(
+        (selectedSourceFilterItem) =>
+          leadItem.source.toUpperCase() ===
+          selectedSourceFilterItem.toUpperCase(),
+      );
+    const matchesCarBrand =
+      appliedFilterState.selectedCarBrand === allFilterOptionData.value ||
+      (leadItem.carBrand ?? "").toLowerCase() ===
+        appliedFilterState.selectedCarBrand.toLowerCase();
+    const matchesBranch =
+      appliedFilterState.selectedBranch === allFilterOptionData.value ||
+      ((leadItem as LeadListItemData & { branch?: string | null }).branch ?? "")
+        .toLowerCase() === appliedFilterState.selectedBranch.toLowerCase();
+    const createdAtValue = leadItem.createdAt ? new Date(leadItem.createdAt) : null;
+    const matchesStartDate =
+      !appliedFilterState.selectedStartDate ||
+      (createdAtValue !== null &&
+        createdAtValue >= new Date(appliedFilterState.selectedStartDate));
+    const matchesEndDate =
+      !appliedFilterState.selectedEndDate ||
+      (createdAtValue !== null &&
+        createdAtValue <= new Date(`${appliedFilterState.selectedEndDate}T23:59:59`));
+    const isStatusMatch =
+      selectedStatusParam === "ALL" || leadItem.status === selectedStatusParam;
+
+    if (
+      !isStatusMatch ||
+      !matchesDrawerStatus ||
+      !matchesSource ||
+      !matchesCarBrand ||
+      !matchesBranch ||
+      !matchesStartDate ||
+      !matchesEndDate
+    ) {
+      return false;
+    }
+
     if (!normalizedSearchValue) {
       return true;
     }
@@ -151,6 +320,10 @@ export default function LeadsPage() {
   // Use Effects
   useEffect(() => {
     fetchSalesLeadsService();
+    fetchLeadStatusesService();
+    fetchLeadSourcesService();
+    fetchLeadBranchesService();
+    fetchCarBrandsService();
   }, []);
 
   return (
@@ -181,6 +354,47 @@ export default function LeadsPage() {
                 onChange={setLeadSearchValue}
                 placeholder="Search by name, phone, car..."
               />
+
+              {/* Status filter chips */}
+              <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
+                {leadStatusTabs.map((leadStatusTabItem) => {
+                  const isActive = selectedStatusParam === leadStatusTabItem.key;
+
+                  return (
+                    <button
+                      key={leadStatusTabItem.key}
+                      type="button"
+                      onClick={() => {
+                        const nextSearchParams = new URLSearchParams(
+                          searchParams.toString(),
+                        );
+
+                        if (leadStatusTabItem.key === "ALL") {
+                          nextSearchParams.delete("status");
+                        } else {
+                          nextSearchParams.set(
+                            "status",
+                            leadStatusTabItem.key.toLowerCase(),
+                          );
+                        }
+
+                        router.push(
+                          nextSearchParams.toString()
+                            ? `${ROUTES.sales.leads}?${nextSearchParams.toString()}`
+                            : ROUTES.sales.leads,
+                        );
+                      }}
+                      className={`rounded-full border px-5 py-3 text-base leading-none font-medium whitespace-nowrap transition-colors ${
+                        isActive
+                          ? "border-blue-600 bg-blue-600 text-white"
+                          : "border-n-200 bg-white text-slate-600"
+                      }`}
+                    >
+                      {`${leadStatusTabItem.label} (${leadStatusTabItem.count})`}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Leads list section */}
@@ -234,8 +448,18 @@ export default function LeadsPage() {
 
         {/* Filter drawer */}
         <LeadsFilterDrawer
+          branchOptions={branchOptions}
+          carBrandOptions={carBrandOptions}
+          filterState={draftFilterState}
           isOpen={isFilterDrawerOpen}
+          onApplyFilters={handleApplyFilters}
+          onClearFilters={handleClearFilters}
+          onFilterStateChange={setDraftFilterState}
           onOpenChange={setIsFilterDrawerOpen}
+          sourceFilterOptions={sourceFilterOptions}
+          statusFilterOptions={leadStatusTabs.map(
+            (leadStatusTabItem) => leadStatusTabItem.label,
+          )}
         />
       </div>
     </section>

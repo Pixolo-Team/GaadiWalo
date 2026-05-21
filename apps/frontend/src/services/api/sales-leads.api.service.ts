@@ -9,6 +9,7 @@ import type {
   CreateLeadRequestData,
   CreateLeadResponseData,
   LeadActivityData,
+  LeadBranchData,
   LeadCarBrandData,
   LeadDetailsData,
   LeadListItemData,
@@ -35,6 +36,22 @@ const getAuthHeadersService = (): Record<string, string> => {
     Authorization: `Bearer ${accessToken ?? ""}`,
     "Content-Type": "application/json",
   };
+};
+
+/**
+ * Fetches all sales branch options.
+ */
+export const getLeadBranchesRequest = async (): Promise<
+  ApiResponseData<LeadBranchData[]>
+> => {
+  const config: AxiosRequestConfig = {
+    headers: getAuthHeadersService(),
+    method: "get",
+    url: `${CONSTANTS.API_URL}/sales/leads/branches`,
+  };
+
+  const response = await axios.request<ApiResponseData<LeadBranchData[]>>(config);
+  return response.data;
 };
 
 /**

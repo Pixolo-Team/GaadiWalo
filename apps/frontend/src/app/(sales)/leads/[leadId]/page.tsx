@@ -296,9 +296,6 @@ export default function LeadDetailsPage() {
           // Clear note input
           setNoteInputValue("");
 
-          // Success toast
-          toast.success(response.message);
-
           // Refresh notes and activities after adding note
           fetchLeadNotesService();
           fetchLeadActivitiesService();

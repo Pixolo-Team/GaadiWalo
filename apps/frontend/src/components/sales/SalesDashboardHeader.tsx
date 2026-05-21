@@ -5,15 +5,30 @@ import { useState } from "react";
 import FilterDropdown from "@/components/common/FilterDropdown";
 import Building1 from "@/components/icons/neevo-icons/Building1";
 
-// DATA //
-import {
-  salesHeaderUser,
-  salesLocationOptions,
-  salesSummaryMetrics,
-} from "@/data/sales";
+interface SalesSummaryMetricData {
+  key: string;
+  label: string;
+  value: string;
+}
+
+interface SalesDashboardHeaderPropsData {
+  avatarLabel: string;
+  greeting: string;
+  locationName: string;
+  locationOptions: ReadonlyArray<string>;
+  name: string;
+  summaryMetrics: SalesSummaryMetricData[];
+}
 
 /** Sales Dashboard Header */
-export function SalesDashboardHeader() {
+export function SalesDashboardHeader({
+  avatarLabel,
+  greeting,
+  locationName,
+  locationOptions,
+  name,
+  summaryMetrics,
+}: SalesDashboardHeaderPropsData) {
   // Define Navigation
 
   // Define Context
@@ -22,7 +37,7 @@ export function SalesDashboardHeader() {
 
   // Define States
   const [selectedLocation, setSelectedLocation] = useState<string>(
-    salesLocationOptions[0],
+    locationName,
   );
 
   // Helper Functions
@@ -32,36 +47,32 @@ export function SalesDashboardHeader() {
   return (
     <div className="flex flex-col gap-3.5 bg-gradient-to-br from-blue-700 to-blue-900 px-6 py-10">
       {/* Greeting and location row */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-3">
         {/* User greeting block */}
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           {/* Avatar */}
           <div className="flex size-11 items-center justify-center rounded-3xl bg-white/20">
             <span className="text-n-50 text-base font-semibold">
-              {salesHeaderUser.avatarLabel}
+              {avatarLabel}
             </span>
           </div>
           {/* Greeting text */}
-          <div>
-            <p className="font-secondary text-n-50 text-sm">
-              {salesHeaderUser.greeting}
-            </p>
-            <p className="text-n-50 text-xl font-bold">
-              {salesHeaderUser.name}
-            </p>
+          <div className="min-w-0">
+            <p className="font-secondary text-n-50 text-sm">{greeting}</p>
+            <p className="text-n-50 truncate text-xl font-bold">{name}</p>
           </div>
         </div>
 
         {/* Location selector */}
         <FilterDropdown
-          title={salesLocationOptions[0]}
-          options={salesLocationOptions}
+          title={locationName}
+          options={locationOptions}
           selectedOption={selectedLocation}
           onChange={setSelectedLocation}
           prefix={
             <Building1 primaryColor="var(--color-n-500)" className="size-4" />
           }
-          className="border-n-300 text-n-600 h-10 rounded-3xl text-xs font-bold"
+          className="border-n-300 text-n-600 h-10 max-w-40 shrink-0 rounded-3xl text-xs font-bold sm:max-w-48"
         />
       </div>
 
@@ -72,7 +83,7 @@ export function SalesDashboardHeader() {
         </p>
         {/* Summary metrics */}
         <div className="flex items-center">
-          {salesSummaryMetrics.map((summaryMetricItem, summaryMetricIndex) => (
+          {summaryMetrics.map((summaryMetricItem, summaryMetricIndex) => (
             /* Summary metric */
             <div key={summaryMetricItem.key} className="contents">
               <div className="flex flex-1 flex-col items-center">
@@ -85,7 +96,7 @@ export function SalesDashboardHeader() {
               </div>
 
               {/* Summary divider */}
-              {summaryMetricIndex < salesSummaryMetrics.length - 1 ? (
+              {summaryMetricIndex < summaryMetrics.length - 1 ? (
                 <span className="bg-n-50/20 h-14 w-0.5" />
               ) : null}
             </div>
