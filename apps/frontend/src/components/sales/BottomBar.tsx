@@ -111,7 +111,9 @@ export function BottomBar() {
           icon={
             <BellNotification
               primaryColor={
-                isAlertsSelected ? "var(--color-blue-600)" : "var(--color-n-500)"
+                isAlertsSelected
+                  ? "var(--color-blue-600)"
+                  : "var(--color-n-500)"
               }
               className="size-7"
             />
@@ -126,7 +128,9 @@ export function BottomBar() {
           icon={
             <UserCircleSingle
               primaryColor={
-                isProfileSelected ? "var(--color-blue-600)" : "var(--color-n-500)"
+                isProfileSelected
+                  ? "var(--color-blue-600)"
+                  : "var(--color-n-500)"
               }
               className="size-7"
             />

@@ -28,6 +28,7 @@ import {
 } from "@/services/leads.service";
 
 // LIBRARIES //
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 // CONSTANTS //
@@ -45,6 +46,8 @@ import type {
 } from "@/types/leads";
 
 const salesSortOptions = ["Newest", "Oldest"] as const;
+const leadMasterDataStaleTime = 10 * 60 * 1000;
+const salesLeadsStaleTime = 30 * 1000;
 
 const initialLeadsFilterState: LeadsFilterStateData = {
   selectedBranch: "all",
@@ -73,98 +76,174 @@ export default function LeadsPage() {
   const [draftFilterState, setDraftFilterState] =
     useState<LeadsFilterStateData>(initialLeadsFilterState);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState<boolean>(false);
-  const [isLeadsLoading, setIsLeadsLoading] = useState<boolean>(true);
-  const [leadBranchItems, setLeadBranchItems] = useState<LeadBranchData[]>([]);
-  const [leadCarBrandItems, setLeadCarBrandItems] = useState<LeadCarBrandData[]>(
-    [],
-  );
   const [leadSearchValue, setLeadSearchValue] = useState<string>("");
-  const [leadSourceItems, setLeadSourceItems] = useState<LeadSourceData[]>([]);
-  const [leadStatusItems, setLeadStatusItems] = useState<LeadStatusOptionData[]>(
-    [],
-  );
-  const [salesLeads, setSalesLeads] = useState<LeadListItemData[]>([]);
   const [selectedSort, setSelectedSort] = useState<string>(salesSortOptions[0]);
 
   // Helper Functions
   const selectedStatusQueryValue = searchParams.get("status")?.toLowerCase() ?? "all";
 
   /**
-   * Fetches leads list payload and filter master data.
+   * Resolves sales leads payload for TanStack Query.
    */
-  const fetchSalesLeadsService = async (): Promise<void> => {
-    try {
-      /**
-       * Call leads APIs.
-       */
-      const [
-        salesLeadsResponse,
-        leadStatusesResponse,
-        leadSourcesResponse,
-        leadBranchesResponse,
-        leadCarBrandsResponse,
-      ] = await Promise.all([
-        getSalesLeadsRequest(),
-        getLeadStatusesRequest(),
-        getLeadSourcesRequest(),
-        getLeadBranchesRequest(),
-        getCarBrandsRequest(),
-      ]);
+  const getSalesLeadsQueryService = async (): Promise<LeadListItemData[]> => {
+    /**
+     * Call get sales leads API.
+     */
+    const salesLeadsResponse = await getSalesLeadsRequest();
 
-      if (salesLeadsResponse.status_code === 200) {
-        // Set sales leads state.
-        setSalesLeads(salesLeadsResponse.data ?? []);
-      } else {
-        // Reset sales leads state.
-        setSalesLeads([]);
-      }
-
-      if (leadStatusesResponse.status_code === 200) {
-        // Set lead statuses state.
-        setLeadStatusItems(leadStatusesResponse.data ?? []);
-      } else {
-        // Reset lead statuses state.
-        setLeadStatusItems([]);
-      }
-
-      if (leadSourcesResponse.status_code === 200) {
-        // Set lead sources state.
-        setLeadSourceItems(leadSourcesResponse.data ?? []);
-      } else {
-        // Reset lead sources state.
-        setLeadSourceItems([]);
-      }
-
-      if (leadBranchesResponse.status_code === 200) {
-        // Set lead branches state.
-        setLeadBranchItems(leadBranchesResponse.data ?? []);
-      } else {
-        // Reset lead branches state.
-        setLeadBranchItems([]);
-      }
-
-      if (leadCarBrandsResponse.status_code === 200) {
-        // Set lead car brands state.
-        setLeadCarBrandItems(leadCarBrandsResponse.data ?? []);
-      } else {
-        // Reset lead car brands state.
-        setLeadCarBrandItems([]);
-      }
-    } catch {
-      // Error toast.
-      toast.error("Unable to load leads right now. Please try again.");
-
-      // Reset leads page state.
-      setLeadBranchItems([]);
-      setLeadCarBrandItems([]);
-      setLeadSourceItems([]);
-      setLeadStatusItems([]);
-      setSalesLeads([]);
-    } finally {
-      // Set loading state to false.
-      setIsLeadsLoading(false);
+    if (salesLeadsResponse.status_code !== 200) {
+      throw new Error(
+        salesLeadsResponse.error ??
+          salesLeadsResponse.message ??
+          "Unable to load sales leads.",
+      );
     }
+
+    return salesLeadsResponse.data ?? [];
   };
+
+  /**
+   * Resolves lead statuses payload for TanStack Query.
+   */
+  const getLeadStatusesQueryService = async (): Promise<
+    LeadStatusOptionData[]
+  > => {
+    /**
+     * Call get lead statuses API.
+     */
+    const leadStatusesResponse = await getLeadStatusesRequest();
+
+    if (leadStatusesResponse.status_code !== 200) {
+      throw new Error(
+        leadStatusesResponse.error ??
+          leadStatusesResponse.message ??
+          "Unable to load lead statuses.",
+      );
+    }
+
+    return leadStatusesResponse.data ?? [];
+  };
+
+  /**
+   * Resolves lead sources payload for TanStack Query.
+   */
+  const getLeadSourcesQueryService = async (): Promise<LeadSourceData[]> => {
+    /**
+     * Call get lead sources API.
+     */
+    const leadSourcesResponse = await getLeadSourcesRequest();
+
+    if (leadSourcesResponse.status_code !== 200) {
+      throw new Error(
+        leadSourcesResponse.error ??
+          leadSourcesResponse.message ??
+          "Unable to load lead sources.",
+      );
+    }
+
+    return leadSourcesResponse.data ?? [];
+  };
+
+  /**
+   * Resolves lead branches payload for TanStack Query.
+   */
+  const getLeadBranchesQueryService = async (): Promise<LeadBranchData[]> => {
+    /**
+     * Call get lead branches API.
+     */
+    const leadBranchesResponse = await getLeadBranchesRequest();
+
+    if (leadBranchesResponse.status_code !== 200) {
+      throw new Error(
+        leadBranchesResponse.error ??
+          leadBranchesResponse.message ??
+          "Unable to load lead branches.",
+      );
+    }
+
+    return leadBranchesResponse.data ?? [];
+  };
+
+  /**
+   * Resolves car brand payload for TanStack Query.
+   */
+  const getLeadCarBrandsQueryService = async (): Promise<LeadCarBrandData[]> => {
+    /**
+     * Call get car brands API.
+     */
+    const leadCarBrandsResponse = await getCarBrandsRequest();
+
+    if (leadCarBrandsResponse.status_code !== 200) {
+      throw new Error(
+        leadCarBrandsResponse.error ??
+          leadCarBrandsResponse.message ??
+          "Unable to load car brands.",
+      );
+    }
+
+    return leadCarBrandsResponse.data ?? [];
+  };
+
+  /**
+   * Loads leads list with short-lived cache for smooth back navigation.
+   */
+  const {
+    data: salesLeads = [],
+    error: salesLeadsError,
+    isLoading: isSalesLeadsLoading,
+  } = useQuery<LeadListItemData[]>({
+    queryKey: ["sales-leads"],
+    queryFn: getSalesLeadsQueryService,
+    staleTime: salesLeadsStaleTime,
+  });
+
+  /**
+   * Loads lead status master data with longer cache.
+   */
+  const {
+    data: leadStatusItems = [],
+    error: leadStatusesError,
+  } = useQuery<LeadStatusOptionData[]>({
+    queryKey: ["lead-statuses"],
+    queryFn: getLeadStatusesQueryService,
+    staleTime: leadMasterDataStaleTime,
+  });
+
+  /**
+   * Loads lead source master data with longer cache.
+   */
+  const {
+    data: leadSourceItems = [],
+    error: leadSourcesError,
+  } = useQuery<LeadSourceData[]>({
+    queryKey: ["lead-sources"],
+    queryFn: getLeadSourcesQueryService,
+    staleTime: leadMasterDataStaleTime,
+  });
+
+  /**
+   * Loads lead branch master data with longer cache.
+   */
+  const {
+    data: leadBranchItems = [],
+    error: leadBranchesError,
+  } = useQuery<LeadBranchData[]>({
+    queryKey: ["lead-branches"],
+    queryFn: getLeadBranchesQueryService,
+    staleTime: leadMasterDataStaleTime,
+  });
+
+  /**
+   * Loads car brand master data with longer cache.
+   */
+  const {
+    data: leadCarBrandItems = [],
+    error: leadCarBrandsError,
+  } = useQuery<LeadCarBrandData[]>({
+    queryKey: ["lead-car-brands"],
+    queryFn: getLeadCarBrandsQueryService,
+    staleTime: leadMasterDataStaleTime,
+  });
 
   const statusTabItems = useMemo(() => {
     const dynamicStatusTabs = leadStatusItems.map((statusItem) => ({
@@ -338,14 +417,23 @@ export default function LeadsPage() {
 
   // Use Effects
   useEffect(() => {
-    const leadsLoadTimeout = window.setTimeout(() => {
-      void fetchSalesLeadsService();
-    }, 0);
-
-    return () => {
-      window.clearTimeout(leadsLoadTimeout);
-    };
-  }, []);
+    if (
+      salesLeadsError ||
+      leadStatusesError ||
+      leadSourcesError ||
+      leadBranchesError ||
+      leadCarBrandsError
+    ) {
+      // Show safe query error feedback once queries fail.
+      toast.error("Unable to load leads right now. Please try again.");
+    }
+  }, [
+    leadBranchesError,
+    leadCarBrandsError,
+    leadSourcesError,
+    leadStatusesError,
+    salesLeadsError,
+  ]);
 
   return (
     <section className="h-full bg-n-100">
@@ -417,19 +505,19 @@ export default function LeadsPage() {
 
               {/* Leads list */}
               <div className="flex flex-col gap-3">
-                {isLeadsLoading ? (
+                {isSalesLeadsLoading ? (
                   <p className="font-secondary text-n-600 py-6 text-center text-sm">
                     Loading leads...
                   </p>
                 ) : null}
 
-                {!isLeadsLoading && filteredLeads.length === 0 ? (
+                {!isSalesLeadsLoading && filteredLeads.length === 0 ? (
                   <p className="font-secondary text-n-600 py-6 text-center text-sm">
                     No leads found.
                   </p>
                 ) : null}
 
-                {!isLeadsLoading
+                {!isSalesLeadsLoading
                   ? filteredLeads.map((leadItem) => (
                       <LeadCard
                         key={leadItem.id}
