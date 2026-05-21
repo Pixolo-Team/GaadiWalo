@@ -6,7 +6,9 @@ export type SalesLeadStatusToneData =
   | "blue"
   | "green"
   | "purple"
-  | "red";
+  | "red"
+  | "cyan"
+  | "pink";
 
 /**
  * Sales lead tone class map.
@@ -39,6 +41,16 @@ export const salesLeadToneClassNameData: Record<
     border: "border-red-500",
     dot: "bg-gradient-to-b from-red-400 to-red-600",
     status: "bg-red-100 text-red-600",
+  },
+  cyan: {
+    border: "border-cyan-500",
+    dot: "bg-gradient-to-b from-cyan-400 to-cyan-600",
+    status: "bg-cyan-100 text-cyan-600",
+  },
+  pink: {
+    border: "border-pink-500",
+    dot: "bg-gradient-to-b from-pink-400 to-pink-600",
+    status: "bg-pink-100 text-pink-600",
   },
 };
 
@@ -205,6 +217,7 @@ export const salesLeadStatusOptions = [
   { label: "Contacted", value: "contacted" },
   { label: "Interested", value: "interested" },
   { label: "Test Drive", value: "test-drive" },
+  { label: "Vehicle NA", value: "vehicle-na" },
   { label: "Won", value: "won" },
   { label: "Lost", value: "lost" },
 ] as const;
@@ -571,9 +584,27 @@ export const salesNotificationQuietHoursTimeOptions = [
  * Sales performance top metric cards dummy data.
  */
 export const salesPerformanceTopMetrics = [
-  { helper: "", key: "total-leads", label: "TOTAL LEADS", tone: "neutral", value: "47" },
-  { helper: "", key: "calls-made", label: "CALLS MADE", tone: "neutral", value: "134" },
-  { helper: "19% rate", key: "won", label: "WON 🎉", tone: "green", value: "9" },
+  {
+    helper: "",
+    key: "total-leads",
+    label: "TOTAL LEADS",
+    tone: "neutral",
+    value: "47",
+  },
+  {
+    helper: "",
+    key: "calls-made",
+    label: "CALLS MADE",
+    tone: "neutral",
+    value: "134",
+  },
+  {
+    helper: "19% rate",
+    key: "won",
+    label: "WON 🎉",
+    tone: "green",
+    value: "9",
+  },
   { helper: "25% lost", key: "lost", label: "LOST", tone: "red", value: "12" },
 ] as const;
 
@@ -581,11 +612,41 @@ export const salesPerformanceTopMetrics = [
  * Sales performance pipeline progress dummy data.
  */
 export const salesPerformancePipelineProgress = [
-  { colorClassName: "bg-blue-600", count: 4, key: "new", label: "New", progress: 9 },
-  { colorClassName: "bg-amber-500", count: 12, key: "contacted", label: "Contacted", progress: 26 },
-  { colorClassName: "bg-purple-600", count: 8, key: "interested", label: "Interested", progress: 17 },
-  { colorClassName: "bg-sky-700", count: 2, key: "test-drive", label: "Test Drive", progress: 4 },
-  { colorClassName: "bg-green-500", count: 9, key: "won", label: "Won", progress: 19 },
+  {
+    colorClassName: "bg-blue-600",
+    count: 4,
+    key: "new",
+    label: "New",
+    progress: 9,
+  },
+  {
+    colorClassName: "bg-amber-500",
+    count: 12,
+    key: "contacted",
+    label: "Contacted",
+    progress: 26,
+  },
+  {
+    colorClassName: "bg-purple-600",
+    count: 8,
+    key: "interested",
+    label: "Interested",
+    progress: 17,
+  },
+  {
+    colorClassName: "bg-sky-700",
+    count: 2,
+    key: "test-drive",
+    label: "Test Drive",
+    progress: 4,
+  },
+  {
+    colorClassName: "bg-green-500",
+    count: 9,
+    key: "won",
+    label: "Won",
+    progress: 19,
+  },
 ] as const;
 
 /**
@@ -605,8 +666,28 @@ export const salesPerformanceWeeklyCallsLeads = [
  * Sales performance source breakdown dummy data.
  */
 export const salesPerformanceSourceBreakdown = [
-  { colorClassName: "bg-blue-600", count: 18, key: "carwale", source: "CarWale" },
-  { colorClassName: "bg-green-500", count: 14, key: "cardekho", source: "CarDekho" },
-  { colorClassName: "bg-amber-500", count: 9, key: "walk-in", source: "Walk In" },
-  { colorClassName: "bg-purple-500", count: 6, key: "referral", source: "Referral" },
+  {
+    colorClassName: "bg-blue-600",
+    count: 18,
+    key: "carwale",
+    source: "CarWale",
+  },
+  {
+    colorClassName: "bg-green-500",
+    count: 14,
+    key: "cardekho",
+    source: "CarDekho",
+  },
+  {
+    colorClassName: "bg-amber-500",
+    count: 9,
+    key: "walk-in",
+    source: "Walk In",
+  },
+  {
+    colorClassName: "bg-purple-500",
+    count: 6,
+    key: "referral",
+    source: "Referral",
+  },
 ] as const;
