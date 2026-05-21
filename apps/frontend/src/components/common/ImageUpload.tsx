@@ -103,7 +103,9 @@ export default function ImageUpload({
 
   // Sync external image
   useEffect(() => {
-    setCroppedImage(imageUrl || null);
+    queueMicrotask(() => {
+      setCroppedImage(imageUrl || null);
+    });
   }, [imageUrl]);
 
   return (

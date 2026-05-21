@@ -57,17 +57,17 @@ export default function FilterDropdown({
       {/* Select trigger */}
       <SelectTrigger
         className={cn(
-          "border-n-400 bg-n-50 font-secondary text-n-600 h-9 w-auto rounded-[20px] border px-4 py-2 text-sm",
+          "border-n-400 bg-n-50 font-secondary text-n-600 h-9 w-auto min-w-0 rounded-[20px] border px-4 py-2 text-sm",
           className,
         )}
       >
         {prefix ? (
-          <span className="flex flex-1 items-center gap-1 text-left">
+          <span className="flex min-w-0 flex-1 items-center gap-1 text-left">
             {/* Prefix content */}
             {typeof prefix === "string" ? <span>{prefix}</span> : prefix}
 
             {/* Selected value */}
-            <span className="[&_[data-slot=select-value]]:font-bold">
+            <span className="min-w-0 truncate [&_[data-slot=select-value]]:font-bold">
               <SelectValue placeholder={title} />
             </span>
           </span>

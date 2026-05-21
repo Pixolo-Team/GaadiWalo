@@ -51,7 +51,13 @@ export default function VerifyOtpPage() {
     useState<number>(RESEND_SECONDS_COUNT);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isResending, setIsResending] = useState<boolean>(false);
-  const [recoveryEmail, setRecoveryEmail] = useState<string>("");
+  const [recoveryEmail] = useState<string>(() => {
+    if (typeof window === "undefined") {
+      return "";
+    }
+
+    return window.localStorage.getItem(CONSTANTS.RECOVERY_EMAIL) ?? "";
+  });
 
   // Helper Functions
   /** Handles OTP verification and moves user to change password screen. */
@@ -141,13 +147,6 @@ export default function VerifyOtpPage() {
   };
 
   // Use Effects
-  useEffect(() => {
-    // Read recovery email only on client.
-    const storedRecoveryEmail =
-      window.localStorage.getItem(CONSTANTS.RECOVERY_EMAIL) ?? "";
-    setRecoveryEmail(storedRecoveryEmail);
-  }, []);
-
   useEffect(() => {
     if (resendSecondsCount <= 0) {
       return;

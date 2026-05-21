@@ -1,5 +1,8 @@
 "use client";
 
+// REACT //
+import { useEffect, useState } from "react";
+
 // COMPONENTS //
 import BellNotification from "@/components/icons/neevo-icons/BellNotification";
 import DesktopMonitorBrowseActivityPerformance from "@/components/icons/neevo-icons/DesktopMonitorBrowseActivityPerformance";
@@ -10,25 +13,109 @@ import MetricItem from "@/components/sales/profile/MetricItem";
 import ProfileMenuItem from "@/components/sales/profile/ProfileMenuItem";
 import ProfileTopSummary from "@/components/sales/profile/ProfileTopSummary";
 
+// SERVICES //
+import { getSalesProfileRequest } from "@/services/api/sales-profile.api.service";
+
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
 
 // DATA //
 import { salesProfileMetrics, salesProfileSummaryData } from "@/data/sales";
 
+// TYPES //
+import type { ApiResponseData } from "@/types/api";
+import type { SalesProfileData } from "@/types/profile";
+
+// OTHERS //
+import { useAuthContext } from "@/context/AuthContext";
+import { toast } from "sonner";
+
 /** Profile Page Component */
 export default function ProfilePage() {
   // Define Navigation
 
   // Define Context
+  const { user } = useAuthContext();
 
   // Define Refs
 
   // Define States
+  const [salesProfile, setSalesProfile] = useState<SalesProfileData | null>(
+    null,
+  );
+  const [isProfileLoading, setIsProfileLoading] = useState<boolean>(true);
 
   // Helper Functions
+  const userCode = user?.userCode ?? user?.userId ?? user?.id ?? "";
+
+  /**
+   * Fetches sales profile for logged-in user.
+   */
+  const getSalesProfile = (): void => {
+    if (!userCode) {
+      setIsProfileLoading(false);
+      return;
+    }
+
+    /**
+     * Call get sales profile API.
+     */
+    getSalesProfileRequest(userCode)
+      .then((response: ApiResponseData<SalesProfileData>) => {
+        if (response.status_code === 200 && response.data) {
+          // Set sales profile state
+          setSalesProfile(response.data);
+        } else {
+          // Reset sales profile state
+          setSalesProfile(null);
+        }
+      })
+      .catch(() => {
+        // Error toast
+        toast.error("Unable to load profile right now.");
+
+        // Reset sales profile state
+        setSalesProfile(null);
+      })
+      .finally(() => {
+        // Set profile loading false
+        setIsProfileLoading(false);
+      });
+  };
 
   // Use Effects
+  useEffect(() => {
+    getSalesProfile();
+  }, [userCode]);
+
+  const summaryProfile = {
+    avatarLabel:
+      salesProfile?.fullName
+        ?.split(" ")
+        .slice(0, 2)
+        .map((wordItem) => wordItem.charAt(0).toUpperCase())
+        .join("") ?? salesProfileSummaryData.avatarLabel,
+    branch: salesProfile?.branch ?? salesProfileSummaryData.branch,
+    joined:
+      (salesProfile?.joinedAt
+        ? new Date(salesProfile.joinedAt).toLocaleDateString()
+        : "") || salesProfileSummaryData.joined,
+    name: salesProfile?.fullName ?? salesProfileSummaryData.name,
+    role: salesProfile?.role ?? salesProfileSummaryData.role,
+    userId: salesProfile?.userId ?? salesProfileSummaryData.userId,
+  };
+
+  if (isProfileLoading) {
+    return (
+      <section className="bg-n-50 h-full">
+        <div className="flex h-full items-center justify-center">
+          <p className="font-secondary text-n-600 text-sm">
+            Loading profile...
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-n-50 h-full">
@@ -36,13 +123,12 @@ export default function ProfilePage() {
       <div className="flex h-full flex-col">
         {/* Profile top summary */}
         <ProfileTopSummary
-          avatarLabel={salesProfileSummaryData.avatarLabel}
-          branch={salesProfileSummaryData.branch}
-          detailsClassName="items-center"
-          joined={salesProfileSummaryData.joined}
-          name={salesProfileSummaryData.name}
-          role={salesProfileSummaryData.role}
-          userId={salesProfileSummaryData.userId}
+          avatarLabel={summaryProfile.avatarLabel}
+          branch={summaryProfile.branch}
+          joined={summaryProfile.joined}
+          name={summaryProfile.name}
+          role={summaryProfile.role}
+          userId={summaryProfile.userId}
         />
 
         {/* Profile content */}

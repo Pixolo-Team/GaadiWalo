@@ -9,4 +9,5 @@ export const CONSTANTS = {
   EXPIRES_IN: "expires_in",
   RECOVERY_EMAIL: "recovery_email",
   RESET_TOKEN: "reset_token",
+  DASHBOARD_LEADS_CACHE_KEY: "sales_dashboard_leads_cache",
 };

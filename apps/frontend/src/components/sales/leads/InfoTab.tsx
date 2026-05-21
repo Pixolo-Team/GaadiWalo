@@ -20,8 +20,10 @@ interface InfoTabPropsData {
   lostReasonOptions: ReadonlyArray<{ label: string; value: string }>;
   onLeadStatusChange: (value: string) => void;
   onLostReasonChange: (value: string) => void;
+  onUpdateStatus: () => void;
   selectedLeadStatus: string;
   selectedLostReason: string;
+  isUpdatingStatus: boolean;
 }
 
 /** Lead Info Tab */
@@ -32,8 +34,10 @@ export function InfoTab({
   lostReasonOptions,
   onLeadStatusChange,
   onLostReasonChange,
+  onUpdateStatus,
   selectedLeadStatus,
   selectedLostReason,
+  isUpdatingStatus,
 }: InfoTabPropsData) {
   // Define Navigation
 
@@ -65,15 +69,23 @@ export function InfoTab({
         />
 
         {/* Lost reason dropdown */}
-        <Dropdown
-          options={lostReasonOptions}
-          selectedOption={selectedLostReason}
-          onChange={onLostReasonChange}
-          placeholder={lostReasonOptions[0]?.label}
-        />
+        {selectedLeadStatus === "LOST" ? (
+          <Dropdown
+            options={lostReasonOptions}
+            selectedOption={selectedLostReason}
+            onChange={onLostReasonChange}
+            placeholder={lostReasonOptions[0]?.label}
+          />
+        ) : null}
 
         {/* Update status action */}
-        <Button type="button">Update Status</Button>
+        <Button
+          type="button"
+          onClick={onUpdateStatus}
+          disabled={isUpdatingStatus}
+        >
+          Update Status
+        </Button>
       </div>
 
       {/* Contact info card */}

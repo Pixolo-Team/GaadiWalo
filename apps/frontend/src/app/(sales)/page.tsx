@@ -1,5 +1,8 @@
 "use client";
 
+// REACT //
+import { useEffect, useMemo, useState } from "react";
+
 // COMPONENTS //
 import ImportInput from "@/components/icons/neevo-icons/ImportInput";
 import UserAddPlus from "@/components/icons/neevo-icons/UserAddPlus";
@@ -9,27 +12,233 @@ import { QuickActionCard } from "@/components/sales/QuickActionCard";
 import { SalesDashboardHeader } from "@/components/sales/SalesDashboardHeader";
 import { SectionHeader } from "@/components/sales/SectionHeader";
 
+// SERVICES //
+import {
+  getLeadBranchesRequest,
+  getLeadStatusesRequest,
+  getSalesLeadsRequest,
+} from "@/services/api/sales-leads.api.service";
+import {
+  getAvatarLabelService,
+  getBranchNameService,
+  getGreetingService,
+  getPhaseCardsService,
+  isWonTodayService,
+} from "@/services/sales-dashboard.service";
+import {
+  getLeadStatusLabel,
+  getLeadStatusTone,
+  getLeadVehicleName,
+} from "@/services/leads.service";
+
+// HOOKS //
+import { useAuthContext } from "@/context/AuthContext";
+
+// LIBRARIES //
+import { toast } from "sonner";
+
 // CONSTANTS //
+import { CONSTANTS } from "@/constants/constants";
 import { ROUTES } from "@/constants/routes";
 
-// DATA //
-import { salesPhaseCardsDetails, salesRecentLeads } from "@/data/sales";
+// TYPES //
+import type {
+  LeadBranchData,
+  LeadListItemData,
+  LeadStatusOptionData,
+} from "@/types/leads";
 
 /**
- * Renders the sales home screen.
+ * Renders the sales home screen with live dashboard data.
  */
 export default function Home() {
   // Define Navigation
 
   // Define Context
+  const { user } = useAuthContext();
+
+  // Define Refs
+
+  // Define States
+  const [isDashboardLoading, setIsDashboardLoading] = useState<boolean>(true);
+  const [leadBranchItems, setLeadBranchItems] = useState<LeadBranchData[]>([]);
+  const [leadStatusItems, setLeadStatusItems] = useState<LeadStatusOptionData[]>(
+    [],
+  );
+  const [salesLeads, setSalesLeads] = useState<LeadListItemData[]>([]);
+  const [selectedPhaseKey, setSelectedPhaseKey] = useState<string>("all");
+
+  // Helper Functions
+  /**
+   * Fetches dashboard leads, statuses, and branches.
+   */
+  const fetchDashboardDataService = async (): Promise<void> => {
+    try {
+      const cachedSalesLeads = window.localStorage.getItem(
+        CONSTANTS.DASHBOARD_LEADS_CACHE_KEY,
+      );
+
+      if (cachedSalesLeads) {
+        // Hydrate dashboard quickly from cache while fresh data loads.
+        setSalesLeads(JSON.parse(cachedSalesLeads) as LeadListItemData[]);
+      }
+    } catch {
+      // Ignore malformed cache and continue with API data.
+    }
+
+    try {
+      /**
+       * Call dashboard APIs.
+       */
+      const [
+        salesLeadsResponse,
+        leadStatusesResponse,
+        leadBranchesResponse,
+      ] = await Promise.all([
+        getSalesLeadsRequest(),
+        getLeadStatusesRequest(),
+        getLeadBranchesRequest(),
+      ]);
+
+      if (salesLeadsResponse.status_code === 200) {
+        // Set sales leads state.
+        const salesLeadItems = salesLeadsResponse.data ?? [];
+        setSalesLeads(salesLeadItems);
+        window.localStorage.setItem(
+          CONSTANTS.DASHBOARD_LEADS_CACHE_KEY,
+          JSON.stringify(salesLeadItems),
+        );
+      } else {
+        // Reset sales leads state.
+        setSalesLeads([]);
+      }
+
+      if (leadStatusesResponse.status_code === 200) {
+        // Set lead statuses state.
+        setLeadStatusItems(leadStatusesResponse.data ?? []);
+      } else {
+        // Reset lead statuses state.
+        setLeadStatusItems([]);
+      }
+
+      if (leadBranchesResponse.status_code === 200) {
+        // Set lead branches state.
+        setLeadBranchItems(leadBranchesResponse.data ?? []);
+      } else {
+        // Reset lead branches state.
+        setLeadBranchItems([]);
+      }
+    } catch {
+      // Error toast.
+      toast.error("Unable to load dashboard right now. Please try again.");
+
+      // Reset dashboard state.
+      setLeadBranchItems([]);
+      setLeadStatusItems([]);
+      setSalesLeads([]);
+    } finally {
+      // Set loading state to false.
+      setIsDashboardLoading(false);
+    }
+  };
+
+  const salesPhaseCardItems = useMemo(
+    () => getPhaseCardsService(leadStatusItems, salesLeads),
+    [leadStatusItems, salesLeads],
+  );
+
+  const filteredRecentLeadItems = useMemo(() => {
+    const phaseFilteredLeadItems =
+      selectedPhaseKey === "all"
+        ? salesLeads
+        : salesLeads.filter(
+            (leadItem) => leadItem.status.toLowerCase() === selectedPhaseKey,
+          );
+
+    return [...phaseFilteredLeadItems]
+      .sort((firstLeadItem, secondLeadItem) => {
+        const firstLeadTime = new Date(
+          firstLeadItem.updatedAt ??
+            firstLeadItem.createdAt ??
+            "1970-01-01T00:00:00.000Z",
+        ).getTime();
+        const secondLeadTime = new Date(
+          secondLeadItem.updatedAt ??
+            secondLeadItem.createdAt ??
+            "1970-01-01T00:00:00.000Z",
+        ).getTime();
+
+        return secondLeadTime - firstLeadTime;
+      })
+      .slice(0, 5);
+  }, [salesLeads, selectedPhaseKey]);
+
+  const branchLocationOptions = useMemo(() => {
+    const branchNameValues = leadBranchItems
+      .map((branchItem) => getBranchNameService(branchItem))
+      .filter(Boolean);
+
+    if (branchNameValues.length > 0) {
+      return branchNameValues;
+    }
+
+    return user?.branch ? [user.branch] : [];
+  }, [leadBranchItems, user]);
+
+  const dashboardSummaryMetrics = useMemo(
+    () => [
+      {
+        key: "calls-due",
+        label: "Calls Due",
+        value: String(
+          salesLeads.filter((leadItem) =>
+            ["CONTACTED", "INTERESTED", "NEGOTIATION", "TEST_DRIVE"].includes(
+              leadItem.status,
+            ),
+          ).length,
+        ).padStart(2, "0"),
+      },
+      {
+        key: "new-leads",
+        label: "New Leads",
+        value: String(
+          salesLeads.filter((leadItem) => leadItem.status === "NEW").length,
+        ).padStart(2, "0"),
+      },
+      {
+        key: "won-today",
+        label: "Won Today",
+        value: String(
+          salesLeads.filter((leadItem) => isWonTodayService(leadItem)).length,
+        ).padStart(2, "0"),
+      },
+    ],
+    [salesLeads],
+  );
 
   // Use Effects
+  useEffect(() => {
+    const dashboardLoadTimeout = window.setTimeout(() => {
+      void fetchDashboardDataService();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(dashboardLoadTimeout);
+    };
+  }, []);
 
   return (
-    <section className="bg-n-100">
+    <section className="min-h-screen bg-n-100">
       <div className="flex flex-col gap-6">
         {/* Sales dashboard header */}
-        <SalesDashboardHeader />
+        <SalesDashboardHeader
+          avatarLabel={getAvatarLabelService(user?.name ?? "Sales User")}
+          greeting={getGreetingService()}
+          locationName={branchLocationOptions[0] ?? user?.branch ?? "Branch"}
+          locationOptions={branchLocationOptions}
+          name={user?.name ?? "Sales User"}
+          summaryMetrics={dashboardSummaryMetrics}
+        />
 
         <div className="flex flex-col gap-6 px-6 pb-6">
           {/* Leads by phase section */}
@@ -38,8 +247,13 @@ export default function Home() {
             <p className="font-secondary text-n-600 text-xs font-semibold tracking-wide uppercase">
               LEADS BY PHASE
             </p>
+
             {/* Phase Cards List Component */}
-            <PhaseCards activeKey="all" tabs={salesPhaseCardsDetails} />
+            <PhaseCards
+              activeKey={selectedPhaseKey}
+              tabs={salesPhaseCardItems}
+              onCardPress={setSelectedPhaseKey}
+            />
           </div>
 
           {/* Recent leads section */}
@@ -53,17 +267,29 @@ export default function Home() {
 
             {/* Recent leads list */}
             <div className="flex flex-col gap-3">
-              {/* Leads */}
-              {salesRecentLeads.map((leadItem) => (
+              {isDashboardLoading && filteredRecentLeadItems.length === 0 ? (
+                <p className="font-secondary text-n-600 py-6 text-center text-sm">
+                  Loading dashboard...
+                </p>
+              ) : null}
+
+              {!isDashboardLoading && filteredRecentLeadItems.length === 0 ? (
+                <p className="font-secondary text-n-600 py-6 text-center text-sm">
+                  No leads found for this phase.
+                </p>
+              ) : null}
+
+              {filteredRecentLeadItems.map((leadItem) => (
                 // LeadCard Component
                 <LeadCard
-                  key={leadItem.key}
-                  name={leadItem.name}
-                  phoneNumber={leadItem.phoneNumber}
+                  key={leadItem.id}
+                  href={ROUTES.sales.leadDetails(leadItem.id)}
+                  name={leadItem.fullName}
+                  phoneNumber={leadItem.phone}
                   source={leadItem.source}
-                  statusLabel={leadItem.statusLabel}
-                  statusTone={leadItem.statusTone}
-                  vehicleName={leadItem.vehicleName}
+                  statusLabel={getLeadStatusLabel(leadItem.status)}
+                  statusTone={getLeadStatusTone(leadItem.status)}
+                  vehicleName={getLeadVehicleName(leadItem)}
                 />
               ))}
             </div>
@@ -80,7 +306,6 @@ export default function Home() {
               <QuickActionCard
                 href={ROUTES.sales.leadImport}
                 icon={
-                  // Icon
                   <ImportInput
                     primaryColor="var(--color-n-800)"
                     className="size-6"
@@ -93,7 +318,6 @@ export default function Home() {
               <QuickActionCard
                 href={ROUTES.sales.leadAdd}
                 icon={
-                  // Icon
                   <UserAddPlus
                     primaryColor="var(--color-n-800)"
                     className="size-6"
