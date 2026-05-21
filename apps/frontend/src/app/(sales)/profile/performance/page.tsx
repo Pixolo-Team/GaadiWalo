@@ -1,10 +1,9 @@
 "use client";
 
 // REACT //
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 // COMPONENTS //
-import Dropdown from "@/components/common/Dropdown";
 import { Header } from "@/components/common/Header";
 import MetricItem from "@/components/sales/profile/MetricItem";
 import PipelineProgressCard from "@/components/sales/profile/PipelineProgressCard";
@@ -23,7 +22,6 @@ import { salesProfileSummaryData } from "@/data/sales";
 
 // TYPES //
 import type { ApiResponseData } from "@/types/api";
-import type { DropdownOptionData } from "@/types/dropdown";
 import type {
   SalesPerformanceData,
   SalesProfileData,
@@ -48,7 +46,6 @@ export default function ProfilePerformancePage() {
   const [salesProfile, setSalesProfile] = useState<SalesProfileData | null>(null);
   const [salesPerformance, setSalesPerformance] =
     useState<SalesPerformanceData | null>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("this-month");
   const [isPerformanceLoading, setIsPerformanceLoading] =
     useState<boolean>(true);
   const [isProfileLoading, setIsProfileLoading] = useState<boolean>(true);
@@ -56,16 +53,10 @@ export default function ProfilePerformancePage() {
   // Helper Functions
   const userCode = user?.userCode ?? user?.userId ?? user?.id ?? "";
 
-  const currentYearMonth = new Date().toISOString().slice(0, 7);
-  const performancePeriodOptions: DropdownOptionData[] = [
-    { label: "This Month", value: "this-month" },
-    { label: currentYearMonth, value: currentYearMonth },
-  ];
-
   /**
    * Fetches sales profile for performance header.
    */
-  const getSalesProfile = (): void => {
+  const getSalesProfile = useCallback((): void => {
     if (!userCode) {
       setIsProfileLoading(false);
       return;
@@ -95,12 +86,12 @@ export default function ProfilePerformancePage() {
         // Set profile loading false
         setIsProfileLoading(false);
       });
-  };
+  }, [userCode]);
 
   /**
    * Fetches sales performance for selected period.
    */
-  const getSalesPerformance = (): void => {
+  const getSalesPerformance = useCallback((): void => {
     if (!userCode) {
       setIsPerformanceLoading(false);
       return;
@@ -111,7 +102,7 @@ export default function ProfilePerformancePage() {
     /**
      * Call get sales performance API.
      */
-    getSalesPerformanceRequest(userCode, selectedPeriod)
+    getSalesPerformanceRequest(userCode, "this-month")
       .then((response: ApiResponseData<SalesPerformanceData>) => {
         if (response.status_code === 200 && response.data) {
           // Set sales performance state
@@ -132,16 +123,28 @@ export default function ProfilePerformancePage() {
         // Set performance loading false
         setIsPerformanceLoading(false);
       });
-  };
+  }, [userCode]);
 
   // Use Effects
   useEffect(() => {
-    getSalesProfile();
-  }, [userCode]);
+    const profileLoadTimeout = window.setTimeout(() => {
+      getSalesProfile();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(profileLoadTimeout);
+    };
+  }, [getSalesProfile]);
 
   useEffect(() => {
-    getSalesPerformance();
-  }, [userCode, selectedPeriod]);
+    const performanceLoadTimeout = window.setTimeout(() => {
+      getSalesPerformance();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(performanceLoadTimeout);
+    };
+  }, [getSalesPerformance]);
 
   const topMetrics = salesPerformance?.topMetrics ?? [];
   const pipelineProgress = salesPerformance?.pipelineProgress ?? [];
@@ -186,17 +189,6 @@ export default function ProfilePerformancePage() {
 
         {/* Performance scroll content */}
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {/* Period selector */}
-          <div className="px-6 pt-4">
-            <Dropdown
-              label="PERIOD"
-              title="Select period"
-              options={performancePeriodOptions}
-              selectedOption={selectedPeriod}
-              onChange={setSelectedPeriod}
-            />
-          </div>
-
           {/* Profile summary */}
           <ProfileTopSummary
             avatarLabel={summaryProfile.avatarLabel}
