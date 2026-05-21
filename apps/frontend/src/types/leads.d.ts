@@ -144,7 +144,7 @@ export interface LeadProfileViewData {
   name: string;
   phoneNumber: string;
   status: string;
-  statusTone: "amber" | "blue" | "green" | "purple" | "red";
+  statusTone: "amber" | "blue" | "green" | "purple" | "red" | "cyan" | "pink";
 }
 
 /**
