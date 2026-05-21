@@ -7,6 +7,7 @@ import type { ApiResponseData } from "@/types/api";
 import type {
   CreateLeadNoteRequestData,
   CreateLeadRequestData,
+  LeadBranchData,
   CreateLeadResponseData,
   LeadActivityData,
   LeadCarBrandData,
@@ -67,6 +68,22 @@ export const getLeadSourcesRequest = async (): Promise<
   };
 
   const response = await axios.request<ApiResponseData<LeadSourceData[]>>(config);
+  return response.data;
+};
+
+/**
+ * Fetches all lead branch options.
+ */
+export const getLeadBranchesRequest = async (): Promise<
+  ApiResponseData<LeadBranchData[]>
+> => {
+  const config: AxiosRequestConfig = {
+    headers: getAuthHeadersService(),
+    method: "get",
+    url: `${CONSTANTS.API_URL}/sales/leads/branches`,
+  };
+
+  const response = await axios.request<ApiResponseData<LeadBranchData[]>>(config);
   return response.data;
 };
 

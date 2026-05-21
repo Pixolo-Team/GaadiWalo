@@ -60,12 +60,18 @@ export interface LeadDetailsData {
 export interface LeadListItemData {
   carBrand: string | null;
   carModel: string | null;
+  branch?: string | null;
+  createdAt?: string | null;
   fullName: string;
   id: string;
   phone: string;
   source: string;
   status: LeadStatusData;
+  statusChangedAt?: string | null;
+  statusUpdatedAt?: string | null;
+  updatedAt?: string | null;
   variantName: string | null;
+  wonAt?: string | null;
 }
 
 /**
@@ -84,6 +90,17 @@ export interface LeadSourceData {
   description: string;
   id: string;
   name: string;
+}
+
+/**
+ * Defines branch option payload.
+ */
+export interface LeadBranchData {
+  branch?: string | null;
+  id?: string | null;
+  label?: string | null;
+  name?: string | null;
+  value?: string | null;
 }
 
 /**
@@ -159,6 +176,18 @@ export interface LeadStatusOptionData {
   id: string;
   name: LeadStatusData;
   reason: string[];
+}
+
+/**
+ * Defines local leads filter state shape.
+ */
+export interface LeadsFilterStateData {
+  selectedBranch: string;
+  selectedCarBrand: string;
+  selectedEndDate: string;
+  selectedSourceFilters: string[];
+  selectedStartDate: string;
+  selectedStatusFilters: string[];
 }
 
 /**

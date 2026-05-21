@@ -6,11 +6,16 @@ interface PhaseCardItemData {
 
 interface PhaseCardPropsData {
   activeKey: string;
+  onCardPress?: (key: string) => void;
   tabs: ReadonlyArray<PhaseCardItemData>;
 }
 
 /** Phase Card Component */
-export function PhaseCards({ activeKey, tabs }: PhaseCardPropsData) {
+export function PhaseCards({
+  activeKey,
+  onCardPress,
+  tabs,
+}: PhaseCardPropsData) {
   // Define Navigation
 
   // Define Context
@@ -34,6 +39,7 @@ export function PhaseCards({ activeKey, tabs }: PhaseCardPropsData) {
           <button
             key={tabItem.key}
             type="button"
+            onClick={() => onCardPress?.(tabItem.key)}
             className={`flex min-w-24 flex-col items-center rounded-xl border-2 p-2.5 ${
               isActive ? "bg-n-50 border-blue-600" : "border-n-50 bg-n-50"
             }`}

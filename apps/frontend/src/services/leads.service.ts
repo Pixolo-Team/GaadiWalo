@@ -5,6 +5,7 @@ import type {
   LeadActivityViewData,
   LeadDetailsData,
   LeadInfoRowData,
+  LeadListItemData,
   LeadNoteData,
   LeadNoteViewData,
   LeadProfileViewData,
@@ -58,6 +59,19 @@ export const getLeadStatusLabel = (statusValue: LeadStatusData): string => {
     .split("_")
     .map((wordItem) => wordItem.charAt(0) + wordItem.slice(1).toLowerCase())
     .join(" ");
+};
+
+/**
+ * Builds display-ready vehicle name from lead fields.
+ */
+export const getLeadVehicleName = (leadItem: LeadListItemData): string => {
+  const vehicleValues = [
+    leadItem.carBrand,
+    leadItem.carModel,
+    leadItem.variantName,
+  ].filter((valueItem): valueItem is string => Boolean(valueItem));
+
+  return vehicleValues.length > 0 ? vehicleValues.join(" ") : "Not specified";
 };
 
 /**
