@@ -1,7 +1,7 @@
 "use client";
 
 // REACT //
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 // COMPONENTS //
 import BellNotification from "@/components/icons/neevo-icons/BellNotification";
@@ -51,7 +51,7 @@ export default function ProfilePage() {
   /**
    * Fetches sales profile for logged-in user.
    */
-  const getSalesProfile = (): void => {
+  const getSalesProfile = useCallback((): void => {
     if (!userCode) {
       setIsProfileLoading(false);
       return;
@@ -81,12 +81,18 @@ export default function ProfilePage() {
         // Set profile loading false
         setIsProfileLoading(false);
       });
-  };
+  }, [userCode]);
 
   // Use Effects
   useEffect(() => {
-    getSalesProfile();
-  }, [userCode]);
+    const profileLoadTimeout = window.setTimeout(() => {
+      getSalesProfile();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(profileLoadTimeout);
+    };
+  }, [getSalesProfile]);
 
   const summaryProfile = {
     avatarLabel:

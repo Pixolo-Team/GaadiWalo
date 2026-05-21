@@ -38,7 +38,8 @@ export function SalesDashboardHeader({
   // Define Refs
 
   // Define States
-  const [selectedLocation, setSelectedLocation] = useState<string>(locationName);
+  const [selectedLocation, setSelectedLocation] =
+    useState<string>(locationName);
 
   // Helper Functions
   const normalizedLocationOptions = useMemo<ReadonlyArray<string>>(() => {
@@ -49,9 +50,11 @@ export function SalesDashboardHeader({
     return Array.from(uniqueLocationValues);
   }, [locationName, locationOptions]);
 
-  const currentLocationValue = normalizedLocationOptions.includes(selectedLocation)
+  const currentLocationValue = normalizedLocationOptions.includes(
+    selectedLocation,
+  )
     ? selectedLocation
-    : normalizedLocationOptions[0] ?? locationName;
+    : (normalizedLocationOptions[0] ?? locationName);
 
   // Use Effects
 
