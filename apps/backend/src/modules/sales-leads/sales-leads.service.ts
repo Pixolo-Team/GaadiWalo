@@ -1,8 +1,12 @@
 // TYPES //
 import type { QueryResponseData } from "../../common/types/api.types.js";
 import type { AuthenticatedUserData } from "../../common/utils/authenticated-user.js";
-import type { SupabaseUserRecordData } from "../../config/supabase.js";
 import type {
+  SupabaseLookupRecordData,
+  SupabaseUserRecordData,
+} from "../../config/supabase.js";
+import type {
+  BranchOptionData,
   CarBrandData,
   CarModelData,
   CreateLeadNoteRequestData,
@@ -22,7 +26,11 @@ import type {
 } from "./sales-leads.types.js";
 // CONFIG //
 import { environmentConfig } from "../../config/environment.js";
-import { getUserByRecordIdentifier } from "../../config/supabase.js";
+import {
+  getBranches,
+  getBranchByIdentifier,
+  getUserByRecordIdentifier,
+} from "../../config/supabase.js";
 // CONSTANTS //
 import {
   ADMIN_ROLE_VALUE,
@@ -162,6 +170,7 @@ interface SalesLeadsServiceDependenciesData {
   getStatusRecords?: () => Promise<NamedEntityRecordData[]>;
   getLostReasonRecords?: () => Promise<NamedEntityRecordData[]>;
   getLeadSourceRecords?: () => Promise<LeadSourceRecordData[]>;
+  getBranchRecords?: () => Promise<SupabaseLookupRecordData[]>;
   getCarBrandRecords?: () => Promise<NamedEntityRecordData[]>;
   getCarModelRecordsByBrandId?: (
     carBrandId: string,
@@ -182,6 +191,9 @@ interface SalesLeadsServiceDependenciesData {
   getUserByRecordIdentifier: (
     userIdentifier: string,
   ) => Promise<SupabaseUserRecordData | null>;
+  getBranchByIdentifier?: (
+    branchIdentifier: string,
+  ) => Promise<SupabaseLookupRecordData | null>;
   getLeadByPhone: (phone: string) => Promise<SalesLeadRecordData | null>;
   getLeadSourceIdByName: (sourceName: string) => Promise<string | null>;
   getLeadSourceNameById: (sourceId: string) => Promise<string | null>;
@@ -573,6 +585,7 @@ const createDefaultSalesLeadsServiceDependencies =
 
         return executeReadRequest<LeadSourceRecordData[]>(requestUrl);
       },
+      getBranchRecords: getBranches,
       getCarBrandRecords: async () => {
         const requestUrl = createSupabaseTableUrl("car_brands");
         requestUrl.searchParams.set("select", "id,name");
@@ -654,6 +667,7 @@ const createDefaultSalesLeadsServiceDependencies =
         return executeReadRequest<SalesLeadNoteRecordData[]>(requestUrl);
       },
       getUserByRecordIdentifier,
+      getBranchByIdentifier,
       getLeadByPhone: async (phone) => {
         const requestUrl = createSupabaseTableUrl("leads");
         requestUrl.searchParams.set("select", "*");
@@ -855,6 +869,9 @@ export interface SalesLeadsServiceData {
   getLeadSourcesService: (
     authenticatedUser: AuthenticatedUserData,
   ) => Promise<QueryResponseData<LeadSourceData[]>>;
+  getBranchesService: (
+    authenticatedUser: AuthenticatedUserData,
+  ) => Promise<QueryResponseData<BranchOptionData[]>>;
   getCarBrandsService: (
     authenticatedUser: AuthenticatedUserData,
   ) => Promise<QueryResponseData<CarBrandData[]>>;
@@ -1037,6 +1054,11 @@ export const createSalesLeadsService = (
         ? dependencies.getCarModelNameById(leadRecord.car_model_id)
         : Promise.resolve(null),
     ]);
+    const resolvedBranchLookup =
+      typeof assignedToUserRecord?.branch_id === "string" &&
+      dependencies.getBranchByIdentifier
+        ? await dependencies.getBranchByIdentifier(assignedToUserRecord.branch_id)
+        : null;
 
     return {
       id: leadRecord.id,
@@ -1078,6 +1100,8 @@ export const createSalesLeadsService = (
         ]) ?? null,
       budget: getOptionalString(leadRecord, ["budget"]) ?? null,
       isUsed: getOptionalBoolean(leadRecord, ["is_used", "isUsed"]),
+      branchId: assignedToUserRecord?.branch_id ?? null,
+      branchName: resolvedBranchLookup?.name ?? null,
       assignedTo: mapLeadUserSummary(assignedToUserRecord),
       createdBy: mapLeadUserSummary(createdByUserRecord),
       createdAt: leadRecord.created_at,
@@ -1098,6 +1122,8 @@ export const createSalesLeadsService = (
       status: leadDetails.status,
       carBrand: leadDetails.carBrand,
       carModel: leadDetails.carModel,
+      branchId: leadDetails.branchId,
+      branchName: leadDetails.branchName,
       assignedTo: leadDetails.assignedTo,
       createdAt: leadDetails.createdAt,
       updatedAt: leadDetails.updatedAt,
@@ -1372,6 +1398,26 @@ export const createSalesLeadsService = (
             id: leadSourceItem.id,
             name: leadSourceItem.name,
             description: leadSourceItem.description,
+          })),
+          error: null,
+        };
+      } catch (error) {
+        return {
+          data: null,
+          error: mapServiceError(error),
+        };
+      }
+    },
+    getBranchesService: async (_authenticatedUser) => {
+      try {
+        const branchRecords = dependencies.getBranchRecords
+          ? await dependencies.getBranchRecords()
+          : [];
+
+        return {
+          data: branchRecords.map((branchItem) => ({
+            id: branchItem.id,
+            name: branchItem.name,
           })),
           error: null,
         };

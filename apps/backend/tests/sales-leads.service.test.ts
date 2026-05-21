@@ -66,6 +66,10 @@ const createDependencies = () => {
         description: "Direct showroom visit",
       },
     ],
+    getBranchRecords: async () => [
+      { id: "branch-1", name: "Calgary North" },
+      { id: "branch-2", name: "Calgary South" },
+    ],
     getCarBrandRecords: async () => [
       { id: "brand-1", name: "Hyundai" },
       { id: "brand-2", name: "Maruti Suzuki" },
@@ -313,6 +317,19 @@ describe("sales-leads.service", () => {
         name: "Walk-in",
         description: "Direct showroom visit",
       },
+    ]);
+  });
+
+  it("returns active branches for the create-lead dropdown", async () => {
+    const salesLeadsService = createSalesLeadsService(createDependencies());
+
+    const branchesResult =
+      await salesLeadsService.getBranchesService(authenticatedSalesUser);
+
+    assert.equal(branchesResult.error, null);
+    assert.deepEqual(branchesResult.data, [
+      { id: "branch-1", name: "Calgary North" },
+      { id: "branch-2", name: "Calgary South" },
     ]);
   });
 

@@ -40,6 +40,7 @@ export const LEAD_DETAILS_SUCCESS_MESSAGE =
 export const LEADS_SUCCESS_MESSAGE = "Leads fetched successfully.";
 export const CAR_BRANDS_SUCCESS_MESSAGE =
   "Car brands fetched successfully.";
+export const BRANCHES_SUCCESS_MESSAGE = "Branches fetched successfully.";
 export const LEAD_SOURCES_SUCCESS_MESSAGE =
   "Lead sources fetched successfully.";
 export const LEAD_STATUS_OPTIONS_SUCCESS_MESSAGE =

@@ -11,6 +11,7 @@ import {
 } from "./sales-leads.types.js";
 // CONSTANTS //
 import {
+  BRANCHES_SUCCESS_MESSAGE,
   CAR_BRANDS_SUCCESS_MESSAGE,
   CAR_MODELS_SUCCESS_MESSAGE,
   INVALID_CREATE_LEAD_NOTE_REQUEST_MESSAGE,
@@ -306,6 +307,44 @@ export const getLeadSourcesController = async (
     status: "success",
     message: LEAD_SOURCES_SUCCESS_MESSAGE,
     data: leadSourcesResult.data,
+  });
+};
+
+/**
+ * Handles GET /sales/leads/branches and returns active branches.
+ */
+export const getBranchesController = async (
+  context: Context,
+): Promise<Response> => {
+  const { authenticatedUser, errorResponse } =
+    await resolveAuthenticatedUser(context);
+
+  if (errorResponse || !authenticatedUser) {
+    return errorResponse as Response;
+  }
+
+  const branchesResult = await getSalesLeadsService().getBranchesService(
+    authenticatedUser,
+  );
+
+  if (branchesResult.error || !branchesResult.data) {
+    const mappedError = mapServiceError(branchesResult.error);
+
+    return sendResponse({
+      context,
+      statusCode: mappedError.statusCode,
+      status: "error",
+      message: mappedError.message,
+      error: mappedError.errorDetail,
+    });
+  }
+
+  return sendResponse({
+    context,
+    statusCode: HTTP_STATUS_CODES.ok,
+    status: "success",
+    message: BRANCHES_SUCCESS_MESSAGE,
+    data: branchesResult.data,
   });
 };
 

@@ -21,6 +21,11 @@ export interface CarBrandData {
   models: string[];
 }
 
+export interface BranchOptionData {
+  id: string;
+  name: string;
+}
+
 export interface LeadSourceData {
   id: string;
   name: string;
@@ -60,6 +65,8 @@ export interface LeadDetailsData {
   colorPreference: string | null;
   budget: string | null;
   isUsed: boolean | null;
+  branchId: string | null;
+  branchName: string | null;
   assignedTo: LeadUserSummaryData | null;
   createdBy: LeadUserSummaryData | null;
   createdAt: string | null;
@@ -75,6 +82,8 @@ export interface LeadListItemData {
   status: LeadStatusData;
   carBrand: string | null;
   carModel: string | null;
+  branchId: string | null;
+  branchName: string | null;
   assignedTo: LeadUserSummaryData | null;
   createdAt: string | null;
   updatedAt: string | null;

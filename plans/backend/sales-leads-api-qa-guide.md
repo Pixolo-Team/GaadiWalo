@@ -70,16 +70,17 @@ This is the normal testing flow for Sales Leads APIs:
 2. Fetch the leads list using `GET /sales/leads`.
 3. Fetch status options using `GET /sales/leads/statuses`.
 4. Fetch lead source options using `GET /sales/leads/lead-sources`.
-5. Read the `reason` array from the `LOST` status item when testing the lost-reason flow.
-6. Fetch brand options using `GET /sales/leads/car-brands`.
-7. Fetch model options using `GET /sales/leads/car-brands/:carBrandName/car-models`.
-8. If you already have a lead, open that lead using `GET /sales/leads/:leadId`.
-9. Check activity history using `GET /sales/leads/:leadId/activities`.
-10. Check notes using `GET /sales/leads/:leadId/notes`.
-11. Update the lead status using `PATCH /sales/leads/:leadId/status`.
-12. Update customer details using `PATCH /sales/leads/:leadId`.
-13. Add a note using `POST /sales/leads/:leadId/notes`.
-14. Create a fresh lead using `POST /sales/leads`.
+5. Fetch branch options using `GET /sales/leads/branches`.
+6. Read the `reason` array from the `LOST` status item when testing the lost-reason flow.
+7. Fetch brand options using `GET /sales/leads/car-brands`.
+8. Fetch model options using `GET /sales/leads/car-brands/:carBrandName/car-models`.
+9. If you already have a lead, open that lead using `GET /sales/leads/:leadId`.
+10. Check activity history using `GET /sales/leads/:leadId/activities`.
+11. Check notes using `GET /sales/leads/:leadId/notes`.
+12. Update the lead status using `PATCH /sales/leads/:leadId/status`.
+13. Update customer details using `PATCH /sales/leads/:leadId`.
+14. Add a note using `POST /sales/leads/:leadId/notes`.
+15. Create a fresh lead using `POST /sales/leads`.
 
 ## Endpoint Summary
 
@@ -88,6 +89,7 @@ This is the normal testing flow for Sales Leads APIs:
 | `GET` | `/sales/leads` | Get all accessible leads |
 | `GET` | `/sales/leads/statuses` | Get statuses for lead create/update dropdowns, with lost reasons inside the `LOST` item |
 | `GET` | `/sales/leads/lead-sources` | Get active lead sources for lead create/update dropdowns |
+| `GET` | `/sales/leads/branches` | Get active branch ids and names for branch-selection dropdowns |
 | `GET` | `/sales/leads/car-brands` | Get car brands for the create-lead dropdown, with nested model names |
 | `GET` | `/sales/leads/car-brands/:carBrandName/car-models` | Get models for the selected car brand |
 | `GET` | `/sales/leads/:leadId` | Get one lead's full details |
@@ -131,6 +133,8 @@ No request body.
       "status": "INTERESTED",
       "carBrand": "Hyundai",
       "carModel": "Creta",
+      "branchId": "branch-1",
+      "branchName": "Calgary North",
       "assignedTo": {
         "id": "sales-1",
         "name": "Neha Singh"
@@ -185,6 +189,8 @@ No request body.
     "colorPreference": "White",
     "budget": "12-15 Lakh",
     "isUsed": false,
+    "branchId": "branch-1",
+    "branchName": "Calgary North",
     "assignedTo": {
       "id": "sales-1",
       "name": "Neha Singh"
@@ -363,6 +369,8 @@ PATCH /sales/leads/:leadId/status
     "colorPreference": "White",
     "budget": "12-15 Lakh",
     "isUsed": false,
+    "branchId": "branch-1",
+    "branchName": "Calgary North",
     "assignedTo": {
       "id": "sales-1",
       "name": "Neha Singh"
@@ -446,6 +454,8 @@ The response shape is the same as `GET /sales/leads/:leadId`.
     "colorPreference": "White",
     "budget": "12-15 Lakh",
     "isUsed": false,
+    "branchId": "branch-1",
+    "branchName": "Calgary North",
     "assignedTo": {
       "id": "sales-1",
       "name": "Neha Singh"
@@ -589,6 +599,8 @@ Use `GET /sales/leads/car-brands` for Brand options and the nested `models` arra
       "colorPreference": "White",
       "budget": "12-15 Lakh",
       "isUsed": false,
+      "branchId": "branch-1",
+      "branchName": "Calgary North",
       "assignedTo": {
         "id": "sales-1",
         "name": "Neha Singh"

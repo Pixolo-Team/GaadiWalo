@@ -133,6 +133,7 @@ Examples:
 | `/sales/leads` | `GET` | Fetch all accessible Leads for the logged-in user |
 | `/sales/leads/statuses` | `GET` | Fetch available Lead statuses for create/update dropdowns, including lost reason names for `LOST` |
 | `/sales/leads/lead-sources` | `GET` | Fetch active Lead sources for lead create/edit dropdowns |
+| `/sales/leads/branches` | `GET` | Fetch active branches for branch-selection dropdowns |
 | `/sales/leads/car-brands` | `GET` | Fetch available car brands for Lead forms, including model names for each brand |
 | `/sales/leads/car-brands/:carBrandName/car-models` | `GET` | Fetch available car models for the selected car brand |
 | `/sales/leads/:leadId` | `GET` | Fetch one Lead with detail fields |
@@ -200,6 +201,8 @@ interface LeadListItemData {
     | "VEHICLE_NA";
   carBrand: string | null;
   carModel: string | null;
+  branchId: string | null;
+  branchName: string | null;
   assignedTo: LeadUserSummaryData | null;
   createdAt: string | null;
   updatedAt: string | null;
@@ -277,6 +280,46 @@ interface LeadListItemData {
 }
 ```
 
+## 1C. Get Branch Options
+
+### Endpoint Name
+
+| Item | Value |
+| --- | --- |
+| HTTP Method | `GET` |
+| Endpoint URL | `/sales/leads/branches` |
+| Description | Returns active branches from the `branches` table for branch-selection dropdowns. Only active rows are returned. |
+
+### Success Response Schema
+
+```ts
+interface BranchOptionData {
+  id: string;
+  name: string;
+}
+```
+
+### Sample Success Response
+
+```json
+{
+  "data": [
+    {
+      "id": "branch-1",
+      "name": "Calgary North"
+    },
+    {
+      "id": "branch-2",
+      "name": "Calgary South"
+    }
+  ],
+  "status": "success",
+  "status_code": 200,
+  "message": "Branches fetched successfully.",
+  "error": null
+}
+```
+
 #### Sample Success Response
 
 ```json
@@ -291,6 +334,8 @@ interface LeadListItemData {
       "status": "INTERESTED",
       "carBrand": "Hyundai",
       "carModel": "Creta",
+      "branchId": "branch-1",
+      "branchName": "Calgary North",
       "assignedTo": {
         "id": "sales-1",
         "name": "Neha Singh"
@@ -379,6 +424,8 @@ interface LeadDetailsData {
   colorPreference: string | null;
   budget: string | null;
   isUsed: boolean | null;
+  branchId: string | null;
+  branchName: string | null;
   assignedTo: LeadUserSummaryData | null;
   createdBy: LeadUserSummaryData | null;
   createdAt: string | null;
@@ -405,6 +452,8 @@ interface LeadDetailsData {
 | `colorPreference` | `string` | Yes | Preferred color. |
 | `budget` | `string` | Yes | Budget display text. |
 | `isUsed` | `boolean` | Yes | Whether the Lead is interested in a used vehicle. |
+| `branchId` | `string` | Yes | Branch identifier of the currently assigned sales user. |
+| `branchName` | `string` | Yes | Branch name resolved from `branchId`. |
 | `assignedTo` | `object` | Yes | Assigned sales user summary. |
 | `createdBy` | `object` | Yes | Lead creator summary. |
 | `createdAt` | `string` | Yes | Lead creation timestamp in ISO-8601 format. |
@@ -430,6 +479,8 @@ interface LeadDetailsData {
     "colorPreference": "Red",
     "budget": "6-8 Lakh",
     "isUsed": true,
+    "branchId": "branch-1",
+    "branchName": "Calgary North",
     "assignedTo": {
       "id": "SP001",
       "name": "Sales Person"
@@ -873,6 +924,8 @@ Returns the same `LeadDetailsData` shape as `GET /sales/leads/:leadId`.
     "colorPreference": "Red",
     "budget": "6-8 Lakh",
     "isUsed": true,
+    "branchId": "branch-1",
+    "branchName": "Calgary North",
     "assignedTo": {
       "id": "SP001",
       "name": "Sales Person"
@@ -1058,6 +1111,8 @@ Returns the same `LeadDetailsData` shape as `GET /sales/leads/:leadId`.
     "colorPreference": "White",
     "budget": "10-12 Lakh",
     "isUsed": false,
+    "branchId": "branch-1",
+    "branchName": "Calgary North",
     "assignedTo": {
       "id": "SP001",
       "name": "Sales Person"
@@ -1403,6 +1458,8 @@ interface CreateLeadResponseData {
       "colorPreference": "Red",
       "budget": "6-8 Lakh",
       "isUsed": true,
+      "branchId": "branch-1",
+      "branchName": "Calgary North",
       "assignedTo": {
         "id": "SP001",
         "name": "Sales Person"
@@ -1684,6 +1741,8 @@ flowchart TD
 | `referrerPhone` | `leads.referrer_phone` if present |
 | `carBrand` | `leads.car_brand` or fallback-compatible source column |
 | `carModel` | `leads.car_model` or fallback-compatible source column |
+| `branchId` | `users.branch_id` from the currently assigned sales user if available |
+| `branchName` | Resolved from `branches.name` using `branchId` |
 | `variantName` | `leads.variant_name` |
 | `colorPreference` | `leads.color_preference` |
 | `budget` | `leads.budget` |
