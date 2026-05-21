@@ -371,6 +371,16 @@ export const salesAddLeadBudgetOptions = [
 ] as const;
 
 /**
+ * Add lead budget options for create-lead API payload values.
+ */
+export const salesLeadBudgetOptions = [
+  { label: "Under 5 Lakh", value: "Under 5 Lakh" },
+  { label: "5 - 8 Lakh", value: "5 - 8 Lakh" },
+  { label: "8 - 12 Lakh", value: "8 - 12 Lakh" },
+  { label: "12+ Lakh", value: "12+ Lakh" },
+] as const;
+
+/**
  * Import lead source tag options dummy data.
  */
 export const salesImportLeadSourceTagOptions = [

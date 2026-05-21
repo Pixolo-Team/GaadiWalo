@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 interface ProfileTopSummaryPropsData {
   avatarLabel: string;
   branch: string;
-  detailsClassName?: "items-center" | "items-start";
+  detailsClassName?: string;
   joined: string;
   name: string;
   role: string;
@@ -18,7 +18,7 @@ interface ProfileTopSummaryPropsData {
 export default function ProfileTopSummary({
   avatarLabel,
   branch,
-  detailsClassName = "items-start",
+  detailsClassName,
   joined,
   name,
   role,

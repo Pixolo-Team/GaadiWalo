@@ -105,7 +105,7 @@ export default function ImportLeadsPage() {
 
               {/* Source selector helper */}
               <p className="font-secondary text-n-500 text-xs leading-tight font-light">
-                If your file has a "Source" column, leave blank and we&apos;ll
+                If your file has a &quot;Source&quot; column, leave blank and we&apos;ll
                 read it from there.
               </p>
             </div>

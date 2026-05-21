@@ -10,11 +10,21 @@ interface LeadNoteData {
 }
 
 interface NotesTabPropsData {
+  isSending: boolean;
+  noteInputValue: string;
+  onNoteInputChange: (value: string) => void;
+  onSendNote: () => void;
   notes: ReadonlyArray<LeadNoteData>;
 }
 
 /** Lead Notes Tab */
-export function NotesTab({ notes }: NotesTabPropsData) {
+export function NotesTab({
+  isSending,
+  noteInputValue,
+  onNoteInputChange,
+  onSendNote,
+  notes,
+}: NotesTabPropsData) {
   // Define Navigation
 
   // Define Context
@@ -83,14 +93,18 @@ export function NotesTab({ notes }: NotesTabPropsData) {
             type="text"
             aria-label="Add a note about this lead"
             placeholder="Add a note about this lead..."
+            value={noteInputValue}
+            onChange={(event) => onNoteInputChange(event.target.value)}
             className="font-secondary text-n-800 placeholder:text-n-400 min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
           />
 
           {/* Send note action */}
           <button
             type="button"
+            onClick={onSendNote}
+            disabled={isSending}
             aria-label="Send note"
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-600"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-600 disabled:opacity-50"
           >
             <MailSendEmailMessage
               primaryColor="var(--color-n-50)"

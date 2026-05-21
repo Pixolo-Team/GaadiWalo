@@ -1,7 +1,17 @@
 "use client";
 
 // REACT //
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+// TYPES //
+import type { ApiResponseData } from "@/types/api";
+import type { DropdownOptionData } from "@/types/dropdown";
+import type {
+  CreateLeadResponseData,
+  LeadCarBrandData,
+  LeadSourceData,
+} from "@/types/leads";
 
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
@@ -11,42 +21,51 @@ import ContentInsightIdeaTrivia from "@/components/icons/neevo-icons/ContentInsi
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-// DATA //
+// API SERVICES //
 import {
-  salesAddLeadBudgetOptions,
-  salesAddLeadCarBrandOptions,
-  salesAddLeadCarModelOptions,
-  salesAddLeadSourceOptions,
-  salesAddLeadVariantOptions,
-} from "@/data/sales";
+  createLeadRequest,
+  getCarBrandsRequest,
+  getLeadSourcesRequest,
+} from "@/services/api/sales-leads.api.service";
+
+// DATA //
+import { salesLeadBudgetOptions } from "@/data/sales";
+
+// CONSTANTS //
+import { ROUTES } from "@/constants/routes";
+
+// UTILS //
+import { validatePhoneNumberValue } from "@/utils/validations";
+
+// OTHERS //
+import { toast } from "sonner";
 
 interface LeadInputFiledData {
   budget: string;
-  carBrand: string;
+  carBrandId: string;
   carModel: string;
   email: string;
   fullName: string;
   initialNote: string;
   phoneNumber: string;
   source: string;
-  variant: string;
 }
 
 const initialLeadInputFiledData: LeadInputFiledData = {
   budget: "",
-  carBrand: "",
+  carBrandId: "",
   carModel: "",
   email: "",
   fullName: "",
   initialNote: "",
   phoneNumber: "",
   source: "",
-  variant: "",
 };
 
 /** Add Lead Page Component */
 export default function AddLeadPage() {
   // Define Navigation
+  const router = useRouter();
 
   // Define Context
 
@@ -56,36 +75,193 @@ export default function AddLeadPage() {
   const [leadInputFiled, setLeadInputField] = useState<LeadInputFiledData>(
     initialLeadInputFiledData,
   );
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [carBrands, setCarBrands] = useState<LeadCarBrandData[]>([]);
+  const [leadSourceOptions, setLeadSourceOptions] = useState<
+    DropdownOptionData[]
+  >([]);
 
   // Helper Functions
-  /** Function to Update input Fields */
+  /**
+   * Updates one create-lead input field.
+   */
   const updateLeadInputFiled = (
     field: keyof LeadInputFiledData,
     value: string,
   ): void => {
-    setLeadInputField((previousInputField) => ({
-      ...previousInputField,
+    setLeadInputField((previousInputFieldItem) => ({
+      ...previousInputFieldItem,
       [field]: value,
     }));
   };
 
   const canCreateLead =
     leadInputFiled.fullName.trim().length > 0 &&
-    leadInputFiled.phoneNumber.trim().length > 0;
+    leadInputFiled.phoneNumber.trim().length > 0 &&
+    leadInputFiled.source.trim().length > 0 &&
+    !isSubmitting;
 
-  /** Handles the create lead action. */
+  const selectedCarBrand = carBrands.find(
+    (carBrandItem) => carBrandItem.id === leadInputFiled.carBrandId,
+  );
+
+  // Car Brands
+  const carBrandOptions: DropdownOptionData[] = carBrands.map(
+    (carBrandItem) => ({
+      label: carBrandItem.name,
+      value: carBrandItem.id,
+    }),
+  );
+
+  // Car Models from specific Brand
+  const carModelOptions: DropdownOptionData[] =
+    selectedCarBrand?.models.map((carModelItem) => ({
+      label: carModelItem,
+      value: carModelItem,
+    })) ?? [];
+
+  /**
+   * Maps local form state to create-lead API payload.
+   */
+  const createLeadPayload = {
+    budget: leadInputFiled.budget || null,
+    carBrand: selectedCarBrand?.name ?? null,
+    carModel: leadInputFiled.carModel || null,
+    email: leadInputFiled.email.trim(),
+    fullName: leadInputFiled.fullName,
+    initialNote: leadInputFiled.initialNote.trim() || undefined,
+    phone: leadInputFiled.phoneNumber,
+    source: leadInputFiled.source,
+  };
+
+  /**
+   * Handles car brand selection and model reset.
+   */
+  const handleCarBrandChange = (carBrandId: string): void => {
+    setLeadInputField((previousInputFieldItem) => ({
+      ...previousInputFieldItem,
+      carBrandId,
+      carModel: "",
+    }));
+  };
+
+  /**
+   * Fetches all car brands for add-lead dropdown.
+   */
+  const getAllCarBrands = (): void => {
+    /**
+     * Call get car brands API.
+     */
+    getCarBrandsRequest()
+      .then((response: ApiResponseData<LeadCarBrandData[]>) => {
+        if (response.status_code === 200) {
+          // Set all car brands state
+          setCarBrands(response.data ?? []);
+        } else {
+          // Reset car brands state
+          setCarBrands([]);
+        }
+      })
+      .catch(() => {
+        // Error toast
+        toast.error("Unable to load car brands right now.");
+
+        // Reset car brands state
+        setCarBrands([]);
+      });
+  };
+
+  /**
+   * Fetches all lead sources for source dropdown.
+   */
+  const getAllLeadSources = (): void => {
+    /**
+     * Call get lead sources API.
+     */
+    getLeadSourcesRequest()
+      .then((response: ApiResponseData<LeadSourceData[]>) => {
+        if (response.status_code === 200) {
+          const sourceOptions = (response.data ?? []).map((leadSourceItem) => ({
+            label: leadSourceItem.name,
+            value: leadSourceItem.name,
+          }));
+
+          // Set Lead Source state
+          setLeadSourceOptions(sourceOptions);
+        } else {
+          // Reset lead source options state
+          setLeadSourceOptions([]);
+        }
+      })
+      .catch(() => {
+        // Error toast
+        toast.error("Unable to load lead sources right now.");
+
+        // Reset lead source options state
+        setLeadSourceOptions([]);
+      });
+  };
+
+  /**
+   * Handles the create lead action.
+   */
   const handleCreateLead = (): void => {
     if (!canCreateLead) {
       return;
     }
+
+    const phoneNumberValidationMessage = validatePhoneNumberValue(
+      leadInputFiled.phoneNumber,
+    );
+
+    if (phoneNumberValidationMessage) {
+      toast.error(phoneNumberValidationMessage);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    /**
+     * Call create lead API
+     */
+    createLeadRequest(createLeadPayload)
+      .then((response: ApiResponseData<CreateLeadResponseData>) => {
+        if (response.status_code === 201 && response.data?.lead.id) {
+          // Success toast
+          toast.success(response.message);
+
+          // Navigate to lead details page
+          router.push(ROUTES.sales.leadDetails(response.data.lead.id));
+        } else {
+          // Error toast
+          toast.error(response.error ?? response.message);
+        }
+      })
+      .catch(() => {
+        // Error toast
+        toast.error("Unable to create lead. Please try again.");
+      })
+      .finally(() => {
+        // Reset submitting state
+        setIsSubmitting(false);
+      });
   };
 
-  /** Function to clear all fields to their initial values */
+  /**
+   * Clears all fields to initial values.
+   */
   const handleCancel = (): void => {
     setLeadInputField(initialLeadInputFiledData);
   };
 
   // Use Effects
+  useEffect(() => {
+    /** Get all Car Brands */
+    getAllCarBrands();
+
+    /** Get all lead sources */
+    getAllLeadSources();
+  }, []);
 
   return (
     <section className="bg-n-100 h-full">
@@ -106,7 +282,7 @@ export default function AddLeadPage() {
                 className="mt-0.5 size-5 shrink-0"
               />
               <p className="font-secondary text-sm leading-normal font-medium text-blue-800">
-                Fill in at least Name and Phone number to create a lead.
+                Fill in Name, Phone number, and Source to create a lead.
               </p>
             </div>
 
@@ -120,9 +296,9 @@ export default function AddLeadPage() {
 
                 {/* Personal info fields */}
                 <div className="flex flex-col gap-4">
-                  {/* Full Name Input */}
                   <InputBox
-                    label="FULL NAME *"
+                    label="FULL NAME"
+                    isRequired
                     placeholder="e.g. Rahul Kumar"
                     value={leadInputFiled.fullName}
                     onChange={(value) =>
@@ -130,9 +306,9 @@ export default function AddLeadPage() {
                     }
                   />
 
-                  {/* Phone Input */}
                   <InputBox
-                    label="PHONE NUMBER *"
+                    label="PHONE NUMBER"
+                    isRequired
                     placeholder="+91 XXXXXXXXXX"
                     value={leadInputFiled.phoneNumber}
                     onChange={(value) =>
@@ -140,7 +316,6 @@ export default function AddLeadPage() {
                     }
                   />
 
-                  {/* Email Input  */}
                   <InputBox
                     label="EMAIL (OPTIONAL)"
                     placeholder="email@example.com"
@@ -151,7 +326,6 @@ export default function AddLeadPage() {
                 </div>
               </div>
 
-              {/* Section divider */}
               <div className="bg-n-200 h-px w-full" />
 
               {/* Lead source section */}
@@ -160,70 +334,52 @@ export default function AddLeadPage() {
                   Lead Source
                 </p>
 
-                {/* Source Dropdown */}
                 <Dropdown
                   label="SOURCE"
-                  required
+                  isRequired
                   title="Select Source"
-                  options={salesAddLeadSourceOptions}
+                  options={leadSourceOptions}
                   selectedOption={leadInputFiled.source}
                   onChange={(value) => updateLeadInputFiled("source", value)}
                 />
               </div>
 
-              {/* Section divider */}
               <div className="bg-n-200 h-px w-full" />
 
               {/* Car details section */}
               <div className="flex flex-col gap-3">
                 <p className="font-secondary text-n-600 text-xs leading-normal font-semibold tracking-wide uppercase">
-                  Lead Source
+                  Car Details
                 </p>
 
-                {/* Car details fields */}
                 <div className="flex flex-col gap-4">
-                  {/* Car Brand Dropdown */}
                   <Dropdown
                     label="CAR BRAND"
-                    required
+                    isRequired
                     title="Select Brand"
-                    options={salesAddLeadCarBrandOptions}
-                    selectedOption={leadInputFiled.carBrand}
-                    onChange={(value) =>
-                      updateLeadInputFiled("carBrand", value)
-                    }
+                    options={carBrandOptions}
+                    selectedOption={leadInputFiled.carBrandId}
+                    onChange={handleCarBrandChange}
                   />
 
-                  {/* Car Model Dropdown */}
                   <Dropdown
                     label="MODEL"
                     title="Select Model"
-                    options={salesAddLeadCarModelOptions}
+                    options={carModelOptions}
                     selectedOption={leadInputFiled.carModel}
                     onChange={(value) =>
                       updateLeadInputFiled("carModel", value)
                     }
                   />
 
-                  {/* Car Variant Dropdown */}
-                  <Dropdown
-                    label="VARIANT / CATEGORY"
-                    title="Select"
-                    options={salesAddLeadVariantOptions}
-                    selectedOption={leadInputFiled.variant}
-                    onChange={(value) => updateLeadInputFiled("variant", value)}
-                  />
-
-                  {/* Budget Range Dropdown */}
                   <Dropdown
                     label="BUDGET RANGE"
                     title="Select Budget"
-                    options={salesAddLeadBudgetOptions}
+                    options={salesLeadBudgetOptions}
                     selectedOption={leadInputFiled.budget}
                     onChange={(value) => updateLeadInputFiled("budget", value)}
                   />
 
-                  {/* Optional Textarea Component */}
                   <Textarea
                     label="INITIAL NOTE (OPTIONAL)"
                     value={leadInputFiled.initialNote}
@@ -231,7 +387,7 @@ export default function AddLeadPage() {
                       updateLeadInputFiled("initialNote", event.target.value)
                     }
                     placeholder="Any additional info about this lead..."
-                    className="border-n-200 bg-n-50 font-secondary text-n-800 placeholder:text-n-400 min-h-[120px] w-full resize-y rounded-lg border p-3.5 text-base leading-normal outline-none"
+                    className="min-h-[120px] w-full resize-y"
                   />
                 </div>
               </div>
@@ -241,7 +397,6 @@ export default function AddLeadPage() {
 
         {/* Sticky action bar */}
         <div className="border-n-200 bg-n-50 shrink-0 border-t-[1.6px] p-3.5">
-          {/* Action buttons */}
           <div className="flex flex-col gap-2">
             <Button
               type="button"

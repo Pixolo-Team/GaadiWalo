@@ -13,10 +13,8 @@ import {
 // OTHERS //
 import { cn } from "@/lib/utils";
 
-interface DropdownOptionData {
-  label: string;
-  value: string;
-}
+// TYPES //
+import type { DropdownOptionData } from "@/types/dropdown";
 
 interface DropdownPropsData {
   className?: string;
@@ -25,7 +23,7 @@ interface DropdownPropsData {
   onChange: (value: string) => void;
   options: ReadonlyArray<DropdownOptionData>;
   placeholder?: string;
-  required?: boolean;
+  isRequired?: boolean;
   selectedOption: string;
   title?: string;
 }
@@ -38,7 +36,7 @@ export default function Dropdown({
   onChange,
   options,
   placeholder,
-  required,
+  isRequired,
   selectedOption,
   title,
 }: DropdownPropsData) {
@@ -57,16 +55,16 @@ export default function Dropdown({
   return (
     <div className="flex h-full w-full flex-col gap-1.5">
       {/* Dropdown label */}
-      {label ? (
+      {label !== "" && (
         <div className="relative flex">
-          <label className="font-secondary text-n-600 text-xs font-semibold uppercase">
+          <label className="font-secondary text-n-600 text-xs leading-normal font-medium tracking-wide uppercase">
             {label}
-            {required ? (
+            {isRequired && (
               <span className="absolute top-0 ml-0.5 text-red-500">*</span>
-            ) : null}
+            )}
           </label>
         </div>
-      ) : null}
+      )}
 
       {/* Dropdown field */}
       <div className="flex flex-col gap-0.5">

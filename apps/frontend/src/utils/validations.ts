@@ -30,3 +30,23 @@ export const validateOtpValue = (otpValue: string): string | null => {
 
   return null;
 };
+
+/**
+ * Validates a phone number as an exact 10-digit value.
+ */
+export const validatePhoneNumberValue = (
+  phoneNumberValue: string,
+): string | null => {
+  const normalizedPhoneNumberValue = phoneNumberValue.trim();
+  const phoneNumberRegex = /^[0-9]{10}$/;
+
+  if (!normalizedPhoneNumberValue) {
+    return "Phone number is required.";
+  }
+
+  if (!phoneNumberRegex.test(normalizedPhoneNumberValue)) {
+    return "Please enter a valid 10-digit phone number.";
+  }
+
+  return null;
+};
