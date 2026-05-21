@@ -95,7 +95,6 @@ export const updateSalesProfileRequestSchema = z
       .trim()
       .regex(mobilePhoneRegex, "Phone number must be 10 digits.")
       .optional(),
-    email: z.string().trim().email().optional(),
     languagePreference: z
       .string()
       .trim()

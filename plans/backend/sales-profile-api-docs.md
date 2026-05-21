@@ -99,8 +99,12 @@ Request body may include:
 
 - `fullName`
 - `phone`
-- `email`
 - `languagePreference`
+
+Locked fields:
+
+- `email` is read-only and cannot be changed through this endpoint.
+- `user_code` is path-based only and is not editable through any sales profile payload.
 
 ### 3. Change Sales Password
 
@@ -185,5 +189,5 @@ Success `data` shape:
 - `401`: missing or invalid bearer token
 - `403`: another sales rep attempted cross-user access, or an admin attempted to change another user's password
 - `404`: unknown sales profile
-- `409`: duplicate email or phone on update
+- `409`: duplicate phone on update
 - `500`: unexpected backend failure

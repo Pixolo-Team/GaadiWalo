@@ -1,0 +1,53 @@
+services:
+  - type: web
+    name: gaadiwalo-backend
+    runtime: image
+    plan: starter
+    image:
+      url: docker.io/gaadiwalopixolo/gaadiwalo-backend:latest
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: AUTH_RESET_TOKEN_SECRET
+        sync: false
+      - key: AUTH_RESET_TOKEN_TTL_MINUTES
+        value: "10"
+      - key: SUPABASE_USERS_TABLE
+        value: users
+      - key: SUPABASE_LOGIN_USER_ID_COLUMN
+        value: user_code
+      - key: SUPABASE_USER_EMAIL_COLUMN
+        value: email
+      - key: SUPABASE_USER_NAME_COLUMN
+        value: full_name
+      - key: SUPABASE_USER_PHONE_COLUMN
+        value: phone
+      - key: SUPABASE_USER_ROLE_COLUMN
+        value: role_id
+      - key: SUPABASE_USER_BRANCH_COLUMN
+        value: branch_id
+      - key: SUPABASE_USER_ACTIVE_COLUMN
+        value: is_active
+      - key: SUPABASE_USER_JOINED_AT_COLUMN
+        value: created_at
+      - key: SUPABASE_ROLES_TABLE
+        value: roles
+      - key: SUPABASE_ROLE_ID_COLUMN
+        value: id
+      - key: SUPABASE_ROLE_NAME_COLUMN
+        value: name
+      - key: SUPABASE_BRANCHES_TABLE
+        value: branches
+      - key: SUPABASE_BRANCH_ID_COLUMN
+        value: id
+      - key: SUPABASE_BRANCH_NAME_COLUMN
+        value: name
+      - key: SUPABASE_BRANCH_ACTIVE_COLUMN
+        value: is_active

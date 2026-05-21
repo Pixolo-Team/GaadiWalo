@@ -24,7 +24,6 @@ import {
   SALES_PROFILE_ACCESS_FORBIDDEN_MESSAGE,
   SALES_PROFILE_DEFAULT_LANGUAGE,
   SALES_PROFILE_DEFAULT_PERIOD,
-  SALES_PROFILE_DUPLICATE_EMAIL_MESSAGE,
   SALES_PROFILE_DUPLICATE_PHONE_MESSAGE,
   SALES_PROFILE_LOST_STATUSES,
   SALES_PROFILE_NOT_FOUND_MESSAGE,
@@ -1000,25 +999,6 @@ export const createSalesProfileService = (
           userCode,
         );
 
-        if (payload.email) {
-          const duplicateEmailUser = await dependencies.getUserRecordByEmail(
-            normalizeEmail(payload.email),
-          );
-
-          if (
-            duplicateEmailUser &&
-            duplicateEmailUser.id !== userContext.userRecord.id
-          ) {
-            return {
-              data: null,
-              error: createSalesProfileServiceError(
-                "CONFLICT",
-                SALES_PROFILE_DUPLICATE_EMAIL_MESSAGE,
-              ),
-            };
-          }
-        }
-
         if (payload.phone) {
           const duplicatePhoneUser = await dependencies.getUserRecordByPhone(
             payload.phone,
@@ -1041,7 +1021,6 @@ export const createSalesProfileService = (
         const updatedUserRecordPayload = {
           ...(payload.fullName ? { full_name: payload.fullName } : {}),
           ...(payload.phone ? { phone: payload.phone } : {}),
-          ...(payload.email ? { email: normalizeEmail(payload.email) } : {}),
           ...buildUserSettingsUpdatePayload({
             userRecord: userContext.userRecord,
             languagePreference: payload.languagePreference,

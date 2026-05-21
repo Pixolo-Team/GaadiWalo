@@ -353,7 +353,6 @@ describe("sales-profile.service", () => {
       {
         fullName: "Updated Sales One",
         phone: "9876543222",
-        email: "updated.sales1@example.com",
         languagePreference: "English",
       },
     );
@@ -361,7 +360,7 @@ describe("sales-profile.service", () => {
     assert.equal(updateResult.error, null);
     assert.equal(updateResult.data?.fullName, "Updated Sales One");
     assert.equal(updateResult.data?.phone, "9876543222");
-    assert.equal(updateResult.data?.email, "updated.sales1@example.com");
+    assert.equal(updateResult.data?.email, "sales1@example.com");
     assert.equal(
       state.users.find((userItem) => userItem.id === "sales-row-1")
         ?.language_preference,
