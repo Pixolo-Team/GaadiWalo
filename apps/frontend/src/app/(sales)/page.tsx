@@ -3,6 +3,13 @@
 // REACT //
 import { useEffect, useMemo, useState } from "react";
 
+// TYPES //
+import type {
+  LeadBranchData,
+  LeadListItemData,
+  LeadStatusOptionData,
+} from "@/types/leads";
+
 // COMPONENTS //
 import ImportInput from "@/components/icons/neevo-icons/ImportInput";
 import UserAddPlus from "@/components/icons/neevo-icons/UserAddPlus";
@@ -12,12 +19,13 @@ import { QuickActionCard } from "@/components/sales/QuickActionCard";
 import { SalesDashboardHeader } from "@/components/sales/SalesDashboardHeader";
 import { SectionHeader } from "@/components/sales/SectionHeader";
 
-// SERVICES //
+// API SERVICES //
 import {
   getLeadBranchesRequest,
-  getLeadStatusesRequest,
   getSalesLeadsRequest,
 } from "@/services/api/sales-leads.api.service";
+
+// SERVICES //
 import {
   getAvatarLabelService,
   getBranchNameService,
@@ -31,22 +39,17 @@ import {
   getLeadVehicleName,
 } from "@/services/leads.service";
 
-// HOOKS //
-import { useAuthContext } from "@/context/AuthContext";
-
-// LIBRARIES //
-import { toast } from "sonner";
-
 // CONSTANTS //
 import { CONSTANTS } from "@/constants/constants";
 import { ROUTES } from "@/constants/routes";
 
-// TYPES //
-import type {
-  LeadBranchData,
-  LeadListItemData,
-  LeadStatusOptionData,
-} from "@/types/leads";
+// OTHERS //
+import { useAuthContext } from "@/context/AuthContext";
+import { toast } from "sonner";
+
+// HOOKS //
+
+// LIBRARIES //
 
 /**
  * Renders the sales home screen with live dashboard data.
@@ -62,7 +65,39 @@ export default function Home() {
   // Define States
   const [isDashboardLoading, setIsDashboardLoading] = useState<boolean>(true);
   const [leadBranchItems, setLeadBranchItems] = useState<LeadBranchData[]>([]);
-  const [leadStatusItems, setLeadStatusItems] = useState<LeadStatusOptionData[]>(
+  const leadStatusItems = useMemo<LeadStatusOptionData[]>(
+    () => [
+      {
+        id: "new",
+        name: "NEW",
+        reason: [],
+      },
+      {
+        id: "contacted",
+        name: "CONTACTED",
+        reason: [],
+      },
+      {
+        id: "interested",
+        name: "INTERESTED",
+        reason: [],
+      },
+      {
+        id: "negotiation",
+        name: "NEGOTIATION",
+        reason: [],
+      },
+      {
+        id: "test-drive",
+        name: "TEST_DRIVE",
+        reason: [],
+      },
+      {
+        id: "won",
+        name: "WON",
+        reason: [],
+      },
+    ],
     [],
   );
   const [salesLeads, setSalesLeads] = useState<LeadListItemData[]>([]);
@@ -90,13 +125,8 @@ export default function Home() {
       /**
        * Call dashboard APIs.
        */
-      const [
-        salesLeadsResponse,
-        leadStatusesResponse,
-        leadBranchesResponse,
-      ] = await Promise.all([
+      const [salesLeadsResponse, leadBranchesResponse] = await Promise.all([
         getSalesLeadsRequest(),
-        getLeadStatusesRequest(),
         getLeadBranchesRequest(),
       ]);
 
@@ -113,14 +143,6 @@ export default function Home() {
         setSalesLeads([]);
       }
 
-      if (leadStatusesResponse.status_code === 200) {
-        // Set lead statuses state.
-        setLeadStatusItems(leadStatusesResponse.data ?? []);
-      } else {
-        // Reset lead statuses state.
-        setLeadStatusItems([]);
-      }
-
       if (leadBranchesResponse.status_code === 200) {
         // Set lead branches state.
         setLeadBranchItems(leadBranchesResponse.data ?? []);
@@ -134,7 +156,6 @@ export default function Home() {
 
       // Reset dashboard state.
       setLeadBranchItems([]);
-      setLeadStatusItems([]);
       setSalesLeads([]);
     } finally {
       // Set loading state to false.
@@ -228,7 +249,7 @@ export default function Home() {
   }, []);
 
   return (
-    <section className="min-h-screen bg-n-100">
+    <section className="bg-n-100 min-h-screen">
       <div className="flex flex-col gap-6">
         {/* Sales dashboard header */}
         <SalesDashboardHeader
