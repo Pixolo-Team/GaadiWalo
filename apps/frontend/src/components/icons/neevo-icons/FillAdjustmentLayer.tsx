@@ -1,0 +1,42 @@
+// REACT //
+import React from "react";
+
+// TYPES //
+import { IconComponentData } from "@/types/icon";
+
+const FillAdjustmentLayer: IconComponentData = ({
+  primaryColor,
+  secondaryColor,
+  tertiaryColor,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="-1 -1 28 28"
+    height={28}
+    width={28}
+    {...props}
+  >
+    <g>
+      <path
+        id="Vector"
+        stroke={primaryColor}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M13 25.071428571428573C5.274285714285714 25.071428571428573 0.9285714285714286 20.725714285714286 0.9285714285714286 13S5.274285714285714 0.9285714285714286 13 0.9285714285714286s12.071428571428571 4.345714285714285 12.071428571428571 12.071428571428571 -4.345714285714285 12.071428571428571 -12.071428571428571 12.071428571428571Z"
+        strokeWidth={2}
+      />
+      <path
+        id="Intersect"
+        stroke={primaryColor}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8.217485714285715 19.103871428571427c4.170548571428572 -3.5898385714285714 7.383201428571429 -6.7823971428571435 10.901985714285715 -10.8628 0.8587428571428571 1.20913 1.3085428571428572 2.809132857142857 1.3085428571428572 4.759002857142857C20.428014285714287 17.754360000000002 17.753654285714283 20.42857142857143 12.999368571428572 20.42857142857143c-1.962182857142857 0 -3.5700785714285717 -0.4555571428571428 -4.7818828571428575 -1.3247000000000002Z"
+        strokeWidth={2}
+      />
+    </g>
+  </svg>
+);
+
+export default FillAdjustmentLayer;

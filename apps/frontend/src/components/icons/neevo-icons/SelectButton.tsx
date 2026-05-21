@@ -1,0 +1,42 @@
+// REACT //
+import React from "react";
+
+// TYPES //
+import { IconComponentData } from "@/types/icon";
+
+const SelectButton: IconComponentData = ({
+  primaryColor,
+  secondaryColor,
+  tertiaryColor,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="-1 -1 28 28"
+    height={28}
+    width={28}
+    {...props}
+  >
+    <g>
+      <path
+        id="Vector"
+        stroke={primaryColor}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M13 25.071428571428573c7.725714285714286 0 12.071428571428571 -4.345714285714285 12.071428571428571 -12.071428571428571S20.725714285714286 0.9285714285714286 13 0.9285714285714286 0.9285714285714286 5.274285714285714 0.9285714285714286 13s4.345714285714285 12.071428571428571 12.071428571428571 12.071428571428571Z"
+        strokeWidth={2}
+      />
+      <path
+        id="Vector_2"
+        stroke={primaryColor}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M13 19.5c4.16 0 6.5 -2.3400000000000003 6.5 -6.5S17.16 6.5 13 6.5 6.5 8.84 6.5 13s2.3400000000000003 6.5 6.5 6.5Z"
+        strokeWidth={2}
+      />
+    </g>
+  </svg>
+);
+
+export default SelectButton;
