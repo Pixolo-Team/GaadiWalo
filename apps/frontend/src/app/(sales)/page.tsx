@@ -93,8 +93,18 @@ export default function Home() {
         reason: [],
       },
       {
+        id: "vehicle-na",
+        name: "VEHICLE_NA",
+        reason: [],
+      },
+      {
         id: "won",
         name: "WON",
+        reason: [],
+      },
+      {
+        id: "lost",
+        name: "LOST",
         reason: [],
       },
     ],
