@@ -38,7 +38,7 @@ export function SearchInput({
   return (
     <div
       className={cn(
-        "border-n-200 bg-n-50 flex items-center gap-3 rounded-[30px] border-2 px-4 py-3.5",
+        "border-n-200 bg-n-50 flex items-center gap-2.5 rounded-[30px] border-2 px-4 py-3.5",
         className,
       )}
     >
@@ -52,7 +52,7 @@ export function SearchInput({
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="font-secondary text-n-800 placeholder:text-n-400 h-auto border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0"
+        className="font-secondary text-n-800 placeholder:text-n-400 h-auto rounded-none border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0"
       />
     </div>
   );
