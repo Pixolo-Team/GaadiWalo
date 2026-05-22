@@ -3,36 +3,7 @@
 // REACT //
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-
-// COMPONENTS //
-import FilterDropdown from "@/components/common/FilterDropdown";
-import { Header } from "@/components/common/Header";
-import { SearchInput } from "@/components/common/SearchInput";
-import HorizontalSlider2 from "@/components/icons/neevo-icons/HorizontalSlider2";
-import { LeadCard } from "@/components/sales/LeadCard";
-import { LeadsFilterDrawer } from "@/components/sales/LeadsFilterDrawer";
-
-// SERVICES //
-import {
-  getCarBrandsRequest,
-  getLeadBranchesRequest,
-  getLeadSourcesRequest,
-  getLeadStatusesRequest,
-  getSalesLeadsRequest,
-} from "@/services/api/sales-leads.api.service";
-import { getBranchNameService, getPhaseLabelService } from "@/services/sales-dashboard.service";
-import {
-  getLeadStatusLabel,
-  getLeadStatusTone,
-  getLeadVehicleName,
-} from "@/services/leads.service";
-
-// LIBRARIES //
 import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-
-// CONSTANTS //
-import { ROUTES } from "@/constants/routes";
 
 // TYPES //
 import type { DropdownOptionData } from "@/types/dropdown";
@@ -44,6 +15,47 @@ import type {
   LeadSourceData,
   LeadStatusOptionData,
 } from "@/types/leads";
+
+// COMPONENTS //
+import FilterDropdown from "@/components/common/FilterDropdown";
+import { Header } from "@/components/common/Header";
+import { SearchInput } from "@/components/common/SearchInput";
+import HorizontalSlider2 from "@/components/icons/neevo-icons/HorizontalSlider2";
+import { LeadCard } from "@/components/sales/LeadCard";
+import { LeadsFilterDrawer } from "@/components/sales/LeadsFilterDrawer";
+
+// API SERVICES //
+import {
+  getCarBrandsRequest,
+  getLeadBranchesRequest,
+  getLeadSourcesRequest,
+  getLeadStatusesRequest,
+  getSalesLeadsRequest,
+} from "@/services/api/sales-leads.api.service";
+
+// SERVICES //
+import {
+  getBranchNameService,
+  getPhaseLabelService,
+  getSalesDashboardCacheService,
+  hasSalesDashboardBranchCacheService,
+  setSalesDashboardBranchCacheService,
+} from "@/services/sales-dashboard.service";
+import {
+  getLeadStatusLabel,
+  getLeadStatusTone,
+  getLeadVehicleName,
+} from "@/services/leads.service";
+
+// CONSTANTS //
+import { ROUTES } from "@/constants/routes";
+
+// OTHERS //
+import { toast } from "sonner";
+
+// LIBRARIES //
+
+
 
 const salesSortOptions = ["Newest", "Oldest"] as const;
 const leadMasterDataStaleTime = 10 * 60 * 1000;
@@ -81,6 +93,10 @@ export default function LeadsPage() {
 
   // Helper Functions
   const selectedStatusQueryValue = searchParams.get("status")?.toLowerCase() ?? "all";
+  const cachedLeadBranchItems = useMemo<LeadBranchData[]>(() => {
+    return getSalesDashboardCacheService().leadBranchItems;
+  }, []);
+  const shouldFetchLeadBranches = !hasSalesDashboardBranchCacheService();
 
   /**
    * Resolves sales leads payload for TanStack Query.
@@ -161,7 +177,11 @@ export default function LeadsPage() {
       );
     }
 
-    return leadBranchesResponse.data ?? [];
+    // Persist shared branch cache so dashboard and leads reuse the same data.
+    const leadBranchValues = leadBranchesResponse.data ?? [];
+    setSalesDashboardBranchCacheService(leadBranchValues);
+
+    return leadBranchValues;
   };
 
   /**
@@ -228,6 +248,8 @@ export default function LeadsPage() {
     data: leadBranchItems = [],
     error: leadBranchesError,
   } = useQuery<LeadBranchData[]>({
+    enabled: shouldFetchLeadBranches,
+    initialData: cachedLeadBranchItems,
     queryKey: ["lead-branches"],
     queryFn: getLeadBranchesQueryService,
     staleTime: leadMasterDataStaleTime,
