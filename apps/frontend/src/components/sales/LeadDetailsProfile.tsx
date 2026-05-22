@@ -1,3 +1,9 @@
+// DATA //
+import {
+  salesLeadToneClassNameData,
+  type SalesLeadStatusToneData,
+} from "@/data/sales";
+
 // LIBRARIES //
 import Link from "next/link";
 
@@ -6,21 +12,13 @@ import WhatsappLogo from "@/components/icons/neevo-icons/WhatsappLogo";
 import { LeadContactActions } from "@/components/sales/LeadContactActions";
 import { Badge } from "@/components/ui/badge";
 
-const statusClassNameData = {
-  amber: "bg-amber-100 text-amber-600",
-  blue: "bg-blue-100 text-blue-600",
-  green: "bg-green-100 text-green-600",
-  purple: "bg-purple-100 text-purple-600",
-  red: "bg-red-100 text-red-600",
-} as const;
-
 interface LeadDetailsProfilePropsData {
   age: string;
   avatarLabel: string;
   name: string;
   phoneNumber: string;
   status: string;
-  statusTone: keyof typeof statusClassNameData;
+  statusTone: SalesLeadStatusToneData;
 }
 
 /**
@@ -43,7 +41,7 @@ export function LeadDetailsProfile({
   // Define States
 
   // Helper Functions
-  const statusClassName = statusClassNameData[statusTone];
+  const statusClassName = salesLeadToneClassNameData[statusTone].status;
 
   // Use Effects
 
