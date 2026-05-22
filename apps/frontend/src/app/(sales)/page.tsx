@@ -27,11 +27,22 @@ import {
 
 // SERVICES //
 import {
+  ALL_BRANCHES_OPTION,
+  dashboardLeadStatusItems,
   getAvatarLabelService,
-  getBranchNameService,
+  getDashboardBranchLocationOptionsService,
+  getDashboardSummaryMetricsService,
+  getFilteredDashboardBranchLeadItemsService,
+  getFilteredRecentLeadItemsService,
   getGreetingService,
+  getResolvedDashboardBranchNameService,
+  getSalesDashboardCacheService,
   getPhaseCardsService,
-  isWonTodayService,
+  getStoredDashboardBranchFilterService,
+  hasSalesDashboardBranchCacheService,
+  setSalesDashboardBranchCacheService,
+  setSalesDashboardLeadCacheService,
+  setStoredDashboardBranchFilterService,
 } from "@/services/sales-dashboard.service";
 import {
   getLeadStatusLabel,
@@ -40,7 +51,6 @@ import {
 } from "@/services/leads.service";
 
 // CONSTANTS //
-import { CONSTANTS } from "@/constants/constants";
 import { ROUTES } from "@/constants/routes";
 
 // OTHERS //
@@ -66,99 +76,67 @@ export default function Home() {
   const [isDashboardLoading, setIsDashboardLoading] = useState<boolean>(true);
   const [leadBranchItems, setLeadBranchItems] = useState<LeadBranchData[]>([]);
   const leadStatusItems = useMemo<LeadStatusOptionData[]>(
-    () => [
-      {
-        id: "new",
-        name: "NEW",
-        reason: [],
-      },
-      {
-        id: "contacted",
-        name: "CONTACTED",
-        reason: [],
-      },
-      {
-        id: "interested",
-        name: "INTERESTED",
-        reason: [],
-      },
-      {
-        id: "negotiation",
-        name: "NEGOTIATION",
-        reason: [],
-      },
-      {
-        id: "test-drive",
-        name: "TEST_DRIVE",
-        reason: [],
-      },
-      {
-        id: "vehicle-na",
-        name: "VEHICLE_NA",
-        reason: [],
-      },
-      {
-        id: "won",
-        name: "WON",
-        reason: [],
-      },
-      {
-        id: "lost",
-        name: "LOST",
-        reason: [],
-      },
-    ],
+    () => dashboardLeadStatusItems,
     [],
   );
   const [salesLeads, setSalesLeads] = useState<LeadListItemData[]>([]);
+  const [selectedBranchName, setSelectedBranchName] = useState<string>(() => {
+    if (typeof window === "undefined") {
+      return ALL_BRANCHES_OPTION;
+    }
+
+    return getStoredDashboardBranchFilterService();
+  });
   const [selectedPhaseKey, setSelectedPhaseKey] = useState<string>("all");
 
   // Helper Functions
   /**
-   * Fetches dashboard leads, statuses, and branches.
+   * Fetches dashboard leads and branches for the home page.
    */
   const fetchDashboardDataService = async (): Promise<void> => {
-    try {
-      const cachedSalesLeads = window.localStorage.getItem(
-        CONSTANTS.DASHBOARD_LEADS_CACHE_KEY,
-      );
+    const dashboardCache = getSalesDashboardCacheService();
 
-      if (cachedSalesLeads) {
-        // Hydrate dashboard quickly from cache while fresh data loads.
-        setSalesLeads(JSON.parse(cachedSalesLeads) as LeadListItemData[]);
-      }
-    } catch {
-      // Ignore malformed cache and continue with API data.
+    if (dashboardCache.salesLeads.length > 0) {
+      // Hydrate dashboard quickly from cache while fresh data loads.
+      setSalesLeads(dashboardCache.salesLeads);
+    }
+
+    if (dashboardCache.leadBranchItems.length > 0) {
+      // Hydrate branch options from cache and avoid branch API on repeat visits.
+      setLeadBranchItems(dashboardCache.leadBranchItems);
     }
 
     try {
+      const hasCachedLeadBranches = hasSalesDashboardBranchCacheService();
+
       /**
        * Call dashboard APIs.
        */
-      const [salesLeadsResponse, leadBranchesResponse] = await Promise.all([
-        getSalesLeadsRequest(),
-        getLeadBranchesRequest(),
-      ]);
+      const salesLeadsResponse = await getSalesLeadsRequest();
 
       if (salesLeadsResponse.status_code === 200) {
         // Set sales leads state.
         const salesLeadItems = salesLeadsResponse.data ?? [];
         setSalesLeads(salesLeadItems);
-        window.localStorage.setItem(
-          CONSTANTS.DASHBOARD_LEADS_CACHE_KEY,
-          JSON.stringify(salesLeadItems),
-        );
+        setSalesDashboardLeadCacheService(salesLeadItems);
       } else {
         // Reset sales leads state.
         setSalesLeads([]);
       }
 
-      if (leadBranchesResponse.status_code === 200) {
-        // Set lead branches state.
-        setLeadBranchItems(leadBranchesResponse.data ?? []);
-      } else {
-        // Reset lead branches state.
-        setLeadBranchItems([]);
+      if (!hasCachedLeadBranches) {
+        // Call branch API only when branch cache does not exist yet.
+        const leadBranchesResponse = await getLeadBranchesRequest();
+
+        if (leadBranchesResponse.status_code === 200) {
+          // Set lead branches state.
+          const leadBranchValues = leadBranchesResponse.data ?? [];
+          setLeadBranchItems(leadBranchValues);
+          setSalesDashboardBranchCacheService(leadBranchValues);
+        } else {
+          // Reset lead branches state.
+          setLeadBranchItems([]);
+        }
       }
     } catch {
       // Error toast.
@@ -173,78 +151,38 @@ export default function Home() {
     }
   };
 
-  const salesPhaseCardItems = useMemo(
-    () => getPhaseCardsService(leadStatusItems, salesLeads),
-    [leadStatusItems, salesLeads],
-  );
-
-  const filteredRecentLeadItems = useMemo(() => {
-    const phaseFilteredLeadItems =
-      selectedPhaseKey === "all"
-        ? salesLeads
-        : salesLeads.filter(
-            (leadItem) => leadItem.status.toLowerCase() === selectedPhaseKey,
-          );
-
-    return [...phaseFilteredLeadItems]
-      .sort((firstLeadItem, secondLeadItem) => {
-        const firstLeadTime = new Date(
-          firstLeadItem.updatedAt ??
-            firstLeadItem.createdAt ??
-            "1970-01-01T00:00:00.000Z",
-        ).getTime();
-        const secondLeadTime = new Date(
-          secondLeadItem.updatedAt ??
-            secondLeadItem.createdAt ??
-            "1970-01-01T00:00:00.000Z",
-        ).getTime();
-
-        return secondLeadTime - firstLeadTime;
-      })
-      .slice(0, 5);
-  }, [salesLeads, selectedPhaseKey]);
-
   const branchLocationOptions = useMemo(() => {
-    const branchNameValues = leadBranchItems
-      .map((branchItem) => getBranchNameService(branchItem))
-      .filter(Boolean);
-
-    if (branchNameValues.length > 0) {
-      return branchNameValues;
-    }
-
-    return user?.branch ? [user.branch] : [];
+    return getDashboardBranchLocationOptionsService(
+      leadBranchItems,
+      user?.branch,
+    );
   }, [leadBranchItems, user]);
 
+  const resolvedBranchName = useMemo(() => {
+    return getResolvedDashboardBranchNameService(
+      branchLocationOptions,
+      selectedBranchName,
+      user?.branch,
+    );
+  }, [branchLocationOptions, selectedBranchName, user]);
+
+  const filteredBranchLeadItems = useMemo(() => {
+    return getFilteredDashboardBranchLeadItemsService(
+      salesLeads,
+      resolvedBranchName,
+    );
+  }, [resolvedBranchName, salesLeads]);
+
+  const filteredRecentLeadItems = useMemo(() => {
+    return getFilteredRecentLeadItemsService(
+      filteredBranchLeadItems,
+      selectedPhaseKey,
+    );
+  }, [filteredBranchLeadItems, selectedPhaseKey]);
+
   const dashboardSummaryMetrics = useMemo(
-    () => [
-      {
-        key: "calls-due",
-        label: "Calls Due",
-        value: String(
-          salesLeads.filter((leadItem) =>
-            ["CONTACTED", "INTERESTED", "NEGOTIATION", "TEST_DRIVE"].includes(
-              leadItem.status,
-            ),
-          ).length,
-        ).padStart(2, "0"),
-      },
-      {
-        key: "new-leads",
-        label: "New Leads",
-        value: String(
-          salesLeads.filter((leadItem) => leadItem.status === "NEW").length,
-        ).padStart(2, "0"),
-      },
-      {
-        key: "won-today",
-        label: "Won Today",
-        value: String(
-          salesLeads.filter((leadItem) => isWonTodayService(leadItem)).length,
-        ).padStart(2, "0"),
-      },
-    ],
-    [salesLeads],
+    () => getDashboardSummaryMetricsService(filteredBranchLeadItems),
+    [filteredBranchLeadItems],
   );
 
   // Use Effects
@@ -258,6 +196,15 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!resolvedBranchName) {
+      return;
+    }
+
+    // Persist dashboard branch filter across navigation and refresh.
+    setStoredDashboardBranchFilterService(resolvedBranchName);
+  }, [resolvedBranchName]);
+
   return (
     <section className="bg-n-100 min-h-screen">
       <div className="flex flex-col gap-6">
@@ -265,9 +212,11 @@ export default function Home() {
         <SalesDashboardHeader
           avatarLabel={getAvatarLabelService(user?.name ?? "Sales User")}
           greeting={getGreetingService()}
-          locationName={branchLocationOptions[0] ?? user?.branch ?? "Branch"}
+          onLocationChange={setSelectedBranchName}
+          locationName={resolvedBranchName || ALL_BRANCHES_OPTION}
           locationOptions={branchLocationOptions}
           name={user?.name ?? "Sales User"}
+          selectedLocation={resolvedBranchName}
           summaryMetrics={dashboardSummaryMetrics}
         />
 
@@ -282,7 +231,10 @@ export default function Home() {
             {/* Phase Cards List Component */}
             <PhaseCards
               activeKey={selectedPhaseKey}
-              tabs={salesPhaseCardItems}
+              tabs={getPhaseCardsService(
+                leadStatusItems,
+                filteredBranchLeadItems,
+              )}
               onCardPress={setSelectedPhaseKey}
             />
           </div>
