@@ -138,7 +138,7 @@ export default function ProfilePage() {
         />
 
         {/* Profile content */}
-        <div className="bg-n-100 min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div className="bg-n-100 scrollbar-hide min-h-0 flex-1 overflow-y-auto px-6 py-6">
           {/* Content stack */}
           <div className="flex flex-col gap-6">
             {/* Metrics cards */}

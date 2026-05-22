@@ -22,10 +22,7 @@ import { salesProfileSummaryData } from "@/data/sales";
 
 // TYPES //
 import type { ApiResponseData } from "@/types/api";
-import type {
-  SalesPerformanceData,
-  SalesProfileData,
-} from "@/types/profile";
+import type { SalesPerformanceData, SalesProfileData } from "@/types/profile";
 
 // OTHERS //
 import { useAuthContext } from "@/context/AuthContext";
@@ -43,7 +40,9 @@ export default function ProfilePerformancePage() {
   // Define Refs
 
   // Define States
-  const [salesProfile, setSalesProfile] = useState<SalesProfileData | null>(null);
+  const [salesProfile, setSalesProfile] = useState<SalesProfileData | null>(
+    null,
+  );
   const [salesPerformance, setSalesPerformance] =
     useState<SalesPerformanceData | null>(null);
   const [isPerformanceLoading, setIsPerformanceLoading] =
@@ -188,7 +187,7 @@ export default function ProfilePerformancePage() {
         <Header title="My Performance" />
 
         {/* Performance scroll content */}
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
           {/* Profile summary */}
           <ProfileTopSummary
             avatarLabel={summaryProfile.avatarLabel}

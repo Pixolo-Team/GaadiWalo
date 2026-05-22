@@ -55,8 +55,6 @@ import { toast } from "sonner";
 
 // LIBRARIES //
 
-
-
 const salesSortOptions = ["Newest", "Oldest"] as const;
 const leadMasterDataStaleTime = 10 * 60 * 1000;
 const salesLeadsStaleTime = 30 * 1000;
@@ -92,7 +90,8 @@ export default function LeadsPage() {
   const [selectedSort, setSelectedSort] = useState<string>(salesSortOptions[0]);
 
   // Helper Functions
-  const selectedStatusQueryValue = searchParams.get("status")?.toLowerCase() ?? "all";
+  const selectedStatusQueryValue =
+    searchParams.get("status")?.toLowerCase() ?? "all";
   const cachedLeadBranchItems = useMemo<LeadBranchData[]>(() => {
     return getSalesDashboardCacheService().leadBranchItems;
   }, []);
@@ -187,7 +186,9 @@ export default function LeadsPage() {
   /**
    * Resolves car brand payload for TanStack Query.
    */
-  const getLeadCarBrandsQueryService = async (): Promise<LeadCarBrandData[]> => {
+  const getLeadCarBrandsQueryService = async (): Promise<
+    LeadCarBrandData[]
+  > => {
     /**
      * Call get car brands API.
      */
@@ -220,10 +221,9 @@ export default function LeadsPage() {
   /**
    * Loads lead status master data with longer cache.
    */
-  const {
-    data: leadStatusItems = [],
-    error: leadStatusesError,
-  } = useQuery<LeadStatusOptionData[]>({
+  const { data: leadStatusItems = [], error: leadStatusesError } = useQuery<
+    LeadStatusOptionData[]
+  >({
     queryKey: ["lead-statuses"],
     queryFn: getLeadStatusesQueryService,
     staleTime: leadMasterDataStaleTime,
@@ -232,10 +232,9 @@ export default function LeadsPage() {
   /**
    * Loads lead source master data with longer cache.
    */
-  const {
-    data: leadSourceItems = [],
-    error: leadSourcesError,
-  } = useQuery<LeadSourceData[]>({
+  const { data: leadSourceItems = [], error: leadSourcesError } = useQuery<
+    LeadSourceData[]
+  >({
     queryKey: ["lead-sources"],
     queryFn: getLeadSourcesQueryService,
     staleTime: leadMasterDataStaleTime,
@@ -244,10 +243,9 @@ export default function LeadsPage() {
   /**
    * Loads lead branch master data with longer cache.
    */
-  const {
-    data: leadBranchItems = [],
-    error: leadBranchesError,
-  } = useQuery<LeadBranchData[]>({
+  const { data: leadBranchItems = [], error: leadBranchesError } = useQuery<
+    LeadBranchData[]
+  >({
     enabled: shouldFetchLeadBranches,
     initialData: cachedLeadBranchItems,
     queryKey: ["lead-branches"],
@@ -258,10 +256,9 @@ export default function LeadsPage() {
   /**
    * Loads car brand master data with longer cache.
    */
-  const {
-    data: leadCarBrandItems = [],
-    error: leadCarBrandsError,
-  } = useQuery<LeadCarBrandData[]>({
+  const { data: leadCarBrandItems = [], error: leadCarBrandsError } = useQuery<
+    LeadCarBrandData[]
+  >({
     queryKey: ["lead-car-brands"],
     queryFn: getLeadCarBrandsQueryService,
     staleTime: leadMasterDataStaleTime,
@@ -269,7 +266,9 @@ export default function LeadsPage() {
 
   const statusTabItems = useMemo(() => {
     const dynamicStatusTabs = leadStatusItems.map((statusItem) => ({
-      count: salesLeads.filter((leadItem) => leadItem.status === statusItem.name).length,
+      count: salesLeads.filter(
+        (leadItem) => leadItem.status === statusItem.name,
+      ).length,
       key: statusItem.name.toLowerCase(),
       label: getPhaseLabelService(statusItem.name),
     }));
@@ -293,7 +292,10 @@ export default function LeadsPage() {
         value: branchValue,
       }));
 
-    return [{ label: "All Branches", value: "all" }, ...normalizedBranchOptions];
+    return [
+      { label: "All Branches", value: "all" },
+      ...normalizedBranchOptions,
+    ];
   }, [leadBranchItems]);
 
   const carBrandOptions = useMemo<DropdownOptionData[]>(() => {
@@ -302,7 +304,10 @@ export default function LeadsPage() {
       value: carBrandItem.name,
     }));
 
-    return [{ label: "All Brands", value: "all" }, ...normalizedCarBrandOptions];
+    return [
+      { label: "All Brands", value: "all" },
+      ...normalizedCarBrandOptions,
+    ];
   }, [leadCarBrandItems]);
 
   const sourceFilterOptions = useMemo<string[]>(
@@ -311,7 +316,12 @@ export default function LeadsPage() {
   );
 
   const statusFilterOptions = useMemo<string[]>(
-    () => ["All", ...leadStatusItems.map((statusItem) => getPhaseLabelService(statusItem.name))],
+    () => [
+      "All",
+      ...leadStatusItems.map((statusItem) =>
+        getPhaseLabelService(statusItem.name),
+      ),
+    ],
     [leadStatusItems],
   );
 
@@ -384,7 +394,9 @@ export default function LeadsPage() {
         leadItem.fullName.toLowerCase().includes(normalizedSearchValue) ||
         leadItem.phone.includes(normalizedSearchValue) ||
         leadItem.source.toLowerCase().includes(normalizedSearchValue) ||
-        getLeadVehicleName(leadItem).toLowerCase().includes(normalizedSearchValue)
+        getLeadVehicleName(leadItem)
+          .toLowerCase()
+          .includes(normalizedSearchValue)
       );
     });
 
@@ -404,7 +416,13 @@ export default function LeadsPage() {
         ? firstLeadTime - secondLeadTime
         : secondLeadTime - firstLeadTime;
     });
-  }, [appliedFilterState, leadSearchValue, salesLeads, selectedSort, selectedStatusQueryValue]);
+  }, [
+    appliedFilterState,
+    leadSearchValue,
+    salesLeads,
+    selectedSort,
+    selectedStatusQueryValue,
+  ]);
 
   const handleOpenFilterDrawer = (): void => {
     setDraftFilterState(appliedFilterState);
@@ -458,7 +476,7 @@ export default function LeadsPage() {
   ]);
 
   return (
-    <section className="h-full bg-n-100">
+    <section className="bg-n-100 h-full">
       {/* Leads page shell */}
       <div className="flex h-full flex-col">
         {/* Leads header container */}
@@ -476,7 +494,7 @@ export default function LeadsPage() {
         </div>
 
         {/* Leads scroll content */}
-        <div className="min-h-0 flex-1 overflow-y-auto p-6">
+        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-6">
           <div className="flex flex-col gap-6">
             {/* Search controls */}
             <div className="flex flex-col gap-3">
@@ -489,7 +507,8 @@ export default function LeadsPage() {
               {/* Status tabs */}
               <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
                 {statusTabItems.map((statusTabItem) => {
-                  const isActive = selectedStatusQueryValue === statusTabItem.key;
+                  const isActive =
+                    selectedStatusQueryValue === statusTabItem.key;
 
                   return (
                     <button

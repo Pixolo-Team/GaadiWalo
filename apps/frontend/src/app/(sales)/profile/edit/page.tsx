@@ -58,7 +58,9 @@ export default function EditProfilePage() {
   const [editProfileInputFields, setEditProfileInputFields] =
     useState<EditProfileInputFieldsData>(initialEditProfileInputFieldsData);
 
-  const [salesProfile, setSalesProfile] = useState<SalesProfileData | null>(null);
+  const [salesProfile, setSalesProfile] = useState<SalesProfileData | null>(
+    null,
+  );
   const [isProfileLoading, setIsProfileLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [profileImage, setProfileImage] = useState<string>("");
@@ -220,7 +222,9 @@ export default function EditProfilePage() {
     return (
       <section className="bg-n-100 h-full">
         <div className="flex h-full items-center justify-center">
-          <p className="font-secondary text-n-600 text-sm">Loading profile...</p>
+          <p className="font-secondary text-n-600 text-sm">
+            Loading profile...
+          </p>
         </div>
       </section>
     );
@@ -234,7 +238,7 @@ export default function EditProfilePage() {
         <Header title="Edit Profile" />
 
         {/* Edit profile scroll content */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-6 py-6">
           {/* Content stack */}
           <div className="flex flex-col gap-6">
             {/* Profile Photo */}
