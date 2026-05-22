@@ -22,6 +22,19 @@ export type LeadActivityTypeData =
   | "system";
 
 /**
+ * Defines supported lead status tone values for UI.
+ */
+export type LeadStatusToneData =
+  | "amber"
+  | "blue"
+  | "green"
+  | "orange"
+  | "purple"
+  | "red"
+  | "cyan"
+  | "pink";
+
+/**
  * Defines lightweight user summary for lead payloads.
  */
 export interface LeadUserSummaryData {
@@ -144,7 +157,7 @@ export interface LeadProfileViewData {
   name: string;
   phoneNumber: string;
   status: string;
-  statusTone: "amber" | "blue" | "green" | "purple" | "red" | "cyan" | "pink";
+  statusTone: LeadStatusToneData;
 }
 
 /**

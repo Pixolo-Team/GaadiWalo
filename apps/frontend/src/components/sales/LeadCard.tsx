@@ -1,3 +1,6 @@
+// TYPES //
+import type { LeadStatusToneData } from "@/types/leads";
+
 // COMPONENTS //
 import Image from "next/image";
 import Link from "next/link";
@@ -7,10 +10,7 @@ import { Badge } from "@/components/ui/badge";
 
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
-import {
-  salesLeadToneClassNameData,
-  type SalesLeadStatusToneData,
-} from "@/data/sales";
+import { salesLeadToneClassNameData } from "@/data/sales";
 
 interface LeadCardPropsData {
   href?: string;
@@ -20,7 +20,7 @@ interface LeadCardPropsData {
   phoneNumber: string;
   source: string;
   statusLabel: string;
-  statusTone: SalesLeadStatusToneData;
+  statusTone: LeadStatusToneData;
   vehicleName: string;
 }
 

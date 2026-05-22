@@ -1,5 +1,4 @@
 // TYPES //
-import type { LeadStatusData } from "@/types/leads";
 import type {
   LeadActivityData,
   LeadActivityViewData,
@@ -9,15 +8,29 @@ import type {
   LeadNoteData,
   LeadNoteViewData,
   LeadProfileViewData,
+  LeadStatusData,
   LeadStatusOptionData,
+  LeadStatusToneData,
 } from "@/types/leads";
+
+/**
+ * Centralized tone map for every lead status.
+ */
+export const leadStatusToneMap: Record<LeadStatusData, LeadStatusToneData> = {
+  NEW: "blue",
+  CONTACTED: "amber",
+  INTERESTED: "purple",
+  TEST_DRIVE: "cyan",
+  NEGOTIATION: "pink",
+  WON: "green",
+  LOST: "red",
+  VEHICLE_NA: "orange",
+};
 
 /**
  * Formats API datetime value into short UI text.
  */
-export const getFormattedDateValue = (
-  dateValue: string | null,
-): string => {
+export const getFormattedDateValue = (dateValue: string | null): string => {
   if (!dateValue) {
     return "";
   }
@@ -31,24 +44,8 @@ export const getFormattedDateValue = (
  */
 export const getLeadStatusTone = (
   statusValue: LeadStatusData,
-): "amber" | "blue" | "green" | "purple" | "red" => {
-  if (statusValue === "NEW") {
-    return "blue";
-  }
-
-  if (statusValue === "CONTACTED") {
-    return "amber";
-  }
-
-  if (statusValue === "WON") {
-    return "green";
-  }
-
-  if (statusValue === "LOST" || statusValue === "VEHICLE_NA") {
-    return "red";
-  }
-
-  return "purple";
+): LeadStatusToneData => {
+  return leadStatusToneMap[statusValue];
 };
 
 /**
