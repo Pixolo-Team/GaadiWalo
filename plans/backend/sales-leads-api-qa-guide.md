@@ -574,8 +574,8 @@ Use `GET /sales/leads/car-brands` for Brand options and the nested `models` arra
 2. API validates the request body.
 3. API checks whether a lead with the same phone number already exists.
 4. API creates the lead.
-5. If `initialNote` is sent, API also creates the first note.
-6. API creates a system activity for lead creation.
+5. API creates an initial `lead_status_log` row for the created Lead status.
+6. If `initialNote` is sent, API also creates the first note.
 7. API returns the created lead and optional note.
 
 ### Expected Success Response
@@ -652,3 +652,4 @@ Use `GET /sales/leads/car-brands` for Brand options and the nested `models` arra
 - Check note creation with empty `content`.
 - Check duplicate phone while creating a lead.
 - Check create lead with and without `initialNote`.
+- Check create lead stores one initial `lead_status_log` row with `from_status_id = null`.

@@ -12,6 +12,7 @@ const createMockAuthService = (
   return {
     loginService: async () => ({ data: null, error: null }),
     refreshTokenService: async () => ({ data: null, error: null }),
+    logoutService: async () => ({ data: null, error: null }),
     forgotPasswordService: async () => ({ data: null, error: null }),
     verifyOtpService: async () => ({ data: null, error: null }),
     resendOtpService: async () => ({ data: null, error: null }),
@@ -172,6 +173,79 @@ describe("auth routes", () => {
     });
 
     assert.equal(response.status, 401);
+  });
+
+  it("returns 401 when logout is requested without a bearer token", async () => {
+    const response = await app.request("/auth/logout", {
+      method: "POST",
+    });
+    const responseBody = (await response.json()) as {
+      status: string;
+      message: string;
+      error: string;
+    };
+
+    assert.equal(response.status, 401);
+    assert.equal(responseBody.status, "error");
+    assert.equal(responseBody.message, "Invalid logout request.");
+    assert.equal(responseBody.error, "Authorization header is required.");
+  });
+
+  it("returns 401 when logout is requested with an invalid bearer token", async () => {
+    setAuthService(
+      createMockAuthService({
+        logoutService: async () => ({
+          data: null,
+          error: Object.assign(
+            new Error("Access token is invalid or expired."),
+            {
+              code: "INVALID_ACCESS_TOKEN",
+            },
+          ),
+        }),
+      }),
+    );
+
+    const response = await app.request("/auth/logout", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer invalid-access-token",
+      },
+    });
+
+    assert.equal(response.status, 401);
+  });
+
+  it("returns 200 for a successful logout request", async () => {
+    setAuthService(
+      createMockAuthService({
+        logoutService: async () => ({
+          data: {
+            success: true,
+          },
+          error: null,
+        }),
+      }),
+    );
+
+    const response = await app.request("/auth/logout", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer valid-access-token",
+      },
+    });
+    const responseBody = (await response.json()) as {
+      status: string;
+      message: string;
+      data: {
+        success: boolean;
+      };
+    };
+
+    assert.equal(response.status, 200);
+    assert.equal(responseBody.status, "success");
+    assert.equal(responseBody.message, "Logged out successfully.");
+    assert.equal(responseBody.data.success, true);
   });
 
   it("returns 200 for a successful forgot password request", async () => {

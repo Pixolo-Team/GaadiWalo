@@ -14,12 +14,14 @@ import {
   FORGOT_PASSWORD_SUCCESS_MESSAGE,
   INVALID_FORGOT_PASSWORD_REQUEST_MESSAGE,
   INVALID_LOGIN_REQUEST_MESSAGE,
+  INVALID_LOGOUT_REQUEST_MESSAGE,
   INVALID_REQUEST_BODY_MESSAGE,
   INVALID_REFRESH_TOKEN_REQUEST_MESSAGE,
   INVALID_RESET_PASSWORD_REQUEST_MESSAGE,
   INVALID_RESEND_OTP_REQUEST_MESSAGE,
   INVALID_VERIFY_OTP_REQUEST_MESSAGE,
   LOGIN_SUCCESS_MESSAGE,
+  LOGOUT_SUCCESS_MESSAGE,
   REFRESH_TOKEN_SUCCESS_MESSAGE,
   RESEND_OTP_SUCCESS_MESSAGE,
   RESET_PASSWORD_SUCCESS_MESSAGE,
@@ -97,6 +99,48 @@ const parseRequestBody = async (
       }),
     };
   }
+};
+
+/**
+ * Reads and validates a Bearer token from the Authorization header.
+ */
+const parseBearerToken = (
+  context: Context,
+): { accessToken: string | null; errorResponse: Response | null } => {
+  const authorizationHeader = context.req.header("Authorization");
+
+  if (!authorizationHeader) {
+    return {
+      accessToken: null,
+      errorResponse: sendResponse({
+        context,
+        statusCode: HTTP_STATUS_CODES.unauthorized,
+        status: "error",
+        message: INVALID_LOGOUT_REQUEST_MESSAGE,
+        error: "Authorization header is required.",
+      }),
+    };
+  }
+
+  const [scheme, token] = authorizationHeader.split(" ");
+
+  if (scheme !== "Bearer" || !token?.trim()) {
+    return {
+      accessToken: null,
+      errorResponse: sendResponse({
+        context,
+        statusCode: HTTP_STATUS_CODES.unauthorized,
+        status: "error",
+        message: INVALID_LOGOUT_REQUEST_MESSAGE,
+        error: "Authorization header must use Bearer token format.",
+      }),
+    };
+  }
+
+  return {
+    accessToken: token.trim(),
+    errorResponse: null,
+  };
 };
 
 /**
@@ -201,6 +245,39 @@ export const refreshTokenController = async (
     status: "success",
     message: REFRESH_TOKEN_SUCCESS_MESSAGE,
     data: refreshTokenResult.data,
+  });
+};
+
+/**
+ * Handles POST /auth/logout and revokes all active sessions for the authenticated user.
+ */
+export const logoutController = async (context: Context): Promise<Response> => {
+  const { accessToken, errorResponse } = parseBearerToken(context);
+
+  if (errorResponse || !accessToken) {
+    return errorResponse as Response;
+  }
+
+  const logoutResult = await authService.logoutService(accessToken);
+
+  if (logoutResult.error || !logoutResult.data) {
+    const mappedError = mapAuthError(logoutResult.error);
+
+    return sendResponse({
+      context,
+      statusCode: mappedError.statusCode,
+      status: "error",
+      message: mappedError.message,
+      error: mappedError.errorDetail,
+    });
+  }
+
+  return sendResponse({
+    context,
+    statusCode: HTTP_STATUS_CODES.ok,
+    status: "success",
+    message: LOGOUT_SUCCESS_MESSAGE,
+    data: logoutResult.data,
   });
 };
 

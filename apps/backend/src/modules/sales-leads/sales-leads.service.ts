@@ -1673,10 +1673,18 @@ export const createSalesLeadsService = (
           payload,
           selectedStatus,
         );
+        const createdStatusId = resolvedReferenceIds.statusId;
         const lostReasonId =
           selectedStatus === "LOST" && payload.lostReason
             ? await dependencies.getLostReasonIdByName(payload.lostReason)
             : null;
+
+        if (!createdStatusId) {
+          throw createSalesLeadServiceError(
+            "INTERNAL",
+            "Lead status id could not be resolved during lead creation.",
+          );
+        }
 
         if (selectedStatus === "LOST" && payload.lostReason && !lostReasonId) {
           return {
@@ -1691,7 +1699,7 @@ export const createSalesLeadsService = (
         const leadRecord = await dependencies.createLeadRecord({
           ...createLeadMutationPayload(payload, resolvedReferenceIds),
           lead_source_id: resolvedReferenceIds.leadSourceId,
-          status_id: resolvedReferenceIds.statusId,
+          status_id: createdStatusId,
           lost_reason_id: selectedStatus === "LOST" ? lostReasonId : null,
           creator_user_id: authenticatedUser.recordId,
           full_name: payload.fullName,
@@ -1709,6 +1717,13 @@ export const createSalesLeadsService = (
           lead_id: leadRecord.id,
           user_id: authenticatedUser.recordId,
           is_primary: true,
+        });
+
+        await dependencies.createLeadActivityRecord({
+          lead_id: leadRecord.id,
+          from_status_id: null,
+          to_status_id: createdStatusId,
+          user_id: authenticatedUser.recordId,
         });
 
         let createdNote: LeadNoteData | null = null;

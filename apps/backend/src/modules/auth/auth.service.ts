@@ -7,6 +7,7 @@ import type {
   ForgotPasswordResponseData,
   LoginRequestData,
   LoginResponseData,
+  LogoutResponseData,
   RefreshTokenRequestData,
   RefreshTokenResponseData,
   ResetPasswordRequestData,
@@ -25,6 +26,7 @@ import {
   getUserByEmailIdentifier,
   getUserByLoginIdentifier,
   refreshSessionWithToken,
+  revokeUserSessions,
   sendRecoveryOtp,
   signInWithPassword,
   updatePasswordWithRecoveryToken,
@@ -35,10 +37,12 @@ import {
   AUTH_CONFIGURATION_ERROR_MESSAGE,
   AUTH_IDENTIFIER_NOT_FOUND_MESSAGE,
   AUTH_INACTIVE_USER_MESSAGE,
+  AUTH_INVALID_ACCESS_TOKEN_MESSAGE,
   AUTH_INVALID_OTP_MESSAGE,
   AUTH_INVALID_REFRESH_TOKEN_MESSAGE,
   AUTH_INVALID_RESET_TOKEN_MESSAGE,
   AUTH_RATE_LIMIT_MESSAGE,
+  AUTH_USER_NOT_FOUND_MESSAGE,
   AUTH_WEAK_PASSWORD_MESSAGE,
   INVALID_CREDENTIALS_MESSAGE,
   PASSWORD_NUMBER_REGEX,
@@ -80,6 +84,7 @@ interface AuthServiceDependenciesData {
     id: string;
     email: string;
   }>;
+  revokeUserSessions: (accessToken: string) => Promise<void>;
   sendRecoveryOtp: (email: string) => Promise<void>;
   verifyRecoveryOtp: (payload: {
     email: string;
@@ -230,6 +235,28 @@ const mapRefreshTokenError = (error: Error): AuthServiceErrorData => {
 };
 
 /**
+ * Converts access-token failures into clearer logout/authentication errors when possible.
+ */
+const mapAccessTokenError = (error: Error): AuthServiceErrorData => {
+  const errorMessage = error.message.toLowerCase();
+
+  if (
+    errorMessage.includes("jwt") ||
+    errorMessage.includes("token") ||
+    errorMessage.includes("expired") ||
+    errorMessage.includes("unauthorized") ||
+    errorMessage.includes("invalid claim")
+  ) {
+    return createAuthServiceError(
+      "INVALID_ACCESS_TOKEN",
+      AUTH_INVALID_ACCESS_TOKEN_MESSAGE,
+    );
+  }
+
+  return mapSupabaseError(error);
+};
+
+/**
  * Converts reset-password failures into clearer token-aware auth errors when possible.
  */
 const mapResetPasswordError = (error: Error): AuthServiceErrorData => {
@@ -276,6 +303,7 @@ const createDefaultAuthServiceDependencies = (): AuthServiceDependenciesData => 
     signInWithPassword,
     refreshSessionWithToken,
     getAuthUserByAccessToken,
+    revokeUserSessions,
     sendRecoveryOtp,
     verifyRecoveryOtp,
     updatePasswordWithRecoveryToken,
@@ -294,6 +322,9 @@ export interface AuthServiceData {
   refreshTokenService: (
     payload: RefreshTokenRequestData,
   ) => Promise<QueryResponseData<RefreshTokenResponseData>>;
+  logoutService: (
+    accessToken: string,
+  ) => Promise<QueryResponseData<LogoutResponseData>>;
   forgotPasswordService: (
     payload: ForgotPasswordRequestData,
   ) => Promise<QueryResponseData<ForgotPasswordResponseData>>;
@@ -513,6 +544,74 @@ export const createAuthService = (
                   "INTERNAL",
                   "Session refresh failed.",
                 ),
+        };
+      }
+    },
+    /**
+     * Resolves the authenticated user from an access token and revokes all active sessions.
+     */
+    logoutService: async (accessToken) => {
+      try {
+        const configurationError = ensureConfigured();
+
+        if (configurationError) {
+          return { data: null, error: configurationError };
+        }
+
+        const trimmedAccessToken = accessToken.trim();
+
+        if (!trimmedAccessToken) {
+          return {
+            data: null,
+            error: createAuthServiceError(
+              "INVALID_ACCESS_TOKEN",
+              AUTH_INVALID_ACCESS_TOKEN_MESSAGE,
+            ),
+          };
+        }
+
+        const authUser = await dependencies.getAuthUserByAccessToken(
+          trimmedAccessToken,
+        );
+        const userRecord =
+          (await dependencies.getUserByAuthIdentifier(authUser.id)) ??
+          (await dependencies.getUserByEmailIdentifier(authUser.email));
+
+        if (!userRecord) {
+          return {
+            data: null,
+            error: createAuthServiceError(
+              "USER_NOT_FOUND",
+              AUTH_USER_NOT_FOUND_MESSAGE,
+            ),
+          };
+        }
+
+        if (userRecord.is_active === false) {
+          return {
+            data: null,
+            error: createAuthServiceError(
+              "INACTIVE_USER",
+              AUTH_INACTIVE_USER_MESSAGE,
+            ),
+          };
+        }
+
+        await dependencies.revokeUserSessions(trimmedAccessToken);
+
+        return {
+          data: {
+            success: true,
+          },
+          error: null,
+        };
+      } catch (error) {
+        return {
+          data: null,
+          error:
+            error instanceof Error
+              ? mapAccessTokenError(error)
+              : createAuthServiceError("INTERNAL", "Logout failed."),
         };
       }
     },

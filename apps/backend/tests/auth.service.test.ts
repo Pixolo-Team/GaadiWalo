@@ -31,6 +31,7 @@ describe("auth.service", () => {
         id: "auth-user-id",
         email: "sales@example.com",
       }),
+      revokeUserSessions: async () => undefined,
       sendRecoveryOtp: async () => undefined,
       verifyRecoveryOtp: async () => ({
         access_token: "recovery-access-token",
@@ -89,6 +90,7 @@ describe("auth.service", () => {
         id: "auth-user-id",
         email: "sales@example.com",
       }),
+      revokeUserSessions: async () => undefined,
       sendRecoveryOtp: async () => undefined,
       verifyRecoveryOtp: async () => ({
         access_token: "recovery-access-token",
@@ -133,6 +135,7 @@ describe("auth.service", () => {
         id: "auth-user-id",
         email: "sales@example.com",
       }),
+      revokeUserSessions: async () => undefined,
       sendRecoveryOtp: async () => undefined,
       verifyRecoveryOtp: async () => ({
         access_token: "recovery-access-token",
@@ -163,6 +166,205 @@ describe("auth.service", () => {
     );
   });
 
+  it("revokes all sessions for a valid authenticated logout request", async () => {
+    let revokedAccessToken: string | null = null;
+
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => ({
+        user_id: "SP001",
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+        auth_id: "auth-user-id",
+      }),
+      getUserByAuthIdentifier: async () => ({
+        user_id: "SP001",
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+        auth_id: "auth-user-id",
+      }),
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async (accessToken: string) => {
+        revokedAccessToken = accessToken;
+      },
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => null,
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const logoutResult = await authService.logoutService("valid-access-token");
+
+    assert.equal(logoutResult.error, null);
+    assert.equal(logoutResult.data?.success, true);
+    assert.equal(revokedAccessToken, "valid-access-token");
+  });
+
+  it("returns not found when logout resolves no backend user", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async () => undefined,
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => null,
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const logoutResult = await authService.logoutService("valid-access-token");
+
+    assert.equal(logoutResult.data, null);
+    assert.equal(
+      logoutResult.error?.message,
+      "Authenticated user account could not be resolved.",
+    );
+    assert.equal(
+      (logoutResult.error as AuthServiceErrorData | null)?.code,
+      "USER_NOT_FOUND",
+    );
+  });
+
+  it("maps an invalid access token to an unauthorized logout error", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => {
+        throw new Error("Invalid JWT");
+      },
+      revokeUserSessions: async () => undefined,
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => null,
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const logoutResult = await authService.logoutService("invalid-access-token");
+
+    assert.equal(logoutResult.data, null);
+    assert.equal(
+      logoutResult.error?.message,
+      "Access token is invalid or expired.",
+    );
+    assert.equal(
+      (logoutResult.error as AuthServiceErrorData | null)?.code,
+      "INVALID_ACCESS_TOKEN",
+    );
+  });
+
+  it("returns an internal error when session revocation fails unexpectedly", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => ({
+        user_id: "SP001",
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+        auth_id: "auth-user-id",
+      }),
+      getUserByAuthIdentifier: async () => ({
+        user_id: "SP001",
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+        auth_id: "auth-user-id",
+      }),
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async () => {
+        throw new Error("Could not revoke sessions.");
+      },
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => null,
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const logoutResult = await authService.logoutService("valid-access-token");
+
+    assert.equal(logoutResult.data, null);
+    assert.equal(
+      (logoutResult.error as AuthServiceErrorData | null)?.code,
+      "INTERNAL",
+    );
+  });
+
   it("returns an identifier-not-found error for an unknown forgot password email", async () => {
     const authService = createAuthService({
       getUserByLoginIdentifier: async () => null,
@@ -178,6 +380,7 @@ describe("auth.service", () => {
         id: "auth-user-id",
         email: "sales@example.com",
       }),
+      revokeUserSessions: async () => undefined,
       sendRecoveryOtp: async () => undefined,
       verifyRecoveryOtp: async () => ({
         access_token: "recovery-access-token",
@@ -229,6 +432,7 @@ describe("auth.service", () => {
         id: "auth-user-id",
         email: "sales@example.com",
       }),
+      revokeUserSessions: async () => undefined,
       sendRecoveryOtp: async () => {
         throw new Error(
           "For security purposes, you can only request this after 30 seconds.",
@@ -284,6 +488,7 @@ describe("auth.service", () => {
         id: "auth-user-id",
         email: "sales@example.com",
       }),
+      revokeUserSessions: async () => undefined,
       sendRecoveryOtp: async () => undefined,
       verifyRecoveryOtp: async () => ({
         access_token: "recovery-access-token",
@@ -327,6 +532,7 @@ describe("auth.service", () => {
         id: "auth-user-id",
         email: "sales@example.com",
       }),
+      revokeUserSessions: async () => undefined,
       sendRecoveryOtp: async () => undefined,
       verifyRecoveryOtp: async () => ({
         access_token: "recovery-access-token",
@@ -373,6 +579,7 @@ describe("auth.service", () => {
         id: "auth-user-id",
         email: "sales@example.com",
       }),
+      revokeUserSessions: async () => undefined,
       sendRecoveryOtp: async () => undefined,
       verifyRecoveryOtp: async () => ({
         access_token: "recovery-access-token",

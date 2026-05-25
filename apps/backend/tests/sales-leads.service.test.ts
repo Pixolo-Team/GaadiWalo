@@ -562,6 +562,12 @@ describe("sales-leads.service", () => {
       user_id: string;
       note_text: string;
     }> = [];
+    const createdStatusLogPayloads: Array<{
+      lead_id: string;
+      from_status_id: string | null;
+      to_status_id: string;
+      user_id: string;
+    }> = [];
     const salesLeadsService = createSalesLeadsService({
       ...createDependencies(),
       createLeadNoteRecord: async (payload: {
@@ -576,6 +582,22 @@ describe("sales-leads.service", () => {
           user_id: payload.user_id,
           note_text: payload.note_text,
           created_at: "2026-05-15T10:30:00.000Z",
+        };
+      },
+      createLeadActivityRecord: async (payload: {
+        lead_id: string;
+        from_status_id: string | null;
+        to_status_id: string;
+        user_id: string;
+      }) => {
+        createdStatusLogPayloads.push(payload);
+
+        return {
+          lead_id: payload.lead_id,
+          from_status_id: payload.from_status_id,
+          to_status_id: payload.to_status_id,
+          user_id: payload.user_id,
+          updated_at: "2026-05-15T10:30:00.000Z",
         };
       },
     });
@@ -614,11 +636,25 @@ describe("sales-leads.service", () => {
         note_text: "Customer asked for a callback after 6 PM.",
       },
     ]);
+    assert.deepEqual(createdStatusLogPayloads, [
+      {
+        lead_id: "lead-created",
+        from_status_id: null,
+        to_status_id: "status-new",
+        user_id: "user-row-1",
+      },
+    ]);
   });
 
   it("creates a lead with the selected status and lost reason id", async () => {
     let createdLeadStatusId: string | undefined;
     let createdLeadLostReasonId: string | null | undefined;
+    const createdStatusLogPayloads: Array<{
+      lead_id: string;
+      from_status_id: string | null;
+      to_status_id: string;
+      user_id: string;
+    }> = [];
     const salesLeadsService = createSalesLeadsService({
       ...createDependencies(),
       createLeadRecord: async (payload) => {
@@ -631,6 +667,22 @@ describe("sales-leads.service", () => {
           id: "lead-created-with-status",
           status_id: "status-lost",
           lost_reason_id: "lost-reason-1",
+        };
+      },
+      createLeadActivityRecord: async (payload: {
+        lead_id: string;
+        from_status_id: string | null;
+        to_status_id: string;
+        user_id: string;
+      }) => {
+        createdStatusLogPayloads.push(payload);
+
+        return {
+          lead_id: payload.lead_id,
+          from_status_id: payload.from_status_id,
+          to_status_id: payload.to_status_id,
+          user_id: payload.user_id,
+          updated_at: "2026-05-15T10:30:00.000Z",
         };
       },
     });
@@ -661,6 +713,14 @@ describe("sales-leads.service", () => {
     assert.equal(createLeadResult.data?.lead.lostReason, "Budget issue");
     assert.equal(createdLeadStatusId, "status-lost");
     assert.equal(createdLeadLostReasonId, "lost-reason-1");
+    assert.deepEqual(createdStatusLogPayloads, [
+      {
+        lead_id: "lead-created-with-status",
+        from_status_id: null,
+        to_status_id: "status-lost",
+        user_id: "user-row-1",
+      },
+    ]);
   });
 
   it("creates a lead without inserting a note when initialNote is omitted", async () => {
@@ -703,6 +763,45 @@ describe("sales-leads.service", () => {
     assert.equal(createLeadResult.data?.lead.id, "lead-created");
     assert.equal(createLeadResult.data?.note, null);
     assert.equal(createdNoteCount, 0);
+  });
+
+  it("returns an error when creating the initial status log fails", async () => {
+    const salesLeadsService = createSalesLeadsService({
+      ...createDependencies(),
+      createLeadActivityRecord: async () => {
+        throw new Error("Failed to insert initial lead status log.");
+      },
+    });
+
+    const createLeadResult = await salesLeadsService.createLeadService(
+      authenticatedSalesUser,
+      {
+        fullName: "Rahul Sharma",
+        phone: "9999999988",
+        email: "rahul@example.com",
+        source: "CarWale",
+        status: "NEW",
+        referrerName: null,
+        referrerPhone: null,
+        carBrand: "Hyundai",
+        carModel: "i10",
+        variantName: "Sportz",
+        colorPreference: "Red",
+        budget: "6-8 Lakh",
+        isUsed: true,
+        initialNote: null,
+      },
+    );
+
+    assert.equal(createLeadResult.data, null);
+    assert.equal(
+      createLeadResult.error?.message,
+      "Failed to insert initial lead status log.",
+    );
+    assert.equal(
+      (createLeadResult.error as SalesLeadServiceErrorData | null)?.code,
+      "INTERNAL",
+    );
   });
 
   it("rejects a lead when the car model does not belong to the selected brand", async () => {

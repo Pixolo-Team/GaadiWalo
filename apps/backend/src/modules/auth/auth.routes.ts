@@ -4,6 +4,7 @@ import { AUTH_ROUTE_BASE_PATH } from "../../common/constants/http.constants.js";
 import {
   forgotPasswordController,
   loginController,
+  logoutController,
   refreshTokenController,
   resendOtpController,
   resetPasswordController,
@@ -20,6 +21,9 @@ authRoutes.post(`${AUTH_ROUTE_BASE_PATH}/login`, loginController);
 
 // Renews an authenticated session without asking the user to log in again.
 authRoutes.post(`${AUTH_ROUTE_BASE_PATH}/refresh`, refreshTokenController);
+
+// Ends all active sessions for the authenticated user.
+authRoutes.post(`${AUTH_ROUTE_BASE_PATH}/logout`, logoutController);
 
 // Starts the password recovery flow without exposing Supabase details to callers.
 authRoutes.post(

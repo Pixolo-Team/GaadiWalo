@@ -717,6 +717,25 @@ export const refreshSessionWithToken = async ({
 };
 
 /**
+ * Revokes all active refresh-token sessions for the authenticated user.
+ */
+export const revokeUserSessions = async (accessToken: string): Promise<void> => {
+  assertSupabaseConfiguration();
+
+  const response = await fetch(`${environmentConfig.supabaseUrl}/auth/v1/logout`, {
+    method: "POST",
+    headers: buildSupabaseHeaders({
+      apiKey: environmentConfig.supabaseAnonKey,
+      accessToken,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+};
+
+/**
  * Starts the Supabase password recovery flow for the supplied email.
  */
 export const sendRecoveryOtp = async (email: string): Promise<void> => {

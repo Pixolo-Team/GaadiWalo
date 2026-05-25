@@ -44,6 +44,11 @@ export interface RefreshTokenResponseData {
   user: AuthenticatedUserData;
 }
 
+// Minimal success payload returned after logout completes.
+export interface LogoutResponseData {
+  success: boolean;
+}
+
 // Client payload for starting the password recovery flow.
 export interface ForgotPasswordRequestData {
   email: string;
@@ -92,7 +97,9 @@ export type AuthServiceErrorCodeData =
   | "CONFIGURATION"
   | "INVALID_CREDENTIALS"
   | "INVALID_REFRESH_TOKEN"
+  | "INVALID_ACCESS_TOKEN"
   | "IDENTIFIER_NOT_FOUND"
+  | "USER_NOT_FOUND"
   | "INVALID_OTP"
   | "INVALID_RESET_TOKEN"
   | "WEAK_PASSWORD"
