@@ -1,7 +1,7 @@
 "use client";
 
 // REACT //
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 // COMPONENTS //
 import FilterDropdown from "@/components/common/FilterDropdown";
@@ -16,9 +16,11 @@ interface SalesSummaryMetricItemData {
 interface SalesDashboardHeaderPropsData {
   avatarLabel: string;
   greeting: string;
+  onLocationChange: (locationValue: string) => void;
   locationName: string;
   locationOptions: ReadonlyArray<string>;
   name: string;
+  selectedLocation: string;
   summaryMetrics: ReadonlyArray<SalesSummaryMetricItemData>;
 }
 
@@ -26,9 +28,11 @@ interface SalesDashboardHeaderPropsData {
 export function SalesDashboardHeader({
   avatarLabel,
   greeting,
+  onLocationChange,
   locationName,
   locationOptions,
   name,
+  selectedLocation,
   summaryMetrics,
 }: SalesDashboardHeaderPropsData) {
   // Define Navigation
@@ -38,7 +42,6 @@ export function SalesDashboardHeader({
   // Define Refs
 
   // Define States
-  const [selectedLocation, setSelectedLocation] = useState<string>(locationName);
 
   // Helper Functions
   const normalizedLocationOptions = useMemo<ReadonlyArray<string>>(() => {
@@ -49,9 +52,11 @@ export function SalesDashboardHeader({
     return Array.from(uniqueLocationValues);
   }, [locationName, locationOptions]);
 
-  const currentLocationValue = normalizedLocationOptions.includes(selectedLocation)
+  const currentLocationValue = normalizedLocationOptions.includes(
+    selectedLocation,
+  )
     ? selectedLocation
-    : normalizedLocationOptions[0] ?? locationName;
+    : (normalizedLocationOptions[0] ?? locationName);
 
   // Use Effects
 
@@ -84,7 +89,7 @@ export function SalesDashboardHeader({
           title={currentLocationValue}
           options={normalizedLocationOptions}
           selectedOption={currentLocationValue}
-          onChange={setSelectedLocation}
+          onChange={onLocationChange}
           prefix={
             <Building1 primaryColor="var(--color-n-500)" className="size-4" />
           }

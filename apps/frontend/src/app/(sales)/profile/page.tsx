@@ -1,7 +1,7 @@
 "use client";
 
 // REACT //
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 // COMPONENTS //
 import DesktopMonitorBrowseActivityPerformance from "@/components/icons/neevo-icons/DesktopMonitorBrowseActivityPerformance";
@@ -50,7 +50,7 @@ export default function ProfilePage() {
   /**
    * Fetches sales profile for logged-in user.
    */
-  const getSalesProfile = (): void => {
+  const getSalesProfile = useCallback((): void => {
     if (!userCode) {
       setIsProfileLoading(false);
       return;
@@ -80,12 +80,18 @@ export default function ProfilePage() {
         // Set profile loading false
         setIsProfileLoading(false);
       });
-  };
+  }, [userCode]);
 
   // Use Effects
   useEffect(() => {
-    getSalesProfile();
-  }, [userCode]);
+    const profileLoadTimeout = window.setTimeout(() => {
+      getSalesProfile();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(profileLoadTimeout);
+    };
+  }, [getSalesProfile]);
 
   const summaryProfile = {
     avatarLabel:
@@ -131,7 +137,7 @@ export default function ProfilePage() {
         />
 
         {/* Profile content */}
-        <div className="bg-n-100 min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div className="bg-n-100 scrollbar-hide min-h-0 flex-1 overflow-y-auto px-6 py-6">
           {/* Content stack */}
           <div className="flex flex-col gap-6">
             {/* Metrics cards */}

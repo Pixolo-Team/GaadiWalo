@@ -52,7 +52,9 @@ export default function SalesLayout({
       {/* Sales page frame */}
       <div className="bg-n-100 mx-auto flex h-full w-full max-w-md flex-col">
         {/* Sales page content */}
-        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
+          {children}
+        </div>
 
         {/* Bottom navigation */}
         {shouldHideBottomBar ? null : <BottomBar />}
@@ -60,4 +62,3 @@ export default function SalesLayout({
     </section>
   );
 }
-

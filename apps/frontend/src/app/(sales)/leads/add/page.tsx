@@ -271,7 +271,7 @@ export default function AddLeadPage() {
         <Header title="Add New Lead" />
 
         {/* Add lead scroll content */}
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
           {/* Add lead content container */}
           <div className="flex flex-col gap-6 p-6">
             {/* Informational banner */}

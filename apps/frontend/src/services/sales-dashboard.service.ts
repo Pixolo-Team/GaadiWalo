@@ -6,6 +6,68 @@ import type {
   LeadStatusOptionData,
 } from "@/types/leads";
 
+// CONSTANTS //
+import { CONSTANTS } from "@/constants/constants";
+
+export interface SalesDashboardSummaryMetricItemData {
+  key: string;
+  label: string;
+  value: string;
+}
+
+export interface SalesDashboardHydratedCacheData {
+  leadBranchItems: LeadBranchData[];
+  salesLeads: LeadListItemData[];
+}
+
+export const ALL_BRANCHES_OPTION = "All Branches";
+
+/**
+ * Defines static lead statuses shown in dashboard phase cards.
+ */
+export const dashboardLeadStatusItems: LeadStatusOptionData[] = [
+  {
+    id: "new",
+    name: "NEW",
+    reason: [],
+  },
+  {
+    id: "contacted",
+    name: "CONTACTED",
+    reason: [],
+  },
+  {
+    id: "interested",
+    name: "INTERESTED",
+    reason: [],
+  },
+  {
+    id: "negotiation",
+    name: "NEGOTIATION",
+    reason: [],
+  },
+  {
+    id: "test-drive",
+    name: "TEST_DRIVE",
+    reason: [],
+  },
+  {
+    id: "vehicle-na",
+    name: "VEHICLE_NA",
+    reason: [],
+  },
+  {
+    id: "won",
+    name: "WON",
+    reason: [],
+  },
+  {
+    id: "lost",
+    name: "LOST",
+    reason: [],
+  },
+];
+
 /**
  * Resolves greeting text from current local time.
  */
@@ -64,6 +126,203 @@ export const getBranchNameService = (branchItem: LeadBranchData): string => {
     branchItem.id ??
     ""
   );
+};
+
+/**
+ * Reads persisted dashboard cache safely from localStorage.
+ */
+export const getSalesDashboardCacheService =
+  (): SalesDashboardHydratedCacheData => {
+    if (typeof window === "undefined") {
+      return {
+        leadBranchItems: [],
+        salesLeads: [],
+      };
+    }
+
+    try {
+      const cachedSalesLeads = window.localStorage.getItem(
+        CONSTANTS.DASHBOARD_LEADS_CACHE_KEY,
+      );
+      const cachedLeadBranches = window.localStorage.getItem(
+        CONSTANTS.DASHBOARD_BRANCHES_CACHE_KEY,
+      );
+
+      return {
+        leadBranchItems: cachedLeadBranches
+          ? (JSON.parse(cachedLeadBranches) as LeadBranchData[])
+          : [],
+        salesLeads: cachedSalesLeads
+          ? (JSON.parse(cachedSalesLeads) as LeadListItemData[])
+          : [],
+      };
+    } catch {
+      return {
+        leadBranchItems: [],
+        salesLeads: [],
+      };
+    }
+  };
+
+/**
+ * Resolves whether branch cache already exists in storage.
+ */
+export const hasSalesDashboardBranchCacheService = (): boolean => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return Boolean(
+    window.localStorage.getItem(CONSTANTS.DASHBOARD_BRANCHES_CACHE_KEY),
+  );
+};
+
+/**
+ * Reads the previously selected dashboard branch from storage.
+ */
+export const getStoredDashboardBranchFilterService = (): string => {
+  if (typeof window === "undefined") {
+    return ALL_BRANCHES_OPTION;
+  }
+
+  return (
+    window.localStorage.getItem(CONSTANTS.DASHBOARD_BRANCH_FILTER_KEY) ??
+    ALL_BRANCHES_OPTION
+  );
+};
+
+/**
+ * Persists dashboard lead cache.
+ */
+export const setSalesDashboardLeadCacheService = (
+  salesLeads: LeadListItemData[],
+): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(
+    CONSTANTS.DASHBOARD_LEADS_CACHE_KEY,
+    JSON.stringify(salesLeads),
+  );
+};
+
+/**
+ * Persists dashboard branch cache.
+ */
+export const setSalesDashboardBranchCacheService = (
+  leadBranchItems: LeadBranchData[],
+): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(
+    CONSTANTS.DASHBOARD_BRANCHES_CACHE_KEY,
+    JSON.stringify(leadBranchItems),
+  );
+};
+
+/**
+ * Persists selected dashboard branch filter.
+ */
+export const setStoredDashboardBranchFilterService = (
+  branchNameValue: string,
+): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(
+    CONSTANTS.DASHBOARD_BRANCH_FILTER_KEY,
+    branchNameValue,
+  );
+};
+
+/**
+ * Normalizes branch values before comparing dashboard filters.
+ */
+export const getNormalizedDashboardBranchNameService = (
+  branchValue: string,
+): string => {
+  return branchValue.trim().toLowerCase();
+};
+
+/**
+ * Resolves dashboard branch dropdown options.
+ */
+export const getDashboardBranchLocationOptionsService = (
+  leadBranchItems: LeadBranchData[],
+  userBranchValue: string | null | undefined,
+): string[] => {
+  const branchNameValues = Array.from(
+    new Set(
+      leadBranchItems
+        .map((branchItem) => getBranchNameService(branchItem))
+        .filter(Boolean),
+    ),
+  );
+
+  if (branchNameValues.length > 0) {
+    return [ALL_BRANCHES_OPTION, ...branchNameValues];
+  }
+
+  return userBranchValue
+    ? [ALL_BRANCHES_OPTION, userBranchValue]
+    : [ALL_BRANCHES_OPTION];
+};
+
+/**
+ * Resolves the active dashboard branch filter from selection and options.
+ */
+export const getResolvedDashboardBranchNameService = (
+  branchLocationOptions: string[],
+  selectedBranchName: string,
+  userBranchValue: string | null | undefined,
+): string => {
+  if (branchLocationOptions.includes(selectedBranchName)) {
+    return selectedBranchName;
+  }
+
+  if (branchLocationOptions.includes(ALL_BRANCHES_OPTION)) {
+    return ALL_BRANCHES_OPTION;
+  }
+
+  return branchLocationOptions[0] ?? userBranchValue ?? ALL_BRANCHES_OPTION;
+};
+
+/**
+ * Filters dashboard leads by selected branch when branch data exists.
+ */
+export const getFilteredDashboardBranchLeadItemsService = (
+  salesLeads: LeadListItemData[],
+  resolvedBranchName: string,
+): LeadListItemData[] => {
+  if (
+    !resolvedBranchName ||
+    resolvedBranchName === ALL_BRANCHES_OPTION
+  ) {
+    return salesLeads;
+  }
+
+  const hasLeadBranchValues = salesLeads.some((leadItem) =>
+    Boolean(leadItem.branch?.trim()),
+  );
+
+  if (!hasLeadBranchValues) {
+    return salesLeads;
+  }
+
+  const normalizedSelectedBranchName =
+    getNormalizedDashboardBranchNameService(resolvedBranchName);
+
+  return salesLeads.filter((leadItem) => {
+    const normalizedLeadBranchName = getNormalizedDashboardBranchNameService(
+      leadItem.branch ?? "",
+    );
+
+    return normalizedLeadBranchName === normalizedSelectedBranchName;
+  });
 };
 
 /**
@@ -133,5 +392,74 @@ export const getPhaseCardsService = (
       label: "All",
     },
     ...phaseCardItems,
+  ];
+};
+
+/**
+ * Filters and sorts recent dashboard leads for the selected phase.
+ */
+export const getFilteredRecentLeadItemsService = (
+  filteredBranchLeadItems: LeadListItemData[],
+  selectedPhaseKey: string,
+): LeadListItemData[] => {
+  const phaseFilteredLeadItems =
+    selectedPhaseKey === "all"
+      ? filteredBranchLeadItems
+      : filteredBranchLeadItems.filter(
+          (leadItem) => leadItem.status.toLowerCase() === selectedPhaseKey,
+        );
+
+  return [...phaseFilteredLeadItems]
+    .sort((firstLeadItem, secondLeadItem) => {
+      const firstLeadTime = new Date(
+        firstLeadItem.updatedAt ??
+          firstLeadItem.createdAt ??
+          "1970-01-01T00:00:00.000Z",
+      ).getTime();
+      const secondLeadTime = new Date(
+        secondLeadItem.updatedAt ??
+          secondLeadItem.createdAt ??
+          "1970-01-01T00:00:00.000Z",
+      ).getTime();
+
+      return secondLeadTime - firstLeadTime;
+    })
+    .slice(0, 5);
+};
+
+/**
+ * Builds dashboard summary metrics from filtered branch leads.
+ */
+export const getDashboardSummaryMetricsService = (
+  filteredBranchLeadItems: LeadListItemData[],
+): SalesDashboardSummaryMetricItemData[] => {
+  return [
+    {
+      key: "calls-due",
+      label: "Calls Due",
+      value: String(
+        filteredBranchLeadItems.filter((leadItem) =>
+          ["CONTACTED", "INTERESTED", "NEGOTIATION", "TEST_DRIVE"].includes(
+            leadItem.status,
+          ),
+        ).length,
+      ).padStart(2, "0"),
+    },
+    {
+      key: "new-leads",
+      label: "New Leads",
+      value: String(
+        filteredBranchLeadItems.filter((leadItem) => leadItem.status === "NEW")
+          .length,
+      ).padStart(2, "0"),
+    },
+    {
+      key: "won-today",
+      label: "Won Today",
+      value: String(
+        filteredBranchLeadItems.filter((leadItem) => isWonTodayService(leadItem))
+          .length,
+      ).padStart(2, "0"),
+    },
   ];
 };

@@ -39,6 +39,7 @@ export function BottomBar() {
     normalizedPathname === ROUTES.sales.profile ||
     normalizedPathname.startsWith(`${ROUTES.sales.profile}/`);
   const isAlertsSelected = normalizedPathname === ROUTES.sales.alerts;
+  const isAddSelected = normalizedPathname === ROUTES.sales.addLead;
 
   // Use Effects
 
@@ -77,7 +78,7 @@ export function BottomBar() {
         />
 
         {/* Add New Lead Tab */}
-        <Tab
+        {/* <Tab
           href={ROUTES.sales.addLead}
           label="Add"
           isFloating
@@ -86,22 +87,38 @@ export function BottomBar() {
               <UserAddPlus primaryColor="white" className="size-5" />
             </span>
           }
+        /> */}
+
+        <Tab
+          href={ROUTES.sales.addLead}
+          label="Add"
+          isActive={isAddSelected}
+          icon={
+            <UserAddPlus
+              primaryColor={
+                isAddSelected ? "var(--color-blue-600)" : "var(--color-n-500)"
+              }
+              className="size-7"
+            />
+          }
         />
 
         {/* Alerts */}
-        <Tab
+        {/* <Tab
           href={ROUTES.sales.alerts}
           label="Alerts"
           isActive={isAlertsSelected}
           icon={
             <BellNotification
               primaryColor={
-                isAlertsSelected ? "var(--color-blue-600)" : "var(--color-n-500)"
+                isAlertsSelected
+                  ? "var(--color-blue-600)"
+                  : "var(--color-n-500)"
               }
               className="size-7"
             />
           }
-        />
+        /> */}
 
         {/* Profile Tab*/}
         <Tab
@@ -111,7 +128,9 @@ export function BottomBar() {
           icon={
             <UserCircleSingle
               primaryColor={
-                isProfileSelected ? "var(--color-blue-600)" : "var(--color-n-500)"
+                isProfileSelected
+                  ? "var(--color-blue-600)"
+                  : "var(--color-n-500)"
               }
               className="size-7"
             />

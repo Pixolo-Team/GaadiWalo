@@ -131,7 +131,7 @@ export default function ChangePasswordPage() {
         <Header title="Change Password" />
 
         {/* Content */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-6 py-6">
           {/* Form stack */}
           <div className="flex flex-col gap-6">
             {/* Input fields */}
