@@ -6,6 +6,7 @@ import { useMemo } from "react";
 // COMPONENTS //
 import FilterDropdown from "@/components/common/FilterDropdown";
 import Building1 from "@/components/icons/neevo-icons/Building1";
+import { CountPlaceholder } from "@/components/sales/CountPlaceholder";
 
 interface SalesSummaryMetricItemData {
   key: string;
@@ -16,6 +17,7 @@ interface SalesSummaryMetricItemData {
 interface SalesDashboardHeaderPropsData {
   avatarLabel: string;
   greeting: string;
+  isSummaryLoading: boolean;
   onLocationChange: (locationValue: string) => void;
   locationName: string;
   locationOptions: ReadonlyArray<string>;
@@ -28,6 +30,7 @@ interface SalesDashboardHeaderPropsData {
 export function SalesDashboardHeader({
   avatarLabel,
   greeting,
+  isSummaryLoading,
   onLocationChange,
   locationName,
   locationOptions,
@@ -109,9 +112,18 @@ export function SalesDashboardHeader({
             /* Summary metric */
             <div key={summaryMetricItem.key} className="contents">
               <div className="flex flex-1 flex-col items-center">
-                <p className="text-n-50 text-3xl font-bold">
-                  {summaryMetricItem.value}
-                </p>
+                {isSummaryLoading ? (
+                  <div className="flex h-[36px] items-center">
+                    <CountPlaceholder
+                      tone="inverse"
+                      className="h-8 w-14 rounded-2xl"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-n-50 text-3xl font-bold">
+                    {summaryMetricItem.value}
+                  </p>
+                )}
                 <p className="font-secondary text-n-50 text-center text-xs">
                   {summaryMetricItem.label}
                 </p>

@@ -309,7 +309,7 @@ export default function AddLeadPage() {
                   <InputBox
                     label="PHONE NUMBER"
                     isRequired
-                    placeholder="+91 XXXXXXXXXX"
+                    placeholder="e.g. 9876543210"
                     value={leadInputFiled.phoneNumber}
                     onChange={(value) =>
                       updateLeadInputFiled("phoneNumber", value)

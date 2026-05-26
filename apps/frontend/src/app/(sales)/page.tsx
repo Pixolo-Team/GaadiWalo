@@ -1,7 +1,7 @@
 "use client";
 
 // REACT //
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useState } from "react";
 
 // TYPES //
 import type {
@@ -88,22 +88,26 @@ export default function Home() {
     return getStoredDashboardBranchFilterService();
   });
   const [selectedPhaseKey, setSelectedPhaseKey] = useState<string>("all");
+  const cachedDashboardState = useMemo(() => getSalesDashboardCacheService(), []);
+  const hasCachedDashboardLeads = cachedDashboardState.salesLeads.length > 0;
+  const hasCachedDashboardBranches =
+    cachedDashboardState.leadBranchItems.length > 0;
+  const shouldShowDashboardCountPlaceholders =
+    isDashboardLoading && !hasCachedDashboardLeads;
 
   // Helper Functions
   /**
    * Fetches dashboard leads and branches for the home page.
    */
-  const fetchDashboardDataService = async (): Promise<void> => {
-    const dashboardCache = getSalesDashboardCacheService();
-
-    if (dashboardCache.salesLeads.length > 0) {
+  const fetchDashboardDataService = useEffectEvent(async (): Promise<void> => {
+    if (hasCachedDashboardLeads) {
       // Hydrate dashboard quickly from cache while fresh data loads.
-      setSalesLeads(dashboardCache.salesLeads);
+      setSalesLeads(cachedDashboardState.salesLeads);
     }
 
-    if (dashboardCache.leadBranchItems.length > 0) {
+    if (hasCachedDashboardBranches) {
       // Hydrate branch options from cache and avoid branch API on repeat visits.
-      setLeadBranchItems(dashboardCache.leadBranchItems);
+      setLeadBranchItems(cachedDashboardState.leadBranchItems);
     }
 
     try {
@@ -142,14 +146,20 @@ export default function Home() {
       // Error toast.
       toast.error("Unable to load dashboard right now. Please try again.");
 
-      // Reset dashboard state.
-      setLeadBranchItems([]);
-      setSalesLeads([]);
+      if (!hasCachedDashboardBranches) {
+        // Reset dashboard branch state only when no cached fallback exists.
+        setLeadBranchItems([]);
+      }
+
+      if (!hasCachedDashboardLeads) {
+        // Reset dashboard lead state only when no cached fallback exists.
+        setSalesLeads([]);
+      }
     } finally {
       // Set loading state to false.
       setIsDashboardLoading(false);
     }
-  };
+  });
 
   const branchLocationOptions = useMemo(() => {
     return getDashboardBranchLocationOptionsService(
@@ -212,6 +222,7 @@ export default function Home() {
         <SalesDashboardHeader
           avatarLabel={getAvatarLabelService(user?.name ?? "Sales User")}
           greeting={getGreetingService()}
+          isSummaryLoading={shouldShowDashboardCountPlaceholders}
           onLocationChange={setSelectedBranchName}
           locationName={resolvedBranchName || ALL_BRANCHES_OPTION}
           locationOptions={branchLocationOptions}
@@ -231,6 +242,7 @@ export default function Home() {
             {/* Phase Cards List Component */}
             <PhaseCards
               activeKey={selectedPhaseKey}
+              isCountLoading={shouldShowDashboardCountPlaceholders}
               tabs={getPhaseCardsService(
                 leadStatusItems,
                 filteredBranchLeadItems,
