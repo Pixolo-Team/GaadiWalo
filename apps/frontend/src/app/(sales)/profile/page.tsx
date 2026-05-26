@@ -4,7 +4,6 @@
 import { useEffect, useState } from "react";
 
 // COMPONENTS //
-import BellNotification from "@/components/icons/neevo-icons/BellNotification";
 import DesktopMonitorBrowseActivityPerformance from "@/components/icons/neevo-icons/DesktopMonitorBrowseActivityPerformance";
 import LoginPassword from "@/components/icons/neevo-icons/LoginPassword";
 import Logout3 from "@/components/icons/neevo-icons/Logout3";
@@ -175,19 +174,6 @@ export default function ProfilePage() {
                   />
                 }
                 label="Change Password"
-              />
-
-              {/* Notification preferences action item */}
-              <ProfileMenuItem
-                href={ROUTES.sales.profileNotifications}
-                iconBackgroundColor="bg-purple-100"
-                iconNode={
-                  <BellNotification
-                    primaryColor="var(--color-purple-600)"
-                    className="size-5"
-                  />
-                }
-                label="Notification Preferences"
               />
 
               {/* Performance report action item */}
