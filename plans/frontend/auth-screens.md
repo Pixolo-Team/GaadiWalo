@@ -320,7 +320,7 @@ Response 401:
 | Access token storage | Client stores only the backend-returned auth context needed by the current flow. |
 | Refresh token storage | Store the backend-issued refresh token securely and replace it whenever `/auth/refresh` returns a new one. |
 | Token refresh strategy | Use `/auth/refresh` silently on app mount and after `401` responses caused by expired access tokens. |
-| Logout | Deferred until backend logout support is added. |
+| Logout | Call `POST /auth/logout`, then clear local auth state and tokens on the client. |
 
 ---
 
