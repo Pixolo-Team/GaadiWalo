@@ -1,3 +1,6 @@
+// COMPONENTS //
+import { CountPlaceholder } from "@/components/sales/CountPlaceholder";
+
 interface PhaseCardItemData {
   count: number;
   key: string;
@@ -6,6 +9,7 @@ interface PhaseCardItemData {
 
 interface PhaseCardPropsData {
   activeKey: string;
+  isCountLoading?: boolean;
   onCardPress?: (key: string) => void;
   tabs: ReadonlyArray<PhaseCardItemData>;
 }
@@ -13,6 +17,7 @@ interface PhaseCardPropsData {
 /** Phase Card Component */
 export function PhaseCards({
   activeKey,
+  isCountLoading = false,
   onCardPress,
   tabs,
 }: PhaseCardPropsData) {
@@ -45,9 +50,15 @@ export function PhaseCards({
             }`}
           >
             {/* Phase count */}
-            <span className="text-n-800 text-xl font-bold">
-              {tabItem.count}
-            </span>
+            {isCountLoading ? (
+              <div className="flex h-[28px] items-center">
+                <CountPlaceholder className="h-7 w-10 rounded-2xl" />
+              </div>
+            ) : (
+              <span className="text-n-800 text-xl font-bold">
+                {tabItem.count}
+              </span>
+            )}
 
             {/* Phase label */}
             <span className="font-secondary text-n-600 text-xs">
@@ -59,4 +70,3 @@ export function PhaseCards({
     </div>
   );
 }
-

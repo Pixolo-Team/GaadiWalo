@@ -21,6 +21,7 @@ import FilterDropdown from "@/components/common/FilterDropdown";
 import { Header } from "@/components/common/Header";
 import { SearchInput } from "@/components/common/SearchInput";
 import HorizontalSlider2 from "@/components/icons/neevo-icons/HorizontalSlider2";
+import { CountPlaceholder } from "@/components/sales/CountPlaceholder";
 import { LeadCard } from "@/components/sales/LeadCard";
 import { LeadsFilterDrawer } from "@/components/sales/LeadsFilterDrawer";
 
@@ -40,6 +41,7 @@ import {
   getSalesDashboardCacheService,
   hasSalesDashboardBranchCacheService,
   setSalesDashboardBranchCacheService,
+  setSalesDashboardLeadCacheService,
 } from "@/services/sales-dashboard.service";
 import {
   getLeadStatusLabel,
@@ -92,9 +94,13 @@ export default function LeadsPage() {
   // Helper Functions
   const selectedStatusQueryValue =
     searchParams.get("status")?.toLowerCase() ?? "all";
+  const cachedSalesLeadItems = useMemo<LeadListItemData[]>(() => {
+    return getSalesDashboardCacheService().salesLeads;
+  }, []);
   const cachedLeadBranchItems = useMemo<LeadBranchData[]>(() => {
     return getSalesDashboardCacheService().leadBranchItems;
   }, []);
+  const hasCachedSalesLeads = cachedSalesLeadItems.length > 0;
   const shouldFetchLeadBranches = !hasSalesDashboardBranchCacheService();
 
   /**
@@ -114,7 +120,10 @@ export default function LeadsPage() {
       );
     }
 
-    return salesLeadsResponse.data ?? [];
+    const salesLeadItems = salesLeadsResponse.data ?? [];
+    setSalesDashboardLeadCacheService(salesLeadItems);
+
+    return salesLeadItems;
   };
 
   /**
@@ -212,11 +221,15 @@ export default function LeadsPage() {
     data: salesLeads = [],
     error: salesLeadsError,
     isLoading: isSalesLeadsLoading,
+    isFetched: hasSalesLeadsFetched,
   } = useQuery<LeadListItemData[]>({
+    initialData: hasCachedSalesLeads ? cachedSalesLeadItems : undefined,
     queryKey: ["sales-leads"],
     queryFn: getSalesLeadsQueryService,
     staleTime: salesLeadsStaleTime,
   });
+  const shouldShowLeadsCountPlaceholders =
+    isSalesLeadsLoading && !hasCachedSalesLeads && !hasSalesLeadsFetched;
 
   /**
    * Loads lead status master data with longer cache.
@@ -521,7 +534,17 @@ export default function LeadsPage() {
                           : "border-n-200 bg-n-50 text-n-700"
                       }`}
                     >
-                      {statusTabItem.label} ({statusTabItem.count})
+                      {statusTabItem.label}
+                      {shouldShowLeadsCountPlaceholders ? (
+                        <span className="inline-flex items-center">
+                          {" "}
+                          (
+                          <CountPlaceholder className="mx-1 h-4 w-5 rounded-xl align-middle" />
+                          )
+                        </span>
+                      ) : (
+                        ` (${statusTabItem.count})`
+                      )}
                     </button>
                   );
                 })}
@@ -532,7 +555,15 @@ export default function LeadsPage() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between gap-3">
                 <p className="font-secondary text-n-500 text-xs">
-                  Showing {filteredLeads.length} leads
+                  {shouldShowLeadsCountPlaceholders ? (
+                    <span className="inline-flex items-center gap-1">
+                      <span>Showing</span>
+                      <CountPlaceholder className="h-3.5 w-5 rounded-xl" />
+                      <span>leads</span>
+                    </span>
+                  ) : (
+                    `Showing ${filteredLeads.length} leads`
+                  )}
                 </p>
 
                 <FilterDropdown
