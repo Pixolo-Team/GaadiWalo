@@ -2,7 +2,6 @@
 import "./globals.css";
 
 // COMPONENTS //
-import { DM_Sans, Sora } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 
 // OTHERS //
@@ -11,16 +10,6 @@ import { QueryProvider } from "@/providers/QueryProvider";
 
 // DATA //
 import type { Metadata } from "next";
-
-const soraFont = Sora({
-  variable: "--font-sora",
-  subsets: ["latin"],
-});
-
-const dmSansFont = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "GaadiWalo",
@@ -33,10 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`${soraFont.variable} ${dmSansFont.variable} h-full antialiased`}
-    >
+    <html lang="en" className="h-full antialiased">
       <body className="flex min-h-full flex-col">
         <QueryProvider>
           <AuthProvider>
@@ -58,4 +44,3 @@ export default function RootLayout({
     </html>
   );
 }
-
