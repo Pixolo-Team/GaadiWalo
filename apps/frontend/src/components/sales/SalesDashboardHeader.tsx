@@ -17,10 +17,7 @@ interface SalesSummaryMetricItemData {
 interface SalesDashboardHeaderPropsData {
   avatarLabel: string;
   greeting: string;
-<<<<<<< HEAD
-=======
   isSummaryLoading: boolean;
->>>>>>> origin/master
   onLocationChange: (locationValue: string) => void;
   locationName: string;
   locationOptions: ReadonlyArray<string>;
@@ -33,10 +30,7 @@ interface SalesDashboardHeaderPropsData {
 export function SalesDashboardHeader({
   avatarLabel,
   greeting,
-<<<<<<< HEAD
-=======
   isSummaryLoading,
->>>>>>> origin/master
   onLocationChange,
   locationName,
   locationOptions,

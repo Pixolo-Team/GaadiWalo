@@ -28,10 +28,7 @@ import {
 // SERVICES //
 import {
   ALL_BRANCHES_OPTION,
-<<<<<<< HEAD
-=======
   dashboardLeadStatusItems,
->>>>>>> origin/master
   getAvatarLabelService,
   getDashboardBranchLocationOptionsService,
   getDashboardSummaryMetricsService,
@@ -100,21 +97,6 @@ export default function Home() {
 
   // Helper Functions
   /**
-<<<<<<< HEAD
-   * Fetches dashboard leads, statuses, and branches for the home page.
-   */
-  const fetchDashboardDataService = async (): Promise<void> => {
-    const dashboardCache = getSalesDashboardCacheService();
-
-    if (dashboardCache.salesLeads.length > 0) {
-      // Hydrate dashboard quickly from cache while fresh data loads.
-      setSalesLeads(dashboardCache.salesLeads);
-    }
-
-    if (dashboardCache.leadBranchItems.length > 0) {
-      // Hydrate branch options from cache and avoid branch API on repeat visits.
-      setLeadBranchItems(dashboardCache.leadBranchItems);
-=======
    * Fetches dashboard leads and branches for the home page.
    */
   const fetchDashboardDataService = useEffectEvent(async (): Promise<void> => {
@@ -126,7 +108,6 @@ export default function Home() {
     if (hasCachedDashboardBranches) {
       // Hydrate branch options from cache and avoid branch API on repeat visits.
       setLeadBranchItems(cachedDashboardState.leadBranchItems);
->>>>>>> origin/master
     }
 
     try {
@@ -147,32 +128,9 @@ export default function Home() {
         setSalesLeads([]);
       }
 
-<<<<<<< HEAD
-      /**
-       * Call dashboard lead statuses API.
-       */
-      const leadStatusesResponse = await getLeadStatusesRequest();
-
-      if (leadStatusesResponse.status_code === 200) {
-        // Set lead statuses state.
-        setLeadStatusItems(leadStatusesResponse.data ?? []);
-      } else {
-        // Reset lead statuses state.
-        setLeadStatusItems([]);
-      }
-
-      if (!hasCachedLeadBranches) {
-        /**
-         * Call dashboard branch API only when branch cache does not exist yet.
-         */
-        const leadBranchesResponse = await getLeadBranchesRequest();
-
-=======
       if (!hasCachedLeadBranches) {
         // Call branch API only when branch cache does not exist yet.
         const leadBranchesResponse = await getLeadBranchesRequest();
-
->>>>>>> origin/master
         if (leadBranchesResponse.status_code === 200) {
           // Set lead branches state.
           const leadBranchValues = leadBranchesResponse.data ?? [];
@@ -200,11 +158,7 @@ export default function Home() {
       // Set loading state to false.
       setIsDashboardLoading(false);
     }
-<<<<<<< HEAD
-  };
-=======
   });
->>>>>>> origin/master
 
   const branchLocationOptions = useMemo(() => {
     return getDashboardBranchLocationOptionsService(
@@ -267,10 +221,7 @@ export default function Home() {
         <SalesDashboardHeader
           avatarLabel={getAvatarLabelService(user?.name ?? "Sales User")}
           greeting={getGreetingService()}
-<<<<<<< HEAD
-=======
           isSummaryLoading={shouldShowDashboardCountPlaceholders}
->>>>>>> origin/master
           onLocationChange={setSelectedBranchName}
           locationName={resolvedBranchName || ALL_BRANCHES_OPTION}
           locationOptions={branchLocationOptions}
@@ -290,10 +241,7 @@ export default function Home() {
             {/* Phase Cards List Component */}
             <PhaseCards
               activeKey={selectedPhaseKey}
-<<<<<<< HEAD
-=======
               isCountLoading={shouldShowDashboardCountPlaceholders}
->>>>>>> origin/master
               tabs={getPhaseCardsService(
                 leadStatusItems,
                 filteredBranchLeadItems,
