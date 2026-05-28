@@ -101,9 +101,13 @@ error: string | null
 - Basic format check: if contains `@` → validate as email, otherwise validate as 10-digit phone number.
 
 **On submit:**
-1. Call `POST /api/auth/forgot-password` with `{ identifier: emailOrPhone }`.
-2. On success → navigate to `/verify-otp`, passing `identifier` via route state (not URL — do not expose in query params).
+1. Call `POST /api/auth/forgot-password` with `{ email }`.
+2. On success → navigate to `/verify-otp`, passing `email` via route state (not URL — do not expose in query params).
 3. On failure → show inline error.
+
+Current backend scope note:
+- Password recovery is email-only in the current backend implementation phase.
+- Phone-based recovery copy may remain in UI drafts, but the API currently accepts `email` only.
 
 ---
 
@@ -112,7 +116,7 @@ error: string | null
 **Design notes (Figma `124:85`):**
 - `<NavHeader>` with back arrow + title **"Verify OTP"**.
 - Keyboard/phone icon centered.
-- Heading: **"OTP Sent!"**, sub-text: *"Enter the 6-digit OTP sent to ra●●●●●●●com"* (masked identifier).
+- Heading: **"OTP Sent!"**, sub-text: *"Enter the 6-digit OTP sent to ra●●●●●●●com"* (masked email).
 - **Six individual single-digit input boxes** in a row.
 - Full-width CTA: **"Verify OTP"**.
 - Below: *"Didn't receive? Resend in 0:45"* — countdown timer; once it hits 0:00, the text changes to a tappable **"Resend OTP"** link.
@@ -128,7 +132,7 @@ isLoading: boolean
 error: string | null
 countdown: number       // seconds remaining (starts at 45)
 canResend: boolean
-identifier: string      // passed from previous screen (masked for display)
+email: string           // passed from previous screen (masked for display)
 ```
 
 **Masking logic (display only):**
@@ -136,12 +140,12 @@ identifier: string      // passed from previous screen (masked for display)
 - Phone: show first 2 and last 2 digits, mask middle.
 
 **On submit:**
-1. Call `POST /api/auth/verify-otp` with `{ identifier, otp: otp.join('') }`.
+1. Call `POST /api/auth/verify-otp` with `{ email, otp: otp.join('') }`.
 2. On success → receive a short-lived `resetToken`; navigate to `/new-password` passing `resetToken` via route state.
 3. On failure (wrong OTP) → shake animation on boxes, show error, clear inputs.
 
 **Resend:**
-- Call `POST /api/auth/resend-otp` with `{ identifier }`.
+- Call `POST /api/auth/resend-otp` with `{ email }`.
 - Restart countdown to 45 seconds.
 
 ---
@@ -226,20 +230,20 @@ Response 429:
 #### `POST /api/auth/forgot-password`
 ```
 Request:
-{ "identifier": "rahul@company.com" | "9876543210" }
+{ "email": "rahul@company.com" }
 
 Response 200:
 { "message": "OTP sent" }
 
 Response 404:
-{ "error": "No account found with this email or phone" }
+{ "error": "No account found with this email" }
 ```
 
 #### `POST /api/auth/verify-otp`
 ```
 Request:
 {
-  "identifier": "rahul@company.com",
+  "email": "rahul@company.com",
   "otp": "123456"
 }
 
@@ -253,7 +257,7 @@ Response 400:
 #### `POST /api/auth/resend-otp`
 ```
 Request:
-{ "identifier": "rahul@company.com" }
+{ "email": "rahul@company.com" }
 
 Response 200:
 { "message": "OTP resent" }
@@ -291,7 +295,17 @@ Request:
 { "refreshToken": "<token>" }
 
 Response 200:
-{ "accessToken": "<new-jwt>" }
+{
+  "accessToken": "<new-jwt>",
+  "refreshToken": "<rotated-refresh-token>",
+  "expiresIn": 3600,
+  "user": {
+    "id": "SP001",
+    "name": "Sales Person",
+    "email": "sales@example.com",
+    "role": "sales"
+  }
+}
 
 Response 401:
 { "error": "Refresh token expired" }
@@ -303,10 +317,10 @@ Response 401:
 
 | Concern | Decision |
 |---------|----------|
-| Access token storage | In-memory (JS variable / Zustand store). Never in `localStorage`. |
-| Refresh token storage | `httpOnly` cookie (set by backend). |
-| Token refresh strategy | Axios/Fetch interceptor: on 401, silently call `/auth/refresh`; replay original request; if refresh also fails, redirect to `/login`. |
-| Logout | Call `/auth/logout`, clear in-memory token, clear cookie via server `Set-Cookie: refreshToken=; Max-Age=0`. |
+| Access token storage | Client stores only the backend-returned auth context needed by the current flow. |
+| Refresh token storage | Store the backend-issued refresh token securely and replace it whenever `/auth/refresh` returns a new one. |
+| Token refresh strategy | Use `/auth/refresh` silently on app mount and after `401` responses caused by expired access tokens. |
+| Logout | Call `POST /auth/logout`, then clear local auth state and tokens on the client. |
 
 ---
 

@@ -55,7 +55,7 @@ Source of truth:
 ```json
 {
   "userId": "S001",
-  "password": "Zinedine14!$"
+  "password": "SkorostUnited12!"
 }
 ```
 
@@ -131,7 +131,122 @@ interface LoginResponseData {
 - `expiresIn` may be `null`.
 - `user.role` is returned as a string.
 
-### 2. Forgot Password
+### 2. Refresh Session
+
+- Method: `POST`
+- Path: `/auth/refresh`
+- Purpose: Exchanges a refresh token for a new authenticated session
+
+#### Request Body
+
+```json
+{
+  "refreshToken": "jwt-refresh-token"
+}
+```
+
+#### Request Field Rules
+
+- `refreshToken`: required, non-empty string
+
+#### Success Response
+
+```json
+{
+  "data": {
+    "accessToken": "new-jwt-access-token",
+    "refreshToken": "new-jwt-refresh-token",
+    "expiresIn": 3600,
+    "user": {
+      "id": "S001",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "sales"
+    }
+  },
+  "status": "success",
+  "status_code": 200,
+  "message": "Session refreshed successfully.",
+  "error": null
+}
+```
+
+#### Response Data Shape
+
+```ts
+interface RefreshTokenResponseData {
+  accessToken: string;
+  refreshToken: string | null;
+  expiresIn: number | null;
+  user: AuthenticatedUserData;
+}
+```
+
+#### Status Codes
+
+- `200`: refresh successful
+- `400`: invalid request payload
+- `401`: refresh token invalid or expired
+- `403`: account inactive
+- `500`: internal/configuration failure
+
+#### Frontend Notes
+
+- Call this endpoint when an authenticated request returns `401` due to token expiry.
+- Replace both stored tokens if a new `refreshToken` is returned.
+- Update the in-memory auth user from the response payload.
+
+### 3. Logout
+
+- Method: `POST`
+- Path: `/auth/logout`
+- Purpose: Revokes all active sessions for the authenticated user across devices
+
+#### Headers
+
+- `Authorization: Bearer <accessToken>` required
+
+#### Request Body
+
+- No request body
+
+#### Success Response
+
+```json
+{
+  "data": {
+    "success": true
+  },
+  "status": "success",
+  "status_code": 200,
+  "message": "Logged out successfully.",
+  "error": null
+}
+```
+
+#### Response Data Shape
+
+```ts
+interface LogoutResponseData {
+  success: boolean;
+}
+```
+
+#### Status Codes
+
+- `200`: logout completed
+- `401`: missing, malformed, invalid, or expired access token
+- `403`: account inactive
+- `404`: authenticated user could not be resolved in the backend user table
+- `500`: internal/configuration failure
+
+#### Frontend Notes
+
+- Call this endpoint with the current `accessToken` in the `Authorization` header.
+- The backend revokes all active sessions for the authenticated user.
+- After a successful response, clear any locally stored auth state and tokens on the client.
+
+### 4. Forgot Password
 
 - Method: `POST`
 - Path: `/auth/forgot-password`

@@ -23,6 +23,7 @@ Source of truth:
 
 These APIs support the Sales lead detail workflow in the backend. They allow a Sales user to:
 
+- fetch all accessible Leads for the leads list
 - fetch a single Lead and its detailed attributes
 - fetch Lead activities
 - fetch Lead notes
@@ -129,6 +130,12 @@ Examples:
 
 | Endpoint | Method | Purpose |
 | --- | --- | --- |
+| `/sales/leads` | `GET` | Fetch all accessible Leads for the logged-in user |
+| `/sales/leads/statuses` | `GET` | Fetch available Lead statuses for create/update dropdowns, including lost reason names for `LOST` |
+| `/sales/leads/lead-sources` | `GET` | Fetch active Lead sources for lead create/edit dropdowns |
+| `/sales/leads/branches` | `GET` | Fetch active branches for branch-selection dropdowns |
+| `/sales/leads/car-brands` | `GET` | Fetch available car brands for Lead forms, including model names for each brand |
+| `/sales/leads/car-brands/:carBrandName/car-models` | `GET` | Fetch available car models for the selected car brand |
 | `/sales/leads/:leadId` | `GET` | Fetch one Lead with detail fields |
 | `/sales/leads/:leadId/activities` | `GET` | Fetch Lead activity timeline |
 | `/sales/leads/:leadId/notes` | `GET` | Fetch Lead notes |
@@ -136,10 +143,313 @@ Examples:
 | `/sales/leads/:leadId` | `PATCH` | Update Lead profile and preference fields |
 | `/sales/leads/:leadId/notes` | `POST` | Create a new Lead note |
 | `/sales/leads` | `POST` | Create a new Lead |
+| `/sales/leads/import` | `POST` | Bulk import Lead rows for the authenticated sales user |
 
 ## Endpoint Details
 
-## 1. Get Lead Details
+## 1. Get All Leads
+
+### Endpoint Name
+
+| Item | Value |
+| --- | --- |
+| HTTP Method | `GET` |
+| Endpoint URL | `/sales/leads` |
+| Description | Returns all Leads accessible to the authenticated Sales or Admin user for the leads listing screen. |
+
+### Request
+
+#### Query Parameters
+
+None.
+
+#### Request Headers
+
+| Header | Required | Description |
+| --- | --- | --- |
+| `Authorization` | Yes | Bearer access token from login. |
+
+#### Request Body
+
+None.
+
+#### Sample Request
+
+```http
+GET /sales/leads HTTP/1.1
+Authorization: Bearer <accessToken>
+```
+
+### Response
+
+#### Success Response Schema
+
+```ts
+interface LeadListItemData {
+  id: string;
+  fullName: string;
+  phone: string;
+  email: string | null;
+  source: string;
+  status:
+    | "NEW"
+    | "CONTACTED"
+    | "INTERESTED"
+    | "TEST_DRIVE"
+    | "NEGOTIATION"
+    | "WON"
+    | "LOST"
+    | "VEHICLE_NA";
+  carBrand: string | null;
+  carModel: string | null;
+  branchId: string | null;
+  branchName: string | null;
+  assignedTo: LeadUserSummaryData | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+```
+
+## 1A. Get Lead Status Options
+
+### Endpoint Name
+
+| Item | Value |
+| --- | --- |
+| HTTP Method | `GET` |
+| Endpoint URL | `/sales/leads/statuses` |
+| Description | Returns the status options from the `statuses` table for Lead creation and status update dropdowns. The `reason` field is populated from the `lost_reasons.name` values for the `LOST` status. |
+
+### Sample Success Response
+
+```json
+{
+  "data": [
+    {
+      "id": "status-new",
+      "name": "NEW",
+      "reason": []
+    },
+    {
+      "id": "status-contacted",
+      "name": "CONTACTED",
+      "reason": []
+    },
+    {
+      "id": "status-lost",
+      "name": "LOST",
+      "reason": ["Budget issue", "Bought elsewhere"]
+    }
+  ],
+  "status": "success",
+  "status_code": 200,
+  "message": "Lead statuses fetched successfully.",
+  "error": null
+}
+```
+
+## 1C. Bulk Import Leads
+
+### Endpoint Name
+
+| Item | Value |
+| --- | --- |
+| HTTP Method | `POST` |
+| Endpoint URL | `/sales/leads/import` |
+| Description | Imports multiple Lead rows for the authenticated Sales user. The backend validates every row independently, supports duplicate handling modes, and returns a partial-success summary. |
+
+### Request Body
+
+```ts
+interface ImportLeadsRequestData {
+  duplicateMode: "skip" | "upsert";
+  rows: Array<{
+    rowNumber: number;
+    fullName: string;
+    phone: string;
+    email: string | null;
+    source: string;
+    referrerName?: string | null;
+    referrerPhone?: string | null;
+    carBrand?: string | null;
+    carModel?: string | null;
+    variantName?: string | null;
+    colorPreference?: string | null;
+    budget?: string | null;
+    isUsed?: boolean | null;
+    status?: "NEW" | "CONTACTED" | "INTERESTED" | "TEST_DRIVE" | "NEGOTIATION" | "WON" | "LOST" | "VEHICLE_NA";
+    lostReason?: string | null;
+    initialNote?: string | null;
+  }>;
+}
+```
+
+### Duplicate Mode Behavior
+
+- `skip`: existing DB phone matches are returned as `skipped`
+- `upsert`: existing accessible Leads are updated using editable Lead fields, and inaccessible duplicates are returned as `skipped`
+
+### Success Response Schema
+
+```ts
+interface ImportLeadsResponseData {
+  importedCount: number;
+  updatedCount: number;
+  skippedCount: number;
+  errorCount: number;
+  totalRows: number;
+  results: Array<{
+    rowNumber: number;
+    status: "imported" | "updated" | "skipped" | "error";
+    reason: string;
+    leadId: string | null;
+  }>;
+}
+```
+
+### Sample Success Response
+
+```json
+{
+  "data": {
+    "importedCount": 1,
+    "updatedCount": 1,
+    "skippedCount": 1,
+    "errorCount": 0,
+    "totalRows": 3,
+    "results": [
+      {
+        "rowNumber": 2,
+        "status": "imported",
+        "reason": "Lead imported successfully.",
+        "leadId": "lead-101"
+      },
+      {
+        "rowNumber": 3,
+        "status": "updated",
+        "reason": "Lead updated successfully.",
+        "leadId": "lead-55"
+      },
+      {
+        "rowNumber": 4,
+        "status": "skipped",
+        "reason": "A lead with this phone number already exists.",
+        "leadId": "lead-20"
+      }
+    ]
+  },
+  "status": "success",
+  "status_code": 200,
+  "message": "Lead import completed successfully.",
+  "error": null
+}
+```
+
+## 1B. Get Lead Source Options
+
+### Endpoint Name
+
+| Item | Value |
+| --- | --- |
+| HTTP Method | `GET` |
+| Endpoint URL | `/sales/leads/lead-sources` |
+| Description | Returns active Lead sources from the `lead_sources` table for Lead create and edit dropdowns. Only rows where `is_active = true` are returned. |
+
+### Sample Success Response
+
+```json
+{
+  "data": [
+    {
+      "id": "source-1",
+      "name": "CarWale",
+      "description": "Marketplace lead source"
+    },
+    {
+      "id": "source-2",
+      "name": "Walk-in",
+      "description": "Direct showroom visit"
+    }
+  ],
+  "status": "success",
+  "status_code": 200,
+  "message": "Lead sources fetched successfully.",
+  "error": null
+}
+```
+
+## 1C. Get Branch Options
+
+### Endpoint Name
+
+| Item | Value |
+| --- | --- |
+| HTTP Method | `GET` |
+| Endpoint URL | `/sales/leads/branches` |
+| Description | Returns active branches from the `branches` table for branch-selection dropdowns. Only active rows are returned. |
+
+### Success Response Schema
+
+```ts
+interface BranchOptionData {
+  id: string;
+  name: string;
+}
+```
+
+### Sample Success Response
+
+```json
+{
+  "data": [
+    {
+      "id": "branch-1",
+      "name": "Calgary North"
+    },
+    {
+      "id": "branch-2",
+      "name": "Calgary South"
+    }
+  ],
+  "status": "success",
+  "status_code": 200,
+  "message": "Branches fetched successfully.",
+  "error": null
+}
+```
+
+#### Sample Success Response
+
+```json
+{
+  "data": [
+    {
+      "id": "lead-1",
+      "fullName": "Rahul Sharma",
+      "phone": "9876543210",
+      "email": "rahul@example.com",
+      "source": "CarWale",
+      "status": "INTERESTED",
+      "carBrand": "Hyundai",
+      "carModel": "Creta",
+      "branchId": "branch-1",
+      "branchName": "Calgary North",
+      "assignedTo": {
+        "id": "sales-1",
+        "name": "Neha Singh"
+      },
+      "createdAt": "2026-05-18T10:00:00.000Z",
+      "updatedAt": "2026-05-18T12:00:00.000Z"
+    }
+  ],
+  "status": "success",
+  "status_code": 200,
+  "message": "Leads fetched successfully.",
+  "error": null
+}
+```
+
+## 2. Get Lead Details
 
 ### Endpoint Name
 
@@ -212,6 +522,8 @@ interface LeadDetailsData {
   colorPreference: string | null;
   budget: string | null;
   isUsed: boolean | null;
+  branchId: string | null;
+  branchName: string | null;
   assignedTo: LeadUserSummaryData | null;
   createdBy: LeadUserSummaryData | null;
   createdAt: string | null;
@@ -238,6 +550,8 @@ interface LeadDetailsData {
 | `colorPreference` | `string` | Yes | Preferred color. |
 | `budget` | `string` | Yes | Budget display text. |
 | `isUsed` | `boolean` | Yes | Whether the Lead is interested in a used vehicle. |
+| `branchId` | `string` | Yes | Branch identifier of the currently assigned sales user. |
+| `branchName` | `string` | Yes | Branch name resolved from `branchId`. |
 | `assignedTo` | `object` | Yes | Assigned sales user summary. |
 | `createdBy` | `object` | Yes | Lead creator summary. |
 | `createdAt` | `string` | Yes | Lead creation timestamp in ISO-8601 format. |
@@ -263,6 +577,8 @@ interface LeadDetailsData {
     "colorPreference": "Red",
     "budget": "6-8 Lakh",
     "isUsed": true,
+    "branchId": "branch-1",
+    "branchName": "Calgary North",
     "assignedTo": {
       "id": "SP001",
       "name": "Sales Person"
@@ -336,7 +652,7 @@ interface LeadDetailsData {
 - Verify a non-existent `leadId` returns `404`.
 - Verify nullable fields such as `email`, `referrerPhone`, and `assignedTo` are handled correctly in the response.
 
-## 2. Get Lead Activities
+## 3. Get Lead Activities
 
 ### Endpoint Name
 
@@ -479,7 +795,7 @@ interface LeadActivityData {
 - Verify note creation creates a `note` activity visible here.
 - Verify unauthorized and forbidden responses match expected ownership behavior.
 
-## 3. Get Lead Notes
+## 4. Get Lead Notes
 
 ### Endpoint Name
 
@@ -706,6 +1022,8 @@ Returns the same `LeadDetailsData` shape as `GET /sales/leads/:leadId`.
     "colorPreference": "Red",
     "budget": "6-8 Lakh",
     "isUsed": true,
+    "branchId": "branch-1",
+    "branchName": "Calgary North",
     "assignedTo": {
       "id": "SP001",
       "name": "Sales Person"
@@ -891,6 +1209,8 @@ Returns the same `LeadDetailsData` shape as `GET /sales/leads/:leadId`.
     "colorPreference": "White",
     "budget": "10-12 Lakh",
     "isUsed": false,
+    "branchId": "branch-1",
+    "branchName": "Calgary North",
     "assignedTo": {
       "id": "SP001",
       "name": "Sales Person"
@@ -1141,6 +1461,8 @@ interface CreateLeadRequestData {
   phone: string;
   email: string | null;
   source: string;
+  status?: "NEW" | "CONTACTED" | "INTERESTED" | "TEST_DRIVE" | "NEGOTIATION" | "WON" | "LOST" | "VEHICLE_NA";
+  lostReason?: string | null;
   referrerName?: string | null;
   referrerPhone?: string | null;
   carBrand?: string | null;
@@ -1161,10 +1483,12 @@ interface CreateLeadRequestData {
 | `phone` | `string` | Yes | Exactly 10 digits | Must be unique across Leads |
 | `email` | `string \| null` | Yes | Valid email, empty string normalized to `null` | Customer email |
 | `source` | `string` | Yes | Trimmed, minimum 1 character | Lead source |
+| `status` | `LeadStatusData` | No | Valid status enum, defaults to `NEW` | Selected value should come from `GET /sales/leads/statuses` |
+| `lostReason` | `string \| null` | No | Required when `status = LOST`; otherwise must be omitted or `null` | Selected value should come from the `reason` array in `GET /sales/leads/statuses` |
 | `referrerName` | `string \| null` | No | Trimmed, empty string normalized to `null` | Referrer name |
 | `referrerPhone` | `string \| null` | No | Exactly 10 digits if provided | Referrer phone |
 | `carBrand` | `string \| null` | No | Trimmed, empty string normalized to `null` | Vehicle brand |
-| `carModel` | `string \| null` | No | Trimmed, empty string normalized to `null` | Vehicle model |
+| `carModel` | `string \| null` | No | Trimmed, empty string normalized to `null` | Vehicle model. Requires `carBrand` and must belong to that brand |
 | `variantName` | `string \| null` | No | Trimmed, empty string normalized to `null` | Vehicle variant |
 | `colorPreference` | `string \| null` | No | Trimmed, empty string normalized to `null` | Preferred color |
 | `budget` | `string \| null` | No | Trimmed, empty string normalized to `null` | Budget display text |
@@ -1179,6 +1503,7 @@ interface CreateLeadRequestData {
   "phone": "9876543210",
   "email": "rahul@example.com",
   "source": "CarWale",
+  "status": "CONTACTED",
   "referrerName": "Amit Verma",
   "referrerPhone": "9988776655",
   "carBrand": "Hyundai",
@@ -1190,6 +1515,14 @@ interface CreateLeadRequestData {
   "initialNote": "Interested in a weekend showroom visit."
 }
 ```
+
+#### Vehicle Catalog Endpoints For Dropdowns
+
+- Use `GET /sales/leads/statuses` to populate the Status dropdown.
+- Use the `reason` array from the `LOST` item in `GET /sales/leads/statuses` to populate the Lost Reason dropdown.
+- Use `GET /sales/leads/car-brands` to populate the Car Brand dropdown and read the nested `models` array for each brand.
+- `GET /sales/leads/car-brands/:carBrandName/car-models` is still available when the frontend wants to fetch models separately after Brand selection.
+- The create-lead payload accepts `status`, `lostReason`, `carBrand`, and `carModel` as display names.
 
 ### Response
 
@@ -1223,6 +1556,8 @@ interface CreateLeadResponseData {
       "colorPreference": "Red",
       "budget": "6-8 Lakh",
       "isUsed": true,
+      "branchId": "branch-1",
+      "branchName": "Calgary North",
       "assignedTo": {
         "id": "SP001",
         "name": "Sales Person"
@@ -1277,10 +1612,13 @@ interface CreateLeadResponseData {
 
 ### Business Rules
 
-- New Leads are always created with `status = NEW`.
+- New Leads default to `status = NEW` when the frontend does not send `status`.
+- If the frontend sends `status`, backend resolves the matching `status_id` from the `statuses` table and stores it on create.
+- If `status = LOST`, frontend must also send a valid `lostReason` name and backend resolves the matching `lost_reason_id`.
 - `assigned_to` and `created_by` are both set to the authenticated Sales user's internal record id.
 - Phone number uniqueness is enforced before insert.
-- A successful Lead create always attempts to create a `system` activity with description `Lead created.`
+- A successful Lead create does not insert an initial `lead_status_log` row.
+- The Lead activity timeline instead exposes a `system` activity entry with description `Lead created.`
 - If `initialNote` is present after trimming, backend also:
   1. inserts a note
   2. inserts a `note` activity
@@ -1288,7 +1626,9 @@ interface CreateLeadResponseData {
 
 ### Frontend Notes
 
-- Do not send `status`, `assignedTo`, or `createdBy`; backend derives them.
+- Send the selected status name from `GET /sales/leads/statuses` when the create form includes a status dropdown.
+- Send `lostReason` only when the selected status is `LOST`.
+- Do not send `assignedTo` or `createdBy`; backend derives them.
 - Use returned `data.lead.id` for post-create navigation.
 - Handle `data.note` as nullable.
 - On create success, the frontend can immediately hydrate the detail page from the returned `lead` object instead of forcing a refetch.
@@ -1296,12 +1636,15 @@ interface CreateLeadResponseData {
 ### QA Test Scenarios
 
 - Create a Lead with all valid fields and no `initialNote`.
+- Create a Lead and verify the activities endpoint includes one `system` entry with description `Lead created.`
 - Create a Lead with valid `initialNote` and verify both note and activity creation.
 - Create a Lead with empty-string optional fields and verify normalization to `null`.
 - Attempt duplicate phone and verify `409`.
 - Attempt invalid email, invalid phone, or invalid referrer phone and verify `400`.
 - Verify created Lead is assigned to and created by the authenticated Sales user.
-- Verify initial Lead status is always `NEW` regardless of frontend intent.
+- Verify omitted `status` defaults to `NEW`.
+- Verify selected `status` is stored when sent during create.
+- Verify `status = LOST` requires a valid `lostReason`.
 - Verify concurrent duplicate create attempts for the same phone do not create two valid Leads.
 
 ## Authentication & Authorization
@@ -1498,6 +1841,8 @@ flowchart TD
 | `referrerPhone` | `leads.referrer_phone` if present |
 | `carBrand` | `leads.car_brand` or fallback-compatible source column |
 | `carModel` | `leads.car_model` or fallback-compatible source column |
+| `branchId` | `users.branch_id` from the currently assigned sales user if available |
+| `branchName` | Resolved from `branches.name` using `branchId` |
 | `variantName` | `leads.variant_name` |
 | `colorPreference` | `leads.color_preference` |
 | `budget` | `leads.budget` |
@@ -1520,11 +1865,12 @@ flowchart TD
 
 | Endpoint | Validation |
 | --- | --- |
+| `GET /sales/leads/car-brands/:carBrandName/car-models` | `carBrandName` must be a non-empty trimmed string |
 | All `:leadId` endpoints | `leadId` must be a non-empty trimmed string |
 | `PATCH /:leadId/status` | `status` enum required; `lostReason` conditional |
-| `PATCH /:leadId` | Required `fullName`, `phone`, `email`, `source`; optional normalized fields |
+| `PATCH /:leadId` | Required `fullName`, `phone`, `email`, `source`; optional normalized fields; `carModel` requires `carBrand` |
 | `POST /:leadId/notes` | `content` required, trimmed, max 2000 |
-| `POST /sales/leads` | Same validation as update details plus optional `initialNote` |
+| `POST /sales/leads` | Same validation as update details plus optional `status`, conditional `lostReason`, and optional `initialNote`; `carModel` must belong to `carBrand` |
 
 ## Postman / Swagger References
 

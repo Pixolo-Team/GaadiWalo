@@ -1,16 +1,8 @@
-<<<<<<< HEAD
-// DATA //
-import {
-  salesLeadToneClassNameData,
-  type SalesLeadStatusToneData,
-} from "@/data/sales";
-=======
 // TYPES //
 import type { LeadStatusToneData } from "@/types/leads";
 
 // DATA //
 import { salesLeadToneClassNameData } from "@/data/sales";
->>>>>>> origin/master
 
 // LIBRARIES //
 import Link from "next/link";
@@ -26,11 +18,7 @@ interface LeadDetailsProfilePropsData {
   name: string;
   phoneNumber: string;
   status: string;
-<<<<<<< HEAD
-  statusTone: SalesLeadStatusToneData;
-=======
   statusTone: LeadStatusToneData;
->>>>>>> origin/master
 }
 
 /**

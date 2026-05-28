@@ -135,7 +135,7 @@ Key architectural goals:
 | car_model_id | UUID FK | References CAR_MODELS.id |
 | variant_name | VARCHAR | Vehicle variant |
 | color_preference | VARCHAR | Preferred color |
-| budget | DECIMAL(12,2) | Budget amount |
+| budget | TEXT | Budget amount |
 | is_used | BOOLEAN | Used car interest |
 | creator_user_id | UUID FK | References USERS.id |
 | created_at | TIMESTAMP | Creation timestamp |

@@ -1,0 +1,615 @@
+// LIBRARIES //
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+// SERVICES //
+import { createAuthService } from "../src/modules/auth/auth.service.js";
+import type { AuthServiceErrorData } from "../src/modules/auth/auth.types.js";
+
+describe("auth.service", () => {
+  it("returns a login payload for valid credentials", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => ({
+        user_id: "SP001",
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+      }),
+      getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+        refresh_token: "refresh-token",
+        expires_in: 3600,
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+        refresh_token: "new-refresh-token",
+        expires_in: 3600,
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async () => undefined,
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => ({
+        email: "sales@example.com",
+        recoveryAccessToken: "recovery-access-token",
+        exp: Date.now() + 300000,
+      }),
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const loginResult = await authService.loginService({
+      userId: "SP001",
+      password: "StrongPassword1",
+    });
+
+    assert.equal(loginResult.error, null);
+    assert.equal(loginResult.data?.accessToken, "access-token");
+    assert.equal(loginResult.data?.user.id, "SP001");
+  });
+
+  it("returns a refreshed session payload for a valid refresh token", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => ({
+        user_id: "SP001",
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+      }),
+      getUserByAuthIdentifier: async () => ({
+        user_id: "SP001",
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+      }),
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+        refresh_token: "new-refresh-token",
+        expires_in: 3600,
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async () => undefined,
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => ({
+        email: "sales@example.com",
+        recoveryAccessToken: "recovery-access-token",
+        exp: Date.now() + 300000,
+      }),
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const refreshResult = await authService.refreshTokenService({
+      refreshToken: "valid-refresh-token",
+    });
+
+    assert.equal(refreshResult.error, null);
+    assert.equal(refreshResult.data?.accessToken, "new-access-token");
+    assert.equal(refreshResult.data?.refreshToken, "new-refresh-token");
+    assert.equal(refreshResult.data?.user.id, "SP001");
+  });
+
+  it("maps an expired refresh token to an unauthorized auth error", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => {
+        throw new Error("Refresh token has expired");
+      },
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async () => undefined,
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => null,
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const refreshResult = await authService.refreshTokenService({
+      refreshToken: "expired-refresh-token",
+    });
+
+    assert.equal(refreshResult.data, null);
+    assert.equal(
+      refreshResult.error?.message,
+      "Refresh token is invalid or expired.",
+    );
+    assert.equal(
+      (refreshResult.error as AuthServiceErrorData | null)?.code,
+      "INVALID_REFRESH_TOKEN",
+    );
+  });
+
+  it("revokes all sessions for a valid authenticated logout request", async () => {
+    let revokedAccessToken: string | null = null;
+
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => ({
+        user_id: "SP001",
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+        auth_id: "auth-user-id",
+      }),
+      getUserByAuthIdentifier: async () => ({
+        user_id: "SP001",
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+        auth_id: "auth-user-id",
+      }),
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async (accessToken: string) => {
+        revokedAccessToken = accessToken;
+      },
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => null,
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const logoutResult = await authService.logoutService("valid-access-token");
+
+    assert.equal(logoutResult.error, null);
+    assert.equal(logoutResult.data?.success, true);
+    assert.equal(revokedAccessToken, "valid-access-token");
+  });
+
+  it("returns not found when logout resolves no backend user", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async () => undefined,
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => null,
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const logoutResult = await authService.logoutService("valid-access-token");
+
+    assert.equal(logoutResult.data, null);
+    assert.equal(
+      logoutResult.error?.message,
+      "Authenticated user account could not be resolved.",
+    );
+    assert.equal(
+      (logoutResult.error as AuthServiceErrorData | null)?.code,
+      "USER_NOT_FOUND",
+    );
+  });
+
+  it("maps an invalid access token to an unauthorized logout error", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => {
+        throw new Error("Invalid JWT");
+      },
+      revokeUserSessions: async () => undefined,
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => null,
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const logoutResult = await authService.logoutService("invalid-access-token");
+
+    assert.equal(logoutResult.data, null);
+    assert.equal(
+      logoutResult.error?.message,
+      "Access token is invalid or expired.",
+    );
+    assert.equal(
+      (logoutResult.error as AuthServiceErrorData | null)?.code,
+      "INVALID_ACCESS_TOKEN",
+    );
+  });
+
+  it("returns an internal error when session revocation fails unexpectedly", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => ({
+        user_id: "SP001",
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+        auth_id: "auth-user-id",
+      }),
+      getUserByAuthIdentifier: async () => ({
+        user_id: "SP001",
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+        auth_id: "auth-user-id",
+      }),
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async () => {
+        throw new Error("Could not revoke sessions.");
+      },
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => null,
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const logoutResult = await authService.logoutService("valid-access-token");
+
+    assert.equal(logoutResult.data, null);
+    assert.equal(
+      (logoutResult.error as AuthServiceErrorData | null)?.code,
+      "INTERNAL",
+    );
+  });
+
+  it("returns an identifier-not-found error for an unknown forgot password email", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async () => undefined,
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => null,
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const forgotPasswordResult = await authService.forgotPasswordService({
+      email: "missing@example.com",
+    });
+
+    assert.equal(forgotPasswordResult.data, null);
+    assert.equal(
+      forgotPasswordResult.error?.message,
+      "This email ID is not registered. Please use a registered email ID.",
+    );
+    assert.equal(
+      (forgotPasswordResult.error as AuthServiceErrorData | null)?.code,
+      "IDENTIFIER_NOT_FOUND",
+    );
+  });
+
+  it("maps forgot password resend throttling to a rate-limited service error", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => ({
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+        user_id: "SP001",
+      }),
+      getUserByAuthIdentifier: async () => null,
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async () => undefined,
+      sendRecoveryOtp: async () => {
+        throw new Error(
+          "For security purposes, you can only request this after 30 seconds.",
+        );
+      },
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => null,
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const forgotPasswordResult = await authService.forgotPasswordService({
+      email: "sales@example.com",
+    });
+
+    assert.equal(forgotPasswordResult.data, null);
+    assert.equal(
+      forgotPasswordResult.error?.message,
+      "Too many attempts. Please try again later.",
+    );
+    assert.equal(
+      (forgotPasswordResult.error as AuthServiceErrorData | null)?.code,
+      "RATE_LIMITED",
+    );
+  });
+
+  it("returns a reset token after a successful OTP verification", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => ({
+        email: "sales@example.com",
+        full_name: "Sales Person",
+        role: "sales",
+        is_active: true,
+        user_id: "SP001",
+      }),
+      getUserByAuthIdentifier: async () => null,
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async () => undefined,
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => ({
+        email: "sales@example.com",
+        recoveryAccessToken: "recovery-access-token",
+        exp: Date.now() + 300000,
+      }),
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const verifyOtpResult = await authService.verifyOtpService({
+      email: "sales@example.com",
+      otp: "123456",
+    });
+
+    assert.equal(verifyOtpResult.error, null);
+    assert.equal(verifyOtpResult.data?.resetToken, "signed-reset-token");
+  });
+
+  it("rejects a weak password during reset", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async () => undefined,
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      updatePasswordWithRecoveryToken: async () => undefined,
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => ({
+        email: "sales@example.com",
+        recoveryAccessToken: "recovery-access-token",
+        exp: Date.now() + 300000,
+      }),
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const resetPasswordResult = await authService.resetPasswordService({
+      resetToken: "signed-reset-token",
+      newPassword: "weakpass",
+    });
+
+    assert.equal(resetPasswordResult.data, null);
+    assert.equal(
+      resetPasswordResult.error?.message,
+      "Password must be at least 8 characters long and include 1 uppercase letter and 1 number.",
+    );
+  });
+
+  it("rejects an invalid reset token", async () => {
+    const authService = createAuthService({
+      getUserByLoginIdentifier: async () => null,
+      getUserByEmailIdentifier: async () => null,
+      getUserByAuthIdentifier: async () => null,
+      signInWithPassword: async () => ({
+        access_token: "access-token",
+      }),
+      refreshSessionWithToken: async () => ({
+        access_token: "new-access-token",
+      }),
+      getAuthUserByAccessToken: async () => ({
+        id: "auth-user-id",
+        email: "sales@example.com",
+      }),
+      revokeUserSessions: async () => undefined,
+      sendRecoveryOtp: async () => undefined,
+      verifyRecoveryOtp: async () => ({
+        access_token: "recovery-access-token",
+      }),
+      isAuthEnvironmentConfigured: () => true,
+      issueRecoveryToken: () => ({
+        resetToken: "signed-reset-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+      }),
+      verifyRecoveryToken: () => ({
+        email: "sales@example.com",
+        recoveryAccessToken: "recovery-access-token",
+        exp: Date.now() + 300000,
+      }),
+      updatePasswordWithRecoveryToken: async () => {
+        throw new Error("Token has expired");
+      },
+      getResetTokenSecret: () => "secret",
+      getResetTokenTtlMinutes: () => 10,
+    });
+
+    const resetPasswordResult = await authService.resetPasswordService({
+      resetToken: "signed-reset-token",
+      newPassword: "StrongPass1",
+    });
+
+    assert.equal(resetPasswordResult.data, null);
+    assert.equal(
+      resetPasswordResult.error?.message,
+      "Reset token is invalid or expired.",
+    );
+  });
+});

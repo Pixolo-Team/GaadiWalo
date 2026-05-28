@@ -105,7 +105,7 @@ Error:
 - `newPassword` must be at least 8 characters long.
 - `newPassword` must contain at least 1 uppercase letter.
 - `newPassword` must contain at least 1 numeric digit.
-- Identifier validation for reset flows should support the approved login/recovery identifier format used by the project.
+- Identifier validation for reset flows is email-only in the current backend phase.
 - OTP input must be validated as a fixed-length code before service execution.
 - Reset tokens must be treated as single-use recovery credentials.
 
@@ -168,7 +168,7 @@ Each auth endpoint must follow the same high-level pattern:
 
 ```json
 {
-  "identifier": "sales@example.com"
+  "email": "sales@example.com"
 }
 ```
 
@@ -179,14 +179,15 @@ Each auth endpoint must follow the same high-level pattern:
 
 #### Controller responsibility
 
-- validate identifier input
+- validate email input
 - reject malformed input with `400`
 - call the forgot-password service
 - return a safe response message through `sendResponse()`
 
 #### Service responsibility
 
-- normalize and validate the identifier format used by the project
+- normalize and validate the email format used by the project
+- accept email input only in the current backend phase
 - initiate the Supabase-compatible password recovery flow
 - avoid leaking unnecessary account existence details unless product requirements explicitly allow it
 - return a success/failure outcome to the controller
@@ -202,7 +203,7 @@ Each auth endpoint must follow the same high-level pattern:
 
 #### Failure cases and status mapping
 
-- `400`: invalid identifier payload
+- `400`: invalid email payload
 - `404`: account not found 
 - `429`: resend/request frequency exceeded
 - `500`: unexpected backend or Supabase integration failure
@@ -213,7 +214,7 @@ Each auth endpoint must follow the same high-level pattern:
 
 ```json
 {
-  "identifier": "sales@example.com",
+  "email": "sales@example.com",
   "otp": "123456"
 }
 ```
@@ -225,7 +226,7 @@ Each auth endpoint must follow the same high-level pattern:
 
 #### Controller responsibility
 
-- validate identifier and OTP format
+- validate email and OTP format
 - reject malformed input with `400`
 - call the OTP verification service
 - map invalid or expired verification attempts to a safe client response
@@ -258,7 +259,7 @@ Each auth endpoint must follow the same high-level pattern:
 
 ```json
 {
-  "identifier": "sales@example.com"
+  "email": "sales@example.com"
 }
 ```
 
@@ -269,7 +270,7 @@ Each auth endpoint must follow the same high-level pattern:
 
 #### Controller responsibility
 
-- validate identifier input
+- validate email input
 - call the resend service
 - return a safe confirmation response
 
@@ -290,7 +291,7 @@ Each auth endpoint must follow the same high-level pattern:
 
 #### Failure cases and status mapping
 
-- `400`: invalid identifier payload
+- `400`: invalid email payload
 - `404`: account not found only if the product intentionally exposes this outcome
 - `429`: resend cooldown or rate limit reached
 - `500`: unexpected backend or Supabase integration failure

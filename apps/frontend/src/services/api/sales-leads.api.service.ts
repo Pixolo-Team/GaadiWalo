@@ -5,11 +5,15 @@ import axios from "axios";
 // TYPES //
 import type { ApiResponseData } from "@/types/api";
 import type {
+  ImportLeadsRequestData,
+  ImportLeadsResponseData,
+} from "@/types/lead-import";
+import type {
   CreateLeadNoteRequestData,
-  CreateLeadRequestData,
-  LeadBranchData,
   CreateLeadResponseData,
+  CreateLeadRequestData,
   LeadActivityData,
+  LeadBranchData,
   LeadCarBrandData,
   LeadDetailsData,
   LeadListItemData,
@@ -242,5 +246,23 @@ export const createLeadRequest = async (
 
   const response =
     await axios.request<ApiResponseData<CreateLeadResponseData>>(config);
+  return response.data;
+};
+
+/**
+ * Imports multiple leads for the authenticated sales user.
+ */
+export const importLeadsRequest = async (
+  payload: ImportLeadsRequestData,
+): Promise<ApiResponseData<ImportLeadsResponseData>> => {
+  const config: AxiosRequestConfig = {
+    data: payload,
+    headers: getAuthHeadersService(),
+    method: "post",
+    url: `${CONSTANTS.API_URL}/sales/leads/import`,
+  };
+
+  const response =
+    await axios.request<ApiResponseData<ImportLeadsResponseData>>(config);
   return response.data;
 };
