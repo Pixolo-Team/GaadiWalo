@@ -3,6 +3,7 @@ import { SALES_LEADS_ROUTE_BASE_PATH } from "../../common/constants/http.constan
 // SERVICES //
 import {
   createLeadController,
+  importLeadsController,
   createLeadNoteController,
   getBranchesController,
   getCarBrandsController,
@@ -41,6 +42,10 @@ salesLeadsRoutes.get(
 salesLeadsRoutes.get(
   `${SALES_LEADS_ROUTE_BASE_PATH}/car-brands/:carBrandName/car-models`,
   getCarModelsController,
+);
+salesLeadsRoutes.post(
+  `${SALES_LEADS_ROUTE_BASE_PATH}/import`,
+  importLeadsController,
 );
 salesLeadsRoutes.get(`${SALES_LEADS_ROUTE_BASE_PATH}/:leadId`, getLeadDetailsController);
 salesLeadsRoutes.get(

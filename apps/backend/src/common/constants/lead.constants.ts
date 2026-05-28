@@ -34,6 +34,8 @@ export const INVALID_CREATE_LEAD_REQUEST_MESSAGE =
   "Invalid create lead request.";
 export const INVALID_CREATE_LEAD_NOTE_REQUEST_MESSAGE =
   "Invalid create lead note request.";
+export const INVALID_IMPORT_LEADS_REQUEST_MESSAGE =
+  "Invalid lead import request.";
 
 export const LEAD_DETAILS_SUCCESS_MESSAGE =
   "Lead details fetched successfully.";
@@ -59,6 +61,8 @@ export const LEAD_DETAILS_UPDATED_SUCCESS_MESSAGE =
 export const LEAD_NOTE_CREATED_SUCCESS_MESSAGE =
   "Lead note created successfully.";
 export const LEAD_CREATED_SUCCESS_MESSAGE = "Lead created successfully.";
+export const LEADS_IMPORTED_SUCCESS_MESSAGE =
+  "Lead import completed successfully.";
 
 export const LEAD_NOT_FOUND_MESSAGE = "Lead not found.";
 export const LEAD_ACCESS_FORBIDDEN_MESSAGE =

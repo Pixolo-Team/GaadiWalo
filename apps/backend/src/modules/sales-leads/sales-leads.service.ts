@@ -12,6 +12,10 @@ import type {
   CreateLeadNoteRequestData,
   CreateLeadRequestData,
   CreateLeadResponseData,
+  ImportLeadResultData,
+  ImportLeadRowRequestData,
+  ImportLeadsRequestData,
+  ImportLeadsResponseData,
   LeadSourceData,
   LeadStatusOptionData,
   LeadActivityData,
@@ -643,10 +647,7 @@ const createDefaultSalesLeadsServiceDependencies =
       getLeadRecordsByUserIdentifier: async (userIdentifier) => {
         const requestUrl = createSupabaseTableUrl("leads");
         requestUrl.searchParams.set("select", "*");
-        requestUrl.searchParams.set(
-          "or",
-          `(creator_user_id.eq.${userIdentifier},created_by.eq.${userIdentifier})`,
-        );
+        requestUrl.searchParams.set("creator_user_id", `eq.${userIdentifier}`);
         requestUrl.searchParams.set("order", "created_at.desc");
 
         return executeReadRequest<SalesLeadRecordData[]>(requestUrl);
@@ -910,6 +911,10 @@ export interface SalesLeadsServiceData {
     authenticatedUser: AuthenticatedUserData,
     payload: CreateLeadRequestData,
   ) => Promise<QueryResponseData<CreateLeadResponseData>>;
+  importLeadsService: (
+    authenticatedUser: AuthenticatedUserData,
+    payload: ImportLeadsRequestData,
+  ) => Promise<QueryResponseData<ImportLeadsResponseData>>;
 }
 
 /**
@@ -1273,6 +1278,189 @@ export const createSalesLeadsService = (
     );
   };
 
+  /**
+   * Builds the editable lead payload used by lead updates and import upserts.
+   */
+  const createUpdatePayload = (
+    payload: ImportLeadRowRequestData | UpdateLeadDetailsRequestData,
+  ): UpdateLeadDetailsRequestData => {
+    return {
+      fullName: payload.fullName,
+      phone: payload.phone,
+      email: payload.email,
+      source: payload.source,
+      referrerName: payload.referrerName ?? null,
+      referrerPhone: payload.referrerPhone ?? null,
+      carBrand: payload.carBrand ?? null,
+      carModel: payload.carModel ?? null,
+      variantName: payload.variantName ?? null,
+      colorPreference: payload.colorPreference ?? null,
+      budget: payload.budget ?? null,
+      isUsed: payload.isUsed ?? null,
+    };
+  };
+
+  /**
+   * Creates an import result item with a consistent shape.
+   */
+  const createImportResult = (
+    rowNumber: number,
+    status: ImportLeadResultData["status"],
+    reason: string,
+    leadId: string | null,
+  ): ImportLeadResultData => {
+    return {
+      rowNumber,
+      status,
+      reason,
+      leadId,
+    };
+  };
+
+  /**
+   * Adds an initial note to a lead when an import row includes one.
+   */
+  const createInitialLeadNote = async ({
+    authenticatedUser,
+    initialNote,
+    leadId,
+  }: {
+    authenticatedUser: AuthenticatedUserData;
+    initialNote: string | null | undefined;
+    leadId: string;
+  }): Promise<LeadNoteData | null> => {
+    if (!initialNote) {
+      return null;
+    }
+
+    const noteRecord = await dependencies.createLeadNoteRecord({
+      lead_id: leadId,
+      user_id: authenticatedUser.recordId,
+      note_text: initialNote,
+    });
+
+    return {
+      id: `${noteRecord.lead_id}:${noteRecord.created_at ?? "unknown"}`,
+      leadId: noteRecord.lead_id,
+      author: {
+        id: authenticatedUser.userId,
+        name: authenticatedUser.fullName,
+      },
+      content: noteRecord.note_text,
+      createdAt: noteRecord.created_at,
+    };
+  };
+
+  /**
+   * Updates editable lead fields after duplicate and access checks pass.
+   */
+  const updateLeadDetailsRecord = async ({
+    authenticatedUser,
+    leadId,
+    payload,
+  }: {
+    authenticatedUser: AuthenticatedUserData;
+    leadId: string;
+    payload: UpdateLeadDetailsRequestData;
+  }): Promise<LeadDetailsData> => {
+    await ensureLeadAccess({ authenticatedUser, leadId });
+    const existingLeadRecord = await dependencies.getLeadByPhone(payload.phone);
+
+    if (existingLeadRecord && existingLeadRecord.id !== leadId) {
+      throw createSalesLeadServiceError("CONFLICT", LEAD_DUPLICATE_PHONE_MESSAGE);
+    }
+
+    const resolvedReferenceIds = await resolveLeadReferenceIds(payload, undefined);
+    const updatedLeadRecord = await dependencies.updateLeadRecord(
+      leadId,
+      createLeadMutationPayload(payload, resolvedReferenceIds),
+    );
+
+    return mapLeadDetails(updatedLeadRecord);
+  };
+
+  /**
+   * Creates a lead and all related side effects from a create-lead payload.
+   */
+  const createLeadRecordWithSideEffects = async ({
+    authenticatedUser,
+    payload,
+  }: {
+    authenticatedUser: AuthenticatedUserData;
+    payload: CreateLeadRequestData;
+  }): Promise<CreateLeadResponseData> => {
+    const existingLeadRecord = await dependencies.getLeadByPhone(payload.phone);
+
+    if (existingLeadRecord) {
+      throw createSalesLeadServiceError("CONFLICT", LEAD_DUPLICATE_PHONE_MESSAGE);
+    }
+
+    const selectedStatus = payload.status ?? "NEW";
+    const resolvedReferenceIds = await resolveLeadReferenceIds(
+      payload,
+      selectedStatus,
+    );
+    const createdStatusId = resolvedReferenceIds.statusId;
+    const lostReasonId =
+      selectedStatus === "LOST" && payload.lostReason
+        ? await dependencies.getLostReasonIdByName(payload.lostReason)
+        : null;
+
+    if (!createdStatusId) {
+      throw createSalesLeadServiceError(
+        "INTERNAL",
+        "Lead status id could not be resolved during lead creation.",
+      );
+    }
+
+    if (selectedStatus === "LOST" && payload.lostReason && !lostReasonId) {
+      throw createSalesLeadServiceError(
+        "NOT_FOUND",
+        `Lost reason not found: ${payload.lostReason}.`,
+      );
+    }
+
+    const leadRecord = await dependencies.createLeadRecord({
+      ...createLeadMutationPayload(payload, resolvedReferenceIds),
+      lead_source_id: resolvedReferenceIds.leadSourceId,
+      status_id: createdStatusId,
+      lost_reason_id: selectedStatus === "LOST" ? lostReasonId : null,
+      creator_user_id: authenticatedUser.recordId,
+      full_name: payload.fullName,
+      phone: payload.phone,
+      email: payload.email,
+      car_brand_id: resolvedReferenceIds.carBrandId,
+      car_model_id: resolvedReferenceIds.carModelId,
+      variant_name: payload.variantName ?? null,
+      color_preference: payload.colorPreference ?? null,
+      budget: payload.budget ?? null,
+      is_used: payload.isUsed ?? null,
+    });
+
+    await dependencies.createLeadUserRecord({
+      lead_id: leadRecord.id,
+      user_id: authenticatedUser.recordId,
+      is_primary: true,
+    });
+    await dependencies.createLeadActivityRecord({
+      lead_id: leadRecord.id,
+      from_status_id: null,
+      to_status_id: createdStatusId,
+      user_id: authenticatedUser.recordId,
+    });
+
+    const createdNote = await createInitialLeadNote({
+      authenticatedUser,
+      initialNote: payload.initialNote,
+      leadId: leadRecord.id,
+    });
+
+    return {
+      lead: await mapLeadDetails(leadRecord),
+      note: createdNote,
+    };
+  };
+
   return {
     getAllLeadsService: async (authenticatedUser) => {
       try {
@@ -1287,9 +1475,8 @@ export const createSalesLeadsService = (
             accessibleLeadMap.set(leadRecordItem.id, leadRecordItem);
           });
         } else {
-          const userIdentifiers = Array.from(
-            new Set([authenticatedUser.recordId, authenticatedUser.userId]),
-          );
+          // Lead ownership tables store internal user record ids, not business codes like S001.
+          const userIdentifiers = Array.from(new Set([authenticatedUser.recordId]));
           const leadCollections = await Promise.all(
             userIdentifiers.map((userIdentifier) =>
               dependencies.getLeadRecordsByUserIdentifier
@@ -1592,30 +1779,12 @@ export const createSalesLeadsService = (
     },
     updateLeadDetailsService: async (authenticatedUser, leadId, payload) => {
       try {
-        await ensureLeadAccess({ authenticatedUser, leadId });
-        const existingLeadRecord = await dependencies.getLeadByPhone(payload.phone);
-
-        if (existingLeadRecord && existingLeadRecord.id !== leadId) {
-          return {
-            data: null,
-            error: createSalesLeadServiceError(
-              "CONFLICT",
-              LEAD_DUPLICATE_PHONE_MESSAGE,
-            ),
-          };
-        }
-
-        const resolvedReferenceIds = await resolveLeadReferenceIds(
-          payload,
-          undefined,
-        );
-        const updatedLeadRecord = await dependencies.updateLeadRecord(
-          leadId,
-          createLeadMutationPayload(payload, resolvedReferenceIds),
-        );
-
         return {
-          data: await mapLeadDetails(updatedLeadRecord),
+          data: await updateLeadDetailsRecord({
+            authenticatedUser,
+            leadId,
+            payload,
+          }),
           error: null,
         };
       } catch (error) {
@@ -1656,101 +1825,103 @@ export const createSalesLeadsService = (
     },
     createLeadService: async (authenticatedUser, payload) => {
       try {
-        const existingLeadRecord = await dependencies.getLeadByPhone(payload.phone);
+        return {
+          data: await createLeadRecordWithSideEffects({
+            authenticatedUser,
+            payload,
+          }),
+          error: null,
+        };
+      } catch (error) {
+        return {
+          data: null,
+          error: mapServiceError(error),
+        };
+      }
+    },
+    importLeadsService: async (authenticatedUser, payload) => {
+      try {
+        const results = await Promise.all(
+          payload.rows.map(async (rowItem) => {
+            try {
+              const existingLeadRecord = await dependencies.getLeadByPhone(
+                rowItem.phone,
+              );
 
-        if (existingLeadRecord) {
-          return {
-            data: null,
-            error: createSalesLeadServiceError(
-              "CONFLICT",
-              LEAD_DUPLICATE_PHONE_MESSAGE,
-            ),
-          };
-        }
+              if (!existingLeadRecord) {
+                const createLeadResult = await createLeadRecordWithSideEffects({
+                  authenticatedUser,
+                  payload: rowItem,
+                });
 
-        const selectedStatus = payload.status ?? "NEW";
-        const resolvedReferenceIds = await resolveLeadReferenceIds(
-          payload,
-          selectedStatus,
+                return createImportResult(
+                  rowItem.rowNumber,
+                  "imported",
+                  "Lead imported successfully.",
+                  createLeadResult.lead.id,
+                );
+              }
+
+              if (payload.duplicateMode === "skip") {
+                return createImportResult(
+                  rowItem.rowNumber,
+                  "skipped",
+                  LEAD_DUPLICATE_PHONE_MESSAGE,
+                  existingLeadRecord.id,
+                );
+              }
+
+              const updatedLead = await updateLeadDetailsRecord({
+                authenticatedUser,
+                leadId: existingLeadRecord.id,
+                payload: createUpdatePayload(rowItem),
+              });
+
+              await createInitialLeadNote({
+                authenticatedUser,
+                initialNote: rowItem.initialNote,
+                leadId: existingLeadRecord.id,
+              });
+
+              return createImportResult(
+                rowItem.rowNumber,
+                "updated",
+                "Lead updated successfully.",
+                updatedLead.id,
+              );
+            } catch (error) {
+              const mappedError = mapServiceError(error);
+              const resultStatus =
+                mappedError.code === "FORBIDDEN" || mappedError.code === "CONFLICT"
+                  ? "skipped"
+                  : "error";
+
+              return createImportResult(
+                rowItem.rowNumber,
+                resultStatus,
+                mappedError.message,
+                null,
+              );
+            }
+          }),
         );
-        const createdStatusId = resolvedReferenceIds.statusId;
-        const lostReasonId =
-          selectedStatus === "LOST" && payload.lostReason
-            ? await dependencies.getLostReasonIdByName(payload.lostReason)
-            : null;
-
-        if (!createdStatusId) {
-          throw createSalesLeadServiceError(
-            "INTERNAL",
-            "Lead status id could not be resolved during lead creation.",
-          );
-        }
-
-        if (selectedStatus === "LOST" && payload.lostReason && !lostReasonId) {
-          return {
-            data: null,
-            error: createSalesLeadServiceError(
-              "NOT_FOUND",
-              `Lost reason not found: ${payload.lostReason}.`,
-            ),
-          };
-        }
-
-        const leadRecord = await dependencies.createLeadRecord({
-          ...createLeadMutationPayload(payload, resolvedReferenceIds),
-          lead_source_id: resolvedReferenceIds.leadSourceId,
-          status_id: createdStatusId,
-          lost_reason_id: selectedStatus === "LOST" ? lostReasonId : null,
-          creator_user_id: authenticatedUser.recordId,
-          full_name: payload.fullName,
-          phone: payload.phone,
-          email: payload.email,
-          car_brand_id: resolvedReferenceIds.carBrandId,
-          car_model_id: resolvedReferenceIds.carModelId,
-          variant_name: payload.variantName ?? null,
-          color_preference: payload.colorPreference ?? null,
-          budget: payload.budget ?? null,
-          is_used: payload.isUsed ?? null,
-        });
-
-        await dependencies.createLeadUserRecord({
-          lead_id: leadRecord.id,
-          user_id: authenticatedUser.recordId,
-          is_primary: true,
-        });
-
-        await dependencies.createLeadActivityRecord({
-          lead_id: leadRecord.id,
-          from_status_id: null,
-          to_status_id: createdStatusId,
-          user_id: authenticatedUser.recordId,
-        });
-
-        let createdNote: LeadNoteData | null = null;
-
-        if (payload.initialNote) {
-          const noteRecord = await dependencies.createLeadNoteRecord({
-            lead_id: leadRecord.id,
-            user_id: authenticatedUser.recordId,
-            note_text: payload.initialNote,
-          });
-
-          createdNote = {
-            id: `${noteRecord.lead_id}:${noteRecord.created_at ?? "unknown"}`,
-            leadId: noteRecord.lead_id,
-            author: {
-              id: authenticatedUser.userId,
-              name: authenticatedUser.fullName,
-            },
-            content: noteRecord.note_text,
-            createdAt: noteRecord.created_at,
-          };
-        }
 
         return {
           data: {
-            lead: await mapLeadDetails(leadRecord),
-            note: createdNote,
+            importedCount: results.filter(
+              (resultItem) => resultItem.status === "imported",
+            ).length,
+            updatedCount: results.filter(
+              (resultItem) => resultItem.status === "updated",
+            ).length,
+            skippedCount: results.filter(
+              (resultItem) => resultItem.status === "skipped",
+            ).length,
+            errorCount: results.filter(
+              (resultItem) => resultItem.status === "error",
+            ).length,
+            totalRows: payload.rows.length,
+            results,
           },
           error: null,
         };

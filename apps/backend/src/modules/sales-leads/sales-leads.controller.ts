@@ -5,6 +5,7 @@ import {
   carBrandNameParamsSchema,
   createLeadNoteRequestSchema,
   createLeadRequestSchema,
+  importLeadsRequestSchema,
   leadDetailsMutationSchema,
   leadIdParamsSchema,
   updateLeadStatusRequestSchema,
@@ -16,6 +17,7 @@ import {
   CAR_MODELS_SUCCESS_MESSAGE,
   INVALID_CREATE_LEAD_NOTE_REQUEST_MESSAGE,
   INVALID_CREATE_LEAD_REQUEST_MESSAGE,
+  INVALID_IMPORT_LEADS_REQUEST_MESSAGE,
   INVALID_CAR_BRAND_NAME_MESSAGE,
   INVALID_LEAD_DETAILS_REQUEST_MESSAGE,
   INVALID_LEAD_ID_MESSAGE,
@@ -27,6 +29,7 @@ import {
   LEAD_CREATED_SUCCESS_MESSAGE,
   LEAD_DETAILS_SUCCESS_MESSAGE,
   LEAD_DETAILS_UPDATED_SUCCESS_MESSAGE,
+  LEADS_IMPORTED_SUCCESS_MESSAGE,
   LEAD_NOTE_CREATED_SUCCESS_MESSAGE,
   LEAD_NOTES_SUCCESS_MESSAGE,
   LEAD_STATUS_UPDATED_SUCCESS_MESSAGE,
@@ -832,5 +835,63 @@ export const createLeadController = async (
     status: "success",
     message: LEAD_CREATED_SUCCESS_MESSAGE,
     data: createLeadResult.data,
+  });
+};
+
+/**
+ * Handles POST /sales/leads/import and bulk imports Leads for the Sales user.
+ */
+export const importLeadsController = async (
+  context: Context,
+): Promise<Response> => {
+  const { authenticatedUser, errorResponse } =
+    await resolveAuthenticatedUser(context);
+
+  if (errorResponse || !authenticatedUser) {
+    return errorResponse as Response;
+  }
+
+  const { requestBody, errorResponse: bodyErrorResponse } =
+    await parseRequestBody(context);
+
+  if (bodyErrorResponse) {
+    return bodyErrorResponse;
+  }
+
+  const requestParseResult = importLeadsRequestSchema.safeParse(requestBody);
+
+  if (!requestParseResult.success) {
+    return sendResponse({
+      context,
+      statusCode: HTTP_STATUS_CODES.badRequest,
+      status: "error",
+      message: INVALID_IMPORT_LEADS_REQUEST_MESSAGE,
+      error: requestParseResult.error.message,
+    });
+  }
+
+  const importLeadsResult = await getSalesLeadsService().importLeadsService(
+    authenticatedUser,
+    requestParseResult.data,
+  );
+
+  if (importLeadsResult.error || !importLeadsResult.data) {
+    const mappedError = mapServiceError(importLeadsResult.error);
+
+    return sendResponse({
+      context,
+      statusCode: mappedError.statusCode,
+      status: "error",
+      message: mappedError.message,
+      error: mappedError.errorDetail,
+    });
+  }
+
+  return sendResponse({
+    context,
+    statusCode: HTTP_STATUS_CODES.ok,
+    status: "success",
+    message: LEADS_IMPORTED_SUCCESS_MESSAGE,
+    data: importLeadsResult.data,
   });
 };

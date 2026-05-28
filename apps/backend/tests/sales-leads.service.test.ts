@@ -885,4 +885,229 @@ describe("sales-leads.service", () => {
       "CONFLICT",
     );
   });
+
+  it("imports new lead rows and skips duplicate rows in skip mode", async () => {
+    const createdPhones: string[] = [];
+    const salesLeadsService = createSalesLeadsService({
+      ...createDependencies(),
+      getLeadByPhone: async (phone: string) =>
+        phone === "9876543210" ? baseLeadRecord : null,
+      createLeadRecord: async (payload) => {
+        createdPhones.push(payload.phone);
+
+        return {
+          ...baseLeadRecord,
+          ...payload,
+          id: `lead-${payload.phone}`,
+          status_id: "status-new",
+        };
+      },
+    });
+
+    const importResult = await salesLeadsService.importLeadsService(
+      authenticatedSalesUser,
+      {
+        duplicateMode: "skip",
+        rows: [
+          {
+            rowNumber: 2,
+            fullName: "Priya Mehta",
+            phone: "9999999991",
+            email: "priya@example.com",
+            source: "CarWale",
+            referrerName: null,
+            referrerPhone: null,
+            carBrand: "Hyundai",
+            carModel: "i10",
+            variantName: null,
+            colorPreference: null,
+            budget: null,
+            isUsed: null,
+            status: "NEW",
+            lostReason: null,
+            initialNote: null,
+          },
+          {
+            rowNumber: 3,
+            fullName: "Rahul Sharma",
+            phone: "9876543210",
+            email: "rahul@example.com",
+            source: "CarWale",
+            referrerName: null,
+            referrerPhone: null,
+            carBrand: "Hyundai",
+            carModel: "i10",
+            variantName: null,
+            colorPreference: null,
+            budget: null,
+            isUsed: null,
+            status: "NEW",
+            lostReason: null,
+            initialNote: null,
+          },
+        ],
+      },
+    );
+
+    assert.equal(importResult.error, null);
+    assert.equal(importResult.data?.importedCount, 1);
+    assert.equal(importResult.data?.skippedCount, 1);
+    assert.deepEqual(createdPhones, ["9999999991"]);
+    assert.deepEqual(importResult.data?.results, [
+      {
+        rowNumber: 2,
+        status: "imported",
+        reason: "Lead imported successfully.",
+        leadId: "lead-9999999991",
+      },
+      {
+        rowNumber: 3,
+        status: "skipped",
+        reason: "A lead with this phone number already exists.",
+        leadId: "lead-1",
+      },
+    ]);
+  });
+
+  it("upserts duplicate rows when the authenticated sales user can access the lead", async () => {
+    let updatedLeadId: string | null = null;
+    const createdNotePayloads: Array<{
+      lead_id: string;
+      user_id: string;
+      note_text: string;
+    }> = [];
+    const salesLeadsService = createSalesLeadsService({
+      ...createDependencies(),
+      getLeadByPhone: async (phone: string) =>
+        phone === "9876543210" ? baseLeadRecord : null,
+      updateLeadRecord: async (leadId: string, payload: object) => {
+        updatedLeadId = leadId;
+
+        return {
+          ...baseLeadRecord,
+          ...payload,
+          id: leadId,
+        };
+      },
+      createLeadNoteRecord: async (payload: {
+        lead_id: string;
+        user_id: string;
+        note_text: string;
+      }) => {
+        createdNotePayloads.push(payload);
+
+        return {
+          lead_id: payload.lead_id,
+          user_id: payload.user_id,
+          note_text: payload.note_text,
+          created_at: "2026-05-15T10:30:00.000Z",
+        };
+      },
+    });
+
+    const importResult = await salesLeadsService.importLeadsService(
+      authenticatedSalesUser,
+      {
+        duplicateMode: "upsert",
+        rows: [
+          {
+            rowNumber: 4,
+            fullName: "Rahul Sharma Updated",
+            phone: "9876543210",
+            email: "rahul@example.com",
+            source: "CarWale",
+            referrerName: null,
+            referrerPhone: null,
+            carBrand: "Hyundai",
+            carModel: "i10",
+            variantName: "Sportz",
+            colorPreference: "Red",
+            budget: "6-8 Lakh",
+            isUsed: true,
+            status: "NEW",
+            lostReason: null,
+            initialNote: "Imported follow-up note.",
+          },
+        ],
+      },
+    );
+
+    assert.equal(importResult.error, null);
+    assert.equal(importResult.data?.updatedCount, 1);
+    assert.equal(updatedLeadId, "lead-1");
+    assert.deepEqual(createdNotePayloads, [
+      {
+        lead_id: "lead-1",
+        user_id: "user-row-1",
+        note_text: "Imported follow-up note.",
+      },
+    ]);
+    assert.deepEqual(importResult.data?.results, [
+      {
+        rowNumber: 4,
+        status: "updated",
+        reason: "Lead updated successfully.",
+        leadId: "lead-1",
+      },
+    ]);
+  });
+
+  it("skips duplicate upsert rows when the existing lead belongs to another user", async () => {
+    const salesLeadsService = createSalesLeadsService({
+      ...createDependencies(),
+      getLeadByPhone: async () => ({
+        ...baseLeadRecord,
+        creator_user_id: "user-row-2",
+      }),
+      getLeadRecord: async () => ({
+        ...baseLeadRecord,
+        creator_user_id: "user-row-2",
+      }),
+      getLeadUserRecords: async () => [
+        {
+          lead_id: "lead-1",
+          user_id: "user-row-2",
+          is_primary: true,
+        },
+      ],
+    });
+
+    const importResult = await salesLeadsService.importLeadsService(
+      authenticatedSalesUser,
+      {
+        duplicateMode: "upsert",
+        rows: [
+          {
+            rowNumber: 5,
+            fullName: "Rahul Sharma",
+            phone: "9876543210",
+            email: "rahul@example.com",
+            source: "CarWale",
+            referrerName: null,
+            referrerPhone: null,
+            carBrand: "Hyundai",
+            carModel: "i10",
+            variantName: null,
+            colorPreference: null,
+            budget: null,
+            isUsed: null,
+            status: "NEW",
+            lostReason: null,
+            initialNote: null,
+          },
+        ],
+      },
+    );
+
+    assert.equal(importResult.error, null);
+    assert.equal(importResult.data?.skippedCount, 1);
+    assert.deepEqual(importResult.data?.results, [
+      {
+        rowNumber: 5,
+        status: "skipped",
+        reason: "You are not allowed to access this lead.",
+        leadId: null,
+      },
+    ]);
+  });
 });

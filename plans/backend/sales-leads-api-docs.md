@@ -143,6 +143,7 @@ Examples:
 | `/sales/leads/:leadId` | `PATCH` | Update Lead profile and preference fields |
 | `/sales/leads/:leadId/notes` | `POST` | Create a new Lead note |
 | `/sales/leads` | `POST` | Create a new Lead |
+| `/sales/leads/import` | `POST` | Bulk import Lead rows for the authenticated sales user |
 
 ## Endpoint Details
 
@@ -243,6 +244,103 @@ interface LeadListItemData {
   "status": "success",
   "status_code": 200,
   "message": "Lead statuses fetched successfully.",
+  "error": null
+}
+```
+
+## 1C. Bulk Import Leads
+
+### Endpoint Name
+
+| Item | Value |
+| --- | --- |
+| HTTP Method | `POST` |
+| Endpoint URL | `/sales/leads/import` |
+| Description | Imports multiple Lead rows for the authenticated Sales user. The backend validates every row independently, supports duplicate handling modes, and returns a partial-success summary. |
+
+### Request Body
+
+```ts
+interface ImportLeadsRequestData {
+  duplicateMode: "skip" | "upsert";
+  rows: Array<{
+    rowNumber: number;
+    fullName: string;
+    phone: string;
+    email: string | null;
+    source: string;
+    referrerName?: string | null;
+    referrerPhone?: string | null;
+    carBrand?: string | null;
+    carModel?: string | null;
+    variantName?: string | null;
+    colorPreference?: string | null;
+    budget?: string | null;
+    isUsed?: boolean | null;
+    status?: "NEW" | "CONTACTED" | "INTERESTED" | "TEST_DRIVE" | "NEGOTIATION" | "WON" | "LOST" | "VEHICLE_NA";
+    lostReason?: string | null;
+    initialNote?: string | null;
+  }>;
+}
+```
+
+### Duplicate Mode Behavior
+
+- `skip`: existing DB phone matches are returned as `skipped`
+- `upsert`: existing accessible Leads are updated using editable Lead fields, and inaccessible duplicates are returned as `skipped`
+
+### Success Response Schema
+
+```ts
+interface ImportLeadsResponseData {
+  importedCount: number;
+  updatedCount: number;
+  skippedCount: number;
+  errorCount: number;
+  totalRows: number;
+  results: Array<{
+    rowNumber: number;
+    status: "imported" | "updated" | "skipped" | "error";
+    reason: string;
+    leadId: string | null;
+  }>;
+}
+```
+
+### Sample Success Response
+
+```json
+{
+  "data": {
+    "importedCount": 1,
+    "updatedCount": 1,
+    "skippedCount": 1,
+    "errorCount": 0,
+    "totalRows": 3,
+    "results": [
+      {
+        "rowNumber": 2,
+        "status": "imported",
+        "reason": "Lead imported successfully.",
+        "leadId": "lead-101"
+      },
+      {
+        "rowNumber": 3,
+        "status": "updated",
+        "reason": "Lead updated successfully.",
+        "leadId": "lead-55"
+      },
+      {
+        "rowNumber": 4,
+        "status": "skipped",
+        "reason": "A lead with this phone number already exists.",
+        "leadId": "lead-20"
+      }
+    ]
+  },
+  "status": "success",
+  "status_code": 200,
+  "message": "Lead import completed successfully.",
   "error": null
 }
 ```

@@ -70,10 +70,18 @@ export const salesLeadBudgetOptions = [
  */
 export const salesImportLeadSourceTagOptions = [
   { label: "Skip / Mixed sources", value: "skip-mixed-sources" },
-  { label: "CarWale", value: "carwale" },
-  { label: "CarDekho", value: "cardekho" },
-  { label: "Walk In", value: "walk-in" },
-  { label: "Referral", value: "referral" },
+  { label: "CarWale", value: "CarWale" },
+  { label: "CarDekho", value: "CarDekho" },
+  { label: "Walk In", value: "Walk In" },
+  { label: "Referral", value: "Referral" },
+] as const;
+
+/**
+ * Import duplicate handling options.
+ */
+export const salesImportDuplicateModeOptions = [
+  { label: "Skip existing leads", value: "skip" },
+  { label: "Update existing leads", value: "upsert" },
 ] as const;
 
 /**

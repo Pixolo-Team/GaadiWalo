@@ -111,6 +111,49 @@ export interface CreateLeadResponseData {
   note: LeadNoteData | null;
 }
 
+export type ImportDuplicateModeData = "skip" | "upsert";
+
+export type ImportLeadResultStatusData =
+  | "imported"
+  | "updated"
+  | "skipped"
+  | "error";
+
+export interface ImportLeadRowData {
+  rowNumber: number;
+  fullName: string;
+  phone: string;
+  email: string | null;
+  source: string;
+  referrerName?: string | null;
+  referrerPhone?: string | null;
+  carBrand?: string | null;
+  carModel?: string | null;
+  variantName?: string | null;
+  colorPreference?: string | null;
+  budget?: string | null;
+  isUsed?: boolean | null;
+  status?: LeadStatusData;
+  lostReason?: string | null;
+  initialNote?: string | null;
+}
+
+export interface ImportLeadResultData {
+  rowNumber: number;
+  status: ImportLeadResultStatusData;
+  reason: string;
+  leadId: string | null;
+}
+
+export interface ImportLeadsResponseData {
+  importedCount: number;
+  updatedCount: number;
+  skippedCount: number;
+  errorCount: number;
+  totalRows: number;
+  results: ImportLeadResultData[];
+}
+
 export interface SalesLeadServiceErrorData extends Error {
   code:
     | "BAD_REQUEST"
@@ -197,37 +240,57 @@ export const createLeadNoteRequestSchema = z.object({
   content: z.string().trim().min(1).max(2000),
 });
 
-export const createLeadRequestSchema = leadDetailsMutationBaseSchema
+const createLeadRequestBaseSchema = leadDetailsMutationBaseSchema.extend({
+  status: z.enum(LEAD_STATUS_VALUES).optional().default("NEW"),
+  lostReason: optionalTrimmedStringSchema,
+  initialNote: optionalTrimmedStringSchema,
+});
+
+const applyCreateLeadValidation = (
+  value: z.infer<typeof createLeadRequestBaseSchema>,
+  context: z.RefinementCtx,
+): void => {
+  if (value.carModel && !value.carBrand) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["carBrand"],
+      message: "Car brand is required when car model is provided.",
+    });
+  }
+
+  if (value.status === "LOST" && !value.lostReason) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["lostReason"],
+      message: "Lost reason is required when status is LOST.",
+    });
+  }
+
+  if (value.status !== "LOST" && value.lostReason) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["lostReason"],
+      message: "Lost reason is allowed only when status is LOST.",
+    });
+  }
+};
+
+export const createLeadRequestSchema = createLeadRequestBaseSchema
+  .superRefine((value, context) => {
+    applyCreateLeadValidation(value, context);
+  });
+export const importLeadRowSchema = createLeadRequestBaseSchema
   .extend({
-    status: z.enum(LEAD_STATUS_VALUES).optional().default("NEW"),
-    lostReason: optionalTrimmedStringSchema,
-    initialNote: optionalTrimmedStringSchema,
+    rowNumber: z.number().int().min(1),
   })
   .superRefine((value, context) => {
-    if (value.carModel && !value.carBrand) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["carBrand"],
-        message: "Car brand is required when car model is provided.",
-      });
-    }
-
-    if (value.status === "LOST" && !value.lostReason) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["lostReason"],
-        message: "Lost reason is required when status is LOST.",
-      });
-    }
-
-    if (value.status !== "LOST" && value.lostReason) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["lostReason"],
-        message: "Lost reason is allowed only when status is LOST.",
-      });
-    }
+    applyCreateLeadValidation(value, context);
   });
+
+export const importLeadsRequestSchema = z.object({
+  duplicateMode: z.enum(["skip", "upsert"]),
+  rows: z.array(importLeadRowSchema).min(1),
+});
 
 export type UpdateLeadStatusRequestData = z.infer<
   typeof updateLeadStatusRequestSchema
@@ -239,3 +302,5 @@ export type CreateLeadNoteRequestData = z.infer<
   typeof createLeadNoteRequestSchema
 >;
 export type CreateLeadRequestData = z.infer<typeof createLeadRequestSchema>;
+export type ImportLeadRowRequestData = z.infer<typeof importLeadRowSchema>;
+export type ImportLeadsRequestData = z.infer<typeof importLeadsRequestSchema>;
