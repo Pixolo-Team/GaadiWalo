@@ -1617,8 +1617,8 @@ interface CreateLeadResponseData {
 - If `status = LOST`, frontend must also send a valid `lostReason` name and backend resolves the matching `lost_reason_id`.
 - `assigned_to` and `created_by` are both set to the authenticated Sales user's internal record id.
 - Phone number uniqueness is enforced before insert.
-- A successful Lead create also inserts an initial `lead_status_log` row representing the first status transition from `null` to the created Lead status.
-- The initial `lead_status_log` row is created whether the Lead uses the default `NEW` status or an explicit status selected by the frontend.
+- A successful Lead create does not insert an initial `lead_status_log` row.
+- The Lead activity timeline instead exposes a `system` activity entry with description `Lead created.`
 - If `initialNote` is present after trimming, backend also:
   1. inserts a note
   2. inserts a `note` activity
@@ -1636,7 +1636,7 @@ interface CreateLeadResponseData {
 ### QA Test Scenarios
 
 - Create a Lead with all valid fields and no `initialNote`.
-- Create a Lead and verify `lead_status_log` contains one initial row with `from_status_id = null` and `to_status_id` equal to the created Lead status.
+- Create a Lead and verify the activities endpoint includes one `system` entry with description `Lead created.`
 - Create a Lead with valid `initialNote` and verify both note and activity creation.
 - Create a Lead with empty-string optional fields and verify normalization to `null`.
 - Attempt duplicate phone and verify `409`.

@@ -40,6 +40,7 @@ import {
   ADMIN_ROLE_VALUE,
   CAR_MODEL_REQUIRES_BRAND_MESSAGE,
   LEAD_ACCESS_FORBIDDEN_MESSAGE,
+  LEAD_CREATED_ACTIVITY_DESCRIPTION,
   LEAD_DUPLICATE_PHONE_MESSAGE,
   LEAD_NOT_FOUND_MESSAGE,
   LEAD_STATUS_CHANGE_ACTIVITY_TEMPLATE,
@@ -451,8 +452,50 @@ const createStatusChangeDescription = ({
   nextStatus: LeadStatusData;
 }): string => {
   return LEAD_STATUS_CHANGE_ACTIVITY_TEMPLATE
-    .replace("{previousStatus}", previousStatus)
-    .replace("{nextStatus}", nextStatus);
+    .replace("{previousStatus}", getLeadStatusLabel(previousStatus))
+    .replace("{nextStatus}", getLeadStatusLabel(nextStatus));
+};
+
+/**
+ * Formats lead status values into human-readable labels for activity copy.
+ */
+const getLeadStatusLabel = (status: LeadStatusData): string => {
+  if (status === "VEHICLE_NA") {
+    return "Vehicle NA";
+  }
+
+  return status
+    .split("_")
+    .map((statusWordItem) => {
+      const normalizedWord = statusWordItem.toLowerCase();
+
+      return `${normalizedWord.charAt(0).toUpperCase()}${normalizedWord.slice(1)}`;
+    })
+    .join(" ");
+};
+
+/**
+ * Builds the lead-created activity entry for new and legacy records.
+ */
+const createLeadCreatedActivity = ({
+  createdAt,
+  leadId,
+  userId,
+}: {
+  createdAt: string | null;
+  leadId: string;
+  userId: string | null;
+}): LeadActivityData => {
+  return {
+    id: `${leadId}:${createdAt ?? "created"}`,
+    leadId,
+    type: "system",
+    description: LEAD_CREATED_ACTIVITY_DESCRIPTION,
+    metaJson: {
+      userId,
+    },
+    createdAt,
+  };
 };
 
 /**
@@ -1179,11 +1222,24 @@ export const createSalesLeadsService = (
    * Maps lead activity records into the API response format.
    */
   const mapLeadActivities = async (
-    leadId: string,
+    leadRecord: SalesLeadRecordData,
   ): Promise<LeadActivityData[]> => {
-    const activityRecords = await dependencies.getLeadActivityRecords(leadId);
-    return Promise.all(
+    const activityRecords = await dependencies.getLeadActivityRecords(
+      leadRecord.id,
+    );
+    const mappedActivityItems = await Promise.all(
       activityRecords.map(async (activityRecordItem) => {
+        if (
+          activityRecordItem.from_status_id === null &&
+          activityRecordItem.to_status_id
+        ) {
+          return createLeadCreatedActivity({
+            createdAt: activityRecordItem.updated_at,
+            leadId: activityRecordItem.lead_id,
+            userId: activityRecordItem.user_id,
+          });
+        }
+
         const [previousStatusName, nextStatusName] = await Promise.all([
           typeof activityRecordItem.from_status_id === "string"
             ? dependencies.getStatusNameById(activityRecordItem.from_status_id)
@@ -1211,6 +1267,33 @@ export const createSalesLeadsService = (
         };
       }),
     );
+
+    const hasCreatedActivity = mappedActivityItems.some(
+      (activityItem) =>
+        activityItem.type === "system" &&
+        activityItem.description === LEAD_CREATED_ACTIVITY_DESCRIPTION,
+    );
+
+    if (!hasCreatedActivity) {
+      mappedActivityItems.push(
+        createLeadCreatedActivity({
+          createdAt: leadRecord.created_at,
+          leadId: leadRecord.id,
+          userId: leadRecord.creator_user_id ?? null,
+        }),
+      );
+    }
+
+    return mappedActivityItems.sort((leftActivityItem, rightActivityItem) => {
+      const leftTimestamp = leftActivityItem.createdAt
+        ? Date.parse(leftActivityItem.createdAt)
+        : 0;
+      const rightTimestamp = rightActivityItem.createdAt
+        ? Date.parse(rightActivityItem.createdAt)
+        : 0;
+
+      return rightTimestamp - leftTimestamp;
+    });
   };
 
   /**
@@ -1441,12 +1524,6 @@ export const createSalesLeadsService = (
       lead_id: leadRecord.id,
       user_id: authenticatedUser.recordId,
       is_primary: true,
-    });
-    await dependencies.createLeadActivityRecord({
-      lead_id: leadRecord.id,
-      from_status_id: null,
-      to_status_id: createdStatusId,
-      user_id: authenticatedUser.recordId,
     });
 
     const createdNote = await createInitialLeadNote({
@@ -1691,10 +1768,10 @@ export const createSalesLeadsService = (
     },
     getLeadActivitiesService: async (authenticatedUser, leadId) => {
       try {
-        await ensureLeadAccess({ authenticatedUser, leadId });
+        const leadRecord = await ensureLeadAccess({ authenticatedUser, leadId });
 
         return {
-          data: await mapLeadActivities(leadId),
+          data: await mapLeadActivities(leadRecord),
           error: null,
         };
       } catch (error) {
