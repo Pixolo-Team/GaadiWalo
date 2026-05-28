@@ -1,4 +1,8 @@
+// REACT //
+import { useState } from "react";
+
 // COMPONENTS //
+import CheckDoubleReadDoneAll from "@/components/icons/neevo-icons/CheckDoubleReadDoneAll";
 import Copy1 from "@/components/icons/neevo-icons/Copy1";
 import Phone from "@/components/icons/neevo-icons/Phone";
 import { Button } from "@/components/ui/button";
@@ -23,8 +27,29 @@ export function LeadContactActions({
   // Define Refs
 
   // Define States
+  const [isPhoneNumberCopied, setIsPhoneNumberCopied] = useState<boolean>(false);
 
   // Helper Functions
+  /**
+   * Copies the lead phone number to clipboard.
+   */
+  const handleCopyPhoneNumber = async (): Promise<void> => {
+    try {
+      // Copy lead phone number to user clipboard.
+      await navigator.clipboard.writeText(phoneNumber);
+
+      // Show inline copied state on the action button.
+      setIsPhoneNumberCopied(true);
+
+      // Reset copied state after a short delay.
+      window.setTimeout(() => {
+        setIsPhoneNumberCopied(false);
+      }, 2000);
+
+      // Run optional callback after successful copy.
+      onCopy?.();
+    } catch {}
+  };
 
   // Use Effects
 
@@ -54,11 +79,20 @@ export function LeadContactActions({
       <Button
         type="button"
         variant="secondary"
-        onClick={onCopy}
+        onClick={() => {
+          void handleCopyPhoneNumber();
+        }}
         className="h-auto w-auto border-0 bg-transparent p-0 shadow-none hover:bg-transparent active:bg-transparent"
       >
-        {/* Copy Icon */}
-        <Copy1 primaryColor="var(--color-n-600)" className="size-5" />
+        {/* Copy status icon */}
+        {isPhoneNumberCopied ? (
+          <CheckDoubleReadDoneAll
+            primaryColor="var(--color-n-600)"
+            className="size-5"
+          />
+        ) : (
+          <Copy1 primaryColor="var(--color-n-600)" className="size-5" />
+        )}
       </Button>
     </div>
   );

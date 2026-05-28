@@ -53,7 +53,7 @@ export default function ImportLeadsPage() {
         <Header title="Import from Excel" />
 
         {/* Import leads scroll content */}
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
           {/* Content container */}
           <div className="flex flex-col gap-6 p-6">
             {/* Step indicator */}
@@ -105,8 +105,8 @@ export default function ImportLeadsPage() {
 
               {/* Source selector helper */}
               <p className="font-secondary text-n-500 text-xs leading-tight font-light">
-                If your file has a &quot;Source&quot; column, leave blank and we&apos;ll
-                read it from there.
+                If your file has a &quot;Source&quot; column, leave blank and
+                we&apos;ll read it from there.
               </p>
             </div>
 

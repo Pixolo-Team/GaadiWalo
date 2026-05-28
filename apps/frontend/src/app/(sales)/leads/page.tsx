@@ -3,36 +3,7 @@
 // REACT //
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-
-// COMPONENTS //
-import FilterDropdown from "@/components/common/FilterDropdown";
-import { Header } from "@/components/common/Header";
-import { SearchInput } from "@/components/common/SearchInput";
-import HorizontalSlider2 from "@/components/icons/neevo-icons/HorizontalSlider2";
-import { LeadCard } from "@/components/sales/LeadCard";
-import { LeadsFilterDrawer } from "@/components/sales/LeadsFilterDrawer";
-
-// SERVICES //
-import {
-  getCarBrandsRequest,
-  getLeadBranchesRequest,
-  getLeadSourcesRequest,
-  getLeadStatusesRequest,
-  getSalesLeadsRequest,
-} from "@/services/api/sales-leads.api.service";
-import { getBranchNameService, getPhaseLabelService } from "@/services/sales-dashboard.service";
-import {
-  getLeadStatusLabel,
-  getLeadStatusTone,
-  getLeadVehicleName,
-} from "@/services/leads.service";
-
-// LIBRARIES //
 import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-
-// CONSTANTS //
-import { ROUTES } from "@/constants/routes";
 
 // TYPES //
 import type { DropdownOptionData } from "@/types/dropdown";
@@ -44,6 +15,47 @@ import type {
   LeadSourceData,
   LeadStatusOptionData,
 } from "@/types/leads";
+
+// COMPONENTS //
+import FilterDropdown from "@/components/common/FilterDropdown";
+import { Header } from "@/components/common/Header";
+import { SearchInput } from "@/components/common/SearchInput";
+import HorizontalSlider2 from "@/components/icons/neevo-icons/HorizontalSlider2";
+import { CountPlaceholder } from "@/components/sales/CountPlaceholder";
+import { LeadCard } from "@/components/sales/LeadCard";
+import { LeadsFilterDrawer } from "@/components/sales/LeadsFilterDrawer";
+
+// API SERVICES //
+import {
+  getCarBrandsRequest,
+  getLeadBranchesRequest,
+  getLeadSourcesRequest,
+  getLeadStatusesRequest,
+  getSalesLeadsRequest,
+} from "@/services/api/sales-leads.api.service";
+
+// SERVICES //
+import {
+  getBranchNameService,
+  getPhaseLabelService,
+  getSalesDashboardCacheService,
+  hasSalesDashboardBranchCacheService,
+  setSalesDashboardBranchCacheService,
+  setSalesDashboardLeadCacheService,
+} from "@/services/sales-dashboard.service";
+import {
+  getLeadStatusLabel,
+  getLeadStatusTone,
+  getLeadVehicleName,
+} from "@/services/leads.service";
+
+// CONSTANTS //
+import { ROUTES } from "@/constants/routes";
+
+// OTHERS //
+import { toast } from "sonner";
+
+// LIBRARIES //
 
 const salesSortOptions = ["Newest", "Oldest"] as const;
 const leadMasterDataStaleTime = 10 * 60 * 1000;
@@ -80,7 +92,16 @@ export default function LeadsPage() {
   const [selectedSort, setSelectedSort] = useState<string>(salesSortOptions[0]);
 
   // Helper Functions
-  const selectedStatusQueryValue = searchParams.get("status")?.toLowerCase() ?? "all";
+  const selectedStatusQueryValue =
+    searchParams.get("status")?.toLowerCase() ?? "all";
+  const cachedSalesLeadItems = useMemo<LeadListItemData[]>(() => {
+    return getSalesDashboardCacheService().salesLeads;
+  }, []);
+  const cachedLeadBranchItems = useMemo<LeadBranchData[]>(() => {
+    return getSalesDashboardCacheService().leadBranchItems;
+  }, []);
+  const hasCachedSalesLeads = cachedSalesLeadItems.length > 0;
+  const shouldFetchLeadBranches = !hasSalesDashboardBranchCacheService();
 
   /**
    * Resolves sales leads payload for TanStack Query.
@@ -99,7 +120,10 @@ export default function LeadsPage() {
       );
     }
 
-    return salesLeadsResponse.data ?? [];
+    const salesLeadItems = salesLeadsResponse.data ?? [];
+    setSalesDashboardLeadCacheService(salesLeadItems);
+
+    return salesLeadItems;
   };
 
   /**
@@ -161,13 +185,19 @@ export default function LeadsPage() {
       );
     }
 
-    return leadBranchesResponse.data ?? [];
+    // Persist shared branch cache so dashboard and leads reuse the same data.
+    const leadBranchValues = leadBranchesResponse.data ?? [];
+    setSalesDashboardBranchCacheService(leadBranchValues);
+
+    return leadBranchValues;
   };
 
   /**
    * Resolves car brand payload for TanStack Query.
    */
-  const getLeadCarBrandsQueryService = async (): Promise<LeadCarBrandData[]> => {
+  const getLeadCarBrandsQueryService = async (): Promise<
+    LeadCarBrandData[]
+  > => {
     /**
      * Call get car brands API.
      */
@@ -191,19 +221,22 @@ export default function LeadsPage() {
     data: salesLeads = [],
     error: salesLeadsError,
     isLoading: isSalesLeadsLoading,
+    isFetched: hasSalesLeadsFetched,
   } = useQuery<LeadListItemData[]>({
+    initialData: hasCachedSalesLeads ? cachedSalesLeadItems : undefined,
     queryKey: ["sales-leads"],
     queryFn: getSalesLeadsQueryService,
     staleTime: salesLeadsStaleTime,
   });
+  const shouldShowLeadsCountPlaceholders =
+    isSalesLeadsLoading && !hasCachedSalesLeads && !hasSalesLeadsFetched;
 
   /**
    * Loads lead status master data with longer cache.
    */
-  const {
-    data: leadStatusItems = [],
-    error: leadStatusesError,
-  } = useQuery<LeadStatusOptionData[]>({
+  const { data: leadStatusItems = [], error: leadStatusesError } = useQuery<
+    LeadStatusOptionData[]
+  >({
     queryKey: ["lead-statuses"],
     queryFn: getLeadStatusesQueryService,
     staleTime: leadMasterDataStaleTime,
@@ -212,10 +245,9 @@ export default function LeadsPage() {
   /**
    * Loads lead source master data with longer cache.
    */
-  const {
-    data: leadSourceItems = [],
-    error: leadSourcesError,
-  } = useQuery<LeadSourceData[]>({
+  const { data: leadSourceItems = [], error: leadSourcesError } = useQuery<
+    LeadSourceData[]
+  >({
     queryKey: ["lead-sources"],
     queryFn: getLeadSourcesQueryService,
     staleTime: leadMasterDataStaleTime,
@@ -224,10 +256,11 @@ export default function LeadsPage() {
   /**
    * Loads lead branch master data with longer cache.
    */
-  const {
-    data: leadBranchItems = [],
-    error: leadBranchesError,
-  } = useQuery<LeadBranchData[]>({
+  const { data: leadBranchItems = [], error: leadBranchesError } = useQuery<
+    LeadBranchData[]
+  >({
+    enabled: shouldFetchLeadBranches,
+    initialData: cachedLeadBranchItems,
     queryKey: ["lead-branches"],
     queryFn: getLeadBranchesQueryService,
     staleTime: leadMasterDataStaleTime,
@@ -236,10 +269,9 @@ export default function LeadsPage() {
   /**
    * Loads car brand master data with longer cache.
    */
-  const {
-    data: leadCarBrandItems = [],
-    error: leadCarBrandsError,
-  } = useQuery<LeadCarBrandData[]>({
+  const { data: leadCarBrandItems = [], error: leadCarBrandsError } = useQuery<
+    LeadCarBrandData[]
+  >({
     queryKey: ["lead-car-brands"],
     queryFn: getLeadCarBrandsQueryService,
     staleTime: leadMasterDataStaleTime,
@@ -247,7 +279,9 @@ export default function LeadsPage() {
 
   const statusTabItems = useMemo(() => {
     const dynamicStatusTabs = leadStatusItems.map((statusItem) => ({
-      count: salesLeads.filter((leadItem) => leadItem.status === statusItem.name).length,
+      count: salesLeads.filter(
+        (leadItem) => leadItem.status === statusItem.name,
+      ).length,
       key: statusItem.name.toLowerCase(),
       label: getPhaseLabelService(statusItem.name),
     }));
@@ -271,7 +305,10 @@ export default function LeadsPage() {
         value: branchValue,
       }));
 
-    return [{ label: "All Branches", value: "all" }, ...normalizedBranchOptions];
+    return [
+      { label: "All Branches", value: "all" },
+      ...normalizedBranchOptions,
+    ];
   }, [leadBranchItems]);
 
   const carBrandOptions = useMemo<DropdownOptionData[]>(() => {
@@ -280,7 +317,10 @@ export default function LeadsPage() {
       value: carBrandItem.name,
     }));
 
-    return [{ label: "All Brands", value: "all" }, ...normalizedCarBrandOptions];
+    return [
+      { label: "All Brands", value: "all" },
+      ...normalizedCarBrandOptions,
+    ];
   }, [leadCarBrandItems]);
 
   const sourceFilterOptions = useMemo<string[]>(
@@ -289,7 +329,12 @@ export default function LeadsPage() {
   );
 
   const statusFilterOptions = useMemo<string[]>(
-    () => ["All", ...leadStatusItems.map((statusItem) => getPhaseLabelService(statusItem.name))],
+    () => [
+      "All",
+      ...leadStatusItems.map((statusItem) =>
+        getPhaseLabelService(statusItem.name),
+      ),
+    ],
     [leadStatusItems],
   );
 
@@ -362,7 +407,9 @@ export default function LeadsPage() {
         leadItem.fullName.toLowerCase().includes(normalizedSearchValue) ||
         leadItem.phone.includes(normalizedSearchValue) ||
         leadItem.source.toLowerCase().includes(normalizedSearchValue) ||
-        getLeadVehicleName(leadItem).toLowerCase().includes(normalizedSearchValue)
+        getLeadVehicleName(leadItem)
+          .toLowerCase()
+          .includes(normalizedSearchValue)
       );
     });
 
@@ -382,7 +429,13 @@ export default function LeadsPage() {
         ? firstLeadTime - secondLeadTime
         : secondLeadTime - firstLeadTime;
     });
-  }, [appliedFilterState, leadSearchValue, salesLeads, selectedSort, selectedStatusQueryValue]);
+  }, [
+    appliedFilterState,
+    leadSearchValue,
+    salesLeads,
+    selectedSort,
+    selectedStatusQueryValue,
+  ]);
 
   const handleOpenFilterDrawer = (): void => {
     setDraftFilterState(appliedFilterState);
@@ -436,7 +489,7 @@ export default function LeadsPage() {
   ]);
 
   return (
-    <section className="h-full bg-n-100">
+    <section className="bg-n-100 h-full">
       {/* Leads page shell */}
       <div className="flex h-full flex-col">
         {/* Leads header container */}
@@ -454,7 +507,7 @@ export default function LeadsPage() {
         </div>
 
         {/* Leads scroll content */}
-        <div className="min-h-0 flex-1 overflow-y-auto p-6">
+        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-6">
           <div className="flex flex-col gap-6">
             {/* Search controls */}
             <div className="flex flex-col gap-3">
@@ -467,7 +520,8 @@ export default function LeadsPage() {
               {/* Status tabs */}
               <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
                 {statusTabItems.map((statusTabItem) => {
-                  const isActive = selectedStatusQueryValue === statusTabItem.key;
+                  const isActive =
+                    selectedStatusQueryValue === statusTabItem.key;
 
                   return (
                     <button
@@ -480,7 +534,17 @@ export default function LeadsPage() {
                           : "border-n-200 bg-n-50 text-n-700"
                       }`}
                     >
-                      {statusTabItem.label} ({statusTabItem.count})
+                      {statusTabItem.label}
+                      {shouldShowLeadsCountPlaceholders ? (
+                        <span className="inline-flex items-center">
+                          {" "}
+                          (
+                          <CountPlaceholder className="mx-1 h-4 w-5 rounded-xl align-middle" />
+                          )
+                        </span>
+                      ) : (
+                        ` (${statusTabItem.count})`
+                      )}
                     </button>
                   );
                 })}
@@ -491,7 +555,15 @@ export default function LeadsPage() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between gap-3">
                 <p className="font-secondary text-n-500 text-xs">
-                  Showing {filteredLeads.length} leads
+                  {shouldShowLeadsCountPlaceholders ? (
+                    <span className="inline-flex items-center gap-1">
+                      <span>Showing</span>
+                      <CountPlaceholder className="h-3.5 w-5 rounded-xl" />
+                      <span>leads</span>
+                    </span>
+                  ) : (
+                    `Showing ${filteredLeads.length} leads`
+                  )}
                 </p>
 
                 <FilterDropdown

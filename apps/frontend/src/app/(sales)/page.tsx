@@ -1,7 +1,14 @@
 "use client";
 
 // REACT //
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useState } from "react";
+
+// TYPES //
+import type {
+  LeadBranchData,
+  LeadListItemData,
+  LeadStatusOptionData,
+} from "@/types/leads";
 
 // COMPONENTS //
 import ImportInput from "@/components/icons/neevo-icons/ImportInput";
@@ -12,14 +19,19 @@ import { QuickActionCard } from "@/components/sales/QuickActionCard";
 import { SalesDashboardHeader } from "@/components/sales/SalesDashboardHeader";
 import { SectionHeader } from "@/components/sales/SectionHeader";
 
-// SERVICES //
+// API SERVICES //
 import {
   getLeadBranchesRequest,
-  getLeadStatusesRequest,
   getSalesLeadsRequest,
 } from "@/services/api/sales-leads.api.service";
+
+// SERVICES //
 import {
   ALL_BRANCHES_OPTION,
+<<<<<<< HEAD
+=======
+  dashboardLeadStatusItems,
+>>>>>>> origin/master
   getAvatarLabelService,
   getDashboardBranchLocationOptionsService,
   getDashboardSummaryMetricsService,
@@ -41,21 +53,16 @@ import {
   getLeadVehicleName,
 } from "@/services/leads.service";
 
-// HOOKS //
-import { useAuthContext } from "@/context/AuthContext";
-
-// LIBRARIES //
-import { toast } from "sonner";
-
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
 
-// TYPES //
-import type {
-  LeadBranchData,
-  LeadListItemData,
-  LeadStatusOptionData,
-} from "@/types/leads";
+// OTHERS //
+import { useAuthContext } from "@/context/AuthContext";
+import { toast } from "sonner";
+
+// HOOKS //
+
+// LIBRARIES //
 
 /**
  * Renders the sales home screen with live dashboard data.
@@ -71,7 +78,8 @@ export default function Home() {
   // Define States
   const [isDashboardLoading, setIsDashboardLoading] = useState<boolean>(true);
   const [leadBranchItems, setLeadBranchItems] = useState<LeadBranchData[]>([]);
-  const [leadStatusItems, setLeadStatusItems] = useState<LeadStatusOptionData[]>(
+  const leadStatusItems = useMemo<LeadStatusOptionData[]>(
+    () => dashboardLeadStatusItems,
     [],
   );
   const [salesLeads, setSalesLeads] = useState<LeadListItemData[]>([]);
@@ -83,9 +91,16 @@ export default function Home() {
     return getStoredDashboardBranchFilterService();
   });
   const [selectedPhaseKey, setSelectedPhaseKey] = useState<string>("all");
+  const cachedDashboardState = useMemo(() => getSalesDashboardCacheService(), []);
+  const hasCachedDashboardLeads = cachedDashboardState.salesLeads.length > 0;
+  const hasCachedDashboardBranches =
+    cachedDashboardState.leadBranchItems.length > 0;
+  const shouldShowDashboardCountPlaceholders =
+    isDashboardLoading && !hasCachedDashboardLeads;
 
   // Helper Functions
   /**
+<<<<<<< HEAD
    * Fetches dashboard leads, statuses, and branches for the home page.
    */
   const fetchDashboardDataService = async (): Promise<void> => {
@@ -99,6 +114,19 @@ export default function Home() {
     if (dashboardCache.leadBranchItems.length > 0) {
       // Hydrate branch options from cache and avoid branch API on repeat visits.
       setLeadBranchItems(dashboardCache.leadBranchItems);
+=======
+   * Fetches dashboard leads and branches for the home page.
+   */
+  const fetchDashboardDataService = useEffectEvent(async (): Promise<void> => {
+    if (hasCachedDashboardLeads) {
+      // Hydrate dashboard quickly from cache while fresh data loads.
+      setSalesLeads(cachedDashboardState.salesLeads);
+    }
+
+    if (hasCachedDashboardBranches) {
+      // Hydrate branch options from cache and avoid branch API on repeat visits.
+      setLeadBranchItems(cachedDashboardState.leadBranchItems);
+>>>>>>> origin/master
     }
 
     try {
@@ -119,6 +147,7 @@ export default function Home() {
         setSalesLeads([]);
       }
 
+<<<<<<< HEAD
       /**
        * Call dashboard lead statuses API.
        */
@@ -138,6 +167,12 @@ export default function Home() {
          */
         const leadBranchesResponse = await getLeadBranchesRequest();
 
+=======
+      if (!hasCachedLeadBranches) {
+        // Call branch API only when branch cache does not exist yet.
+        const leadBranchesResponse = await getLeadBranchesRequest();
+
+>>>>>>> origin/master
         if (leadBranchesResponse.status_code === 200) {
           // Set lead branches state.
           const leadBranchValues = leadBranchesResponse.data ?? [];
@@ -152,15 +187,24 @@ export default function Home() {
       // Error toast.
       toast.error("Unable to load dashboard right now. Please try again.");
 
-      // Reset dashboard state.
-      setLeadBranchItems([]);
-      setLeadStatusItems([]);
-      setSalesLeads([]);
+      if (!hasCachedDashboardBranches) {
+        // Reset dashboard branch state only when no cached fallback exists.
+        setLeadBranchItems([]);
+      }
+
+      if (!hasCachedDashboardLeads) {
+        // Reset dashboard lead state only when no cached fallback exists.
+        setSalesLeads([]);
+      }
     } finally {
       // Set loading state to false.
       setIsDashboardLoading(false);
     }
+<<<<<<< HEAD
   };
+=======
+  });
+>>>>>>> origin/master
 
   const branchLocationOptions = useMemo(() => {
     return getDashboardBranchLocationOptionsService(
@@ -217,12 +261,16 @@ export default function Home() {
   }, [resolvedBranchName]);
 
   return (
-    <section className="min-h-screen bg-n-100">
+    <section className="bg-n-100 min-h-screen">
       <div className="flex flex-col gap-6">
         {/* Sales dashboard header */}
         <SalesDashboardHeader
           avatarLabel={getAvatarLabelService(user?.name ?? "Sales User")}
           greeting={getGreetingService()}
+<<<<<<< HEAD
+=======
+          isSummaryLoading={shouldShowDashboardCountPlaceholders}
+>>>>>>> origin/master
           onLocationChange={setSelectedBranchName}
           locationName={resolvedBranchName || ALL_BRANCHES_OPTION}
           locationOptions={branchLocationOptions}
@@ -242,6 +290,10 @@ export default function Home() {
             {/* Phase Cards List Component */}
             <PhaseCards
               activeKey={selectedPhaseKey}
+<<<<<<< HEAD
+=======
+              isCountLoading={shouldShowDashboardCountPlaceholders}
+>>>>>>> origin/master
               tabs={getPhaseCardsService(
                 leadStatusItems,
                 filteredBranchLeadItems,
