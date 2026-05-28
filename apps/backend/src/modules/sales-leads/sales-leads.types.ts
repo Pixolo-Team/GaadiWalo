@@ -206,7 +206,8 @@ const leadDetailsMutationBaseSchema = z.object({
     .trim()
     .email()
     .or(z.literal(""))
-    .transform((value) => (value.length > 0 ? value : null)),
+    .nullable()
+    .transform((value) => (value && value.length > 0 ? value : null)),
   source: z.string().trim().min(1),
   referrerName: optionalTrimmedStringSchema,
   referrerPhone: z

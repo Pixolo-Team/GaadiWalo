@@ -370,7 +370,8 @@ const createImportRequestRow = (
     carBrand: previewRow.carBrand,
     carModel: previewRow.carModel,
     colorPreference: previewRow.colorPreference,
-    email: previewRow.email,
+    // Send empty string for blank email to stay compatible with older backends.
+    email: previewRow.email ?? "",
     fullName: previewRow.fullName,
     initialNote: previewRow.initialNote,
     isUsed: previewRow.isUsed,

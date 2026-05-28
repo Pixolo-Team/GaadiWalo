@@ -62,13 +62,13 @@ Recommended when you want tighter control over image versions.
 Build the image:
 
 ```bash
-docker build -f apps/backend/Dockerfile -t your-dockerhub-user/gaadiwalo-backend:latest apps/backend
+docker build -f apps/backend/Dockerfile -t gaadiwalopixolo/gaadiwalo-backend:latest apps/backend
 ```
 
 Push the image:
 
 ```bash
-docker push your-dockerhub-user/gaadiwalo-backend:latest
+docker push gaadiwalopixolo/gaadiwalo-backend:latest
 ```
 
 Render setup steps:
