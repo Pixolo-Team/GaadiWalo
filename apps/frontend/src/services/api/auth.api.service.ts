@@ -8,6 +8,7 @@ import type {
   ForgotPasswordRequestData,
   ForgotPasswordResponseData,
   LoginResponseData,
+  LogoutResponseData,
   ResendOtpResponseData,
   ResetPasswordRequestData,
   ResetPasswordResponseData,
@@ -119,5 +120,27 @@ export const resetPasswordRequest = async (
   // Make the API Call and return Data
   const response =
     await axios.request<ApiResponseData<ResetPasswordResponseData>>(config);
+  return response.data;
+};
+
+/**
+ * Logs out the authenticated user by revoking active backend sessions.
+ */
+export const logoutRequest = async (
+  accessToken: string,
+): Promise<ApiResponseData<LogoutResponseData>> => {
+  // Prepare the API Call
+  const config: AxiosRequestConfig = {
+    method: "post",
+    url: `${CONSTANTS.API_URL}/auth/logout`,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+  };
+
+  // Make the API Call and return Data
+  const response =
+    await axios.request<ApiResponseData<LogoutResponseData>>(config);
   return response.data;
 };

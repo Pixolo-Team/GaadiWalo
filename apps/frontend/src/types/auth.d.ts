@@ -54,6 +54,13 @@ export interface ResetPasswordResponseData {
 }
 
 /**
+ * Defines logout response payload.
+ */
+export interface LogoutResponseData {
+  success: boolean;
+}
+
+/**
  * Defines login request payload.
  */
 export interface LoginRequestData {

@@ -148,6 +148,8 @@ export function AuthProvider({ children }: AuthProviderPropsData) {
         });
         window.localStorage.removeItem(CONSTANTS.ACCESS_TOKEN);
         window.localStorage.removeItem(CONSTANTS.AUTH_USER);
+        window.localStorage.removeItem(CONSTANTS.REFRESH_TOKEN);
+        window.localStorage.removeItem(CONSTANTS.EXPIRES_IN);
         document.cookie = `${CONSTANTS.ACCESS_TOKEN}=; Path=/; Max-Age=0; SameSite=Lax`;
         return;
       }

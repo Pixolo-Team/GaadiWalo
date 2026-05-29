@@ -2,6 +2,7 @@
 
 // REACT //
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 // COMPONENTS //
 import DesktopMonitorBrowseActivityPerformance from "@/components/icons/neevo-icons/DesktopMonitorBrowseActivityPerformance";
@@ -13,6 +14,7 @@ import ProfileMenuItem from "@/components/sales/profile/ProfileMenuItem";
 import ProfileTopSummary from "@/components/sales/profile/ProfileTopSummary";
 
 // SERVICES //
+import { logoutRequest } from "@/services/api/auth.api.service";
 import { getSalesProfileRequest } from "@/services/api/sales-profile.api.service";
 
 // CONSTANTS //
@@ -23,6 +25,7 @@ import { salesProfileMetrics, salesProfileSummaryData } from "@/data/sales";
 
 // TYPES //
 import type { ApiResponseData } from "@/types/api";
+import type { LogoutResponseData } from "@/types/auth";
 import type { SalesProfileData } from "@/types/profile";
 
 // OTHERS //
@@ -32,9 +35,10 @@ import { toast } from "sonner";
 /** Profile Page Component */
 export default function ProfilePage() {
   // Define Navigation
+  const router = useRouter();
 
   // Define Context
-  const { user } = useAuthContext();
+  const { clearAuthSessionService, session, user } = useAuthContext();
 
   // Define Refs
 
@@ -43,9 +47,11 @@ export default function ProfilePage() {
     null,
   );
   const [isProfileLoading, setIsProfileLoading] = useState<boolean>(true);
+  const [isLogoutSubmitting, setIsLogoutSubmitting] = useState<boolean>(false);
 
   // Helper Functions
   const userCode = user?.userCode ?? user?.userId ?? user?.id ?? "";
+  const accessToken = session?.token ?? "";
 
   /**
    * Fetches sales profile for logged-in user.
@@ -81,6 +87,64 @@ export default function ProfilePage() {
         setIsProfileLoading(false);
       });
   }, [userCode]);
+
+  /**
+   * Logs out the authenticated user from backend and local session state.
+   */
+  const handleLogout = useCallback((): void => {
+    if (isLogoutSubmitting) {
+      return;
+    }
+
+    if (!accessToken) {
+      // Clear local session when backend token is already unavailable.
+      clearAuthSessionService();
+      router.replace(ROUTES.auth.login);
+      return;
+    }
+
+    // Set logout submitting state.
+    setIsLogoutSubmitting(true);
+
+    /**
+     * Call logout API.
+     */
+    logoutRequest(accessToken)
+      .then((response: ApiResponseData<LogoutResponseData>) => {
+        // Clear local session after logout response to prevent stale access.
+        clearAuthSessionService();
+
+        if (response.status_code === 200 && response.data?.success) {
+          // Success toast.
+          toast.success(response.message);
+        } else {
+          // Error toast.
+          toast.error(response.error ?? response.message);
+        }
+
+        // Route user back to login page.
+        router.replace(ROUTES.auth.login);
+      })
+      .catch(() => {
+        // Clear local session even when logout request fails.
+        clearAuthSessionService();
+
+        // Error toast.
+        toast.error("Unable to logout cleanly. Please login again.");
+
+        // Route user back to login page.
+        router.replace(ROUTES.auth.login);
+      })
+      .finally(() => {
+        // Reset logout submitting state.
+        setIsLogoutSubmitting(false);
+      });
+  }, [
+    accessToken,
+    clearAuthSessionService,
+    isLogoutSubmitting,
+    router,
+  ]);
 
   // Use Effects
   useEffect(() => {
@@ -205,6 +269,7 @@ export default function ProfilePage() {
                   />
                 }
                 label="Logout"
+                onClick={handleLogout}
               />
             </div>
           </div>

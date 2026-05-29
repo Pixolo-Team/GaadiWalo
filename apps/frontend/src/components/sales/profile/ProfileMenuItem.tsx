@@ -20,6 +20,7 @@ interface ProfileMenuItemPropsData {
   href?: string;
   iconNode: ReactNode;
   label: string;
+  onClick?: () => void;
 }
 
 /** Profile Menu Item Component*/
@@ -28,6 +29,7 @@ export default function ProfileMenuItem({
   href,
   iconNode,
   label,
+  onClick,
 }: ProfileMenuItemPropsData) {
   // Define Navigation
 
@@ -79,6 +81,7 @@ export default function ProfileMenuItem({
   return (
     <button
       type="button"
+      onClick={onClick}
       className="bg-n-50 flex w-full items-center gap-3.5 rounded-xl px-5 py-[15px] text-left"
     >
       {contentNode}
