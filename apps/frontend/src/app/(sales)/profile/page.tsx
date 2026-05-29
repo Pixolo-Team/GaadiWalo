@@ -97,9 +97,8 @@ export default function ProfilePage() {
     }
 
     if (!accessToken) {
-      // Clear local session when backend token is already unavailable.
-      clearAuthSessionService();
-      router.replace(ROUTES.auth.login);
+      // Error toast when logout cannot be authenticated from frontend state.
+      toast.error("Unable to logout right now. Please try again.");
       return;
     }
 
@@ -111,29 +110,24 @@ export default function ProfilePage() {
      */
     logoutRequest(accessToken)
       .then((response: ApiResponseData<LogoutResponseData>) => {
-        // Clear local session after logout response to prevent stale access.
-        clearAuthSessionService();
-
         if (response.status_code === 200 && response.data?.success) {
+          // Clear local session only after confirmed backend logout.
+          clearAuthSessionService();
+
           // Success toast.
           toast.success(response.message);
-        } else {
-          // Error toast.
-          toast.error(response.error ?? response.message);
+
+          // Route user back to login page.
+          router.replace(ROUTES.auth.login);
+          return;
         }
 
-        // Route user back to login page.
-        router.replace(ROUTES.auth.login);
+        // Error toast.
+        toast.error(response.error ?? response.message);
       })
       .catch(() => {
-        // Clear local session even when logout request fails.
-        clearAuthSessionService();
-
         // Error toast.
-        toast.error("Unable to logout cleanly. Please login again.");
-
-        // Route user back to login page.
-        router.replace(ROUTES.auth.login);
+        toast.error("Unable to logout right now. Please try again.");
       })
       .finally(() => {
         // Reset logout submitting state.
