@@ -1,6 +1,9 @@
 // STYLES //
 import "./globals.css";
 
+// LIBRARIES //
+import { DM_Sans, Sora } from "next/font/google";
+
 // COMPONENTS //
 import { Toaster } from "@/components/ui/sonner";
 
@@ -16,14 +19,27 @@ export const metadata: Metadata = {
   description: "GaadiWalo Sales CRM",
 };
 
+const sora = Sora({
+  subsets: ["latin"],
+  variable: "--font-sora",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+});
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="flex min-h-full flex-col">
+    <html
+      lang="en"
+      className={`${sora.variable} ${dmSans.variable} h-full antialiased`}
+    >
+      <body className="flex min-h-full flex-col font-sans">
         <QueryProvider>
           <AuthProvider>
             {children}
