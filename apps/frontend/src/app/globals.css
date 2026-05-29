@@ -3,10 +3,6 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --font-sora:
-    "Sora", "Avenir Next", "Segoe UI", sans-serif;
-  --font-dm-sans:
-    "DM Sans", "Avenir Next", "Segoe UI", sans-serif;
   --color-n-50: #ffffff;
   --color-n-100: #f1f5f9;
   --color-n-200: #e2e8f1;
@@ -163,9 +159,6 @@
   }
   body {
     @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
   }
 }
 
