@@ -6,7 +6,7 @@ import axios from "axios";
 import type { ApiResponseData } from "@/types/api";
 import type {
   ChangeSalesPasswordRequestData,
-  SalesPerformanceData,
+  SalesPerformanceResponseData,
   SalesProfileData,
   UpdateSalesProfileRequestData,
 } from "@/types/profile";
@@ -88,7 +88,7 @@ export const changeSalesPasswordRequest = async (
 export const getSalesPerformanceRequest = async (
   userCode: string,
   period: string,
-): Promise<ApiResponseData<SalesPerformanceData>> => {
+): Promise<ApiResponseData<SalesPerformanceResponseData>> => {
   const config: AxiosRequestConfig = {
     headers: getAuthHeadersService(),
     method: "get",
@@ -96,6 +96,7 @@ export const getSalesPerformanceRequest = async (
     url: `${CONSTANTS.API_URL}/sales/profile/${userCode}/performance`,
   };
 
-  const response = await axios.request<ApiResponseData<SalesPerformanceData>>(config);
+  const response =
+    await axios.request<ApiResponseData<SalesPerformanceResponseData>>(config);
   return response.data;
 };

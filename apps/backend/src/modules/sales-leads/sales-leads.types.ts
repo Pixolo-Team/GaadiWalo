@@ -87,6 +87,7 @@ export interface LeadListItemData {
   assignedTo: LeadUserSummaryData | null;
   createdAt: string | null;
   updatedAt: string | null;
+  statusChangedAt: string | null;
 }
 
 export interface LeadActivityData {

@@ -33,6 +33,39 @@ export interface ChangeSalesPasswordRequestData {
 }
 
 /**
+ * Defines weekly activity item from the performance API.
+ */
+export interface SalesPerformanceWeeklyActivityData {
+  calls: number;
+  day: string;
+  leads: number;
+}
+
+/**
+ * Defines source breakdown item from the performance API.
+ */
+export interface SalesPerformanceSourceBreakdownData {
+  count: number;
+  source: string;
+}
+
+/**
+ * Defines the raw sales performance payload returned by the API.
+ */
+export interface SalesPerformanceResponseData {
+  callsMade: number;
+  lost: number;
+  lostRate: number;
+  pipeline: Record<string, number>;
+  rank: number | null;
+  sourceBreakdown: SalesPerformanceSourceBreakdownData[];
+  totalLeads: number;
+  weeklyActivity: SalesPerformanceWeeklyActivityData[];
+  won: number;
+  wonRate: number;
+}
+
+/**
  * Defines weekly performance item payload.
  */
 export interface SalesPerformanceWeeklyItemData {
