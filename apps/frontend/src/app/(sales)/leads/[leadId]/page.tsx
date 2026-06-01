@@ -12,6 +12,12 @@ import { ActivityTab } from "@/components/sales/leads/ActivityTab";
 import { InfoTab } from "@/components/sales/leads/InfoTab";
 import { NotesTab } from "@/components/sales/leads/NotesTab";
 
+// LIBRARIES //
+import { AnimatePresence, motion } from "motion/react";
+
+// UTILS //
+import { tabSlideVariants } from "@/lib/animations";
+
 // DATA //
 import { salesLeadDetailTabs } from "@/data/sales";
 
@@ -63,6 +69,7 @@ export default function LeadDetailsPage() {
   const [selectedTab, setSelectedTab] = useState<SalesLeadDetailsTabData>(
     salesLeadDetailTabs[0],
   );
+  const [tabSlideDirection, setTabSlideDirection] = useState<number>(0);
   const [leadDetails, setLeadDetails] = useState<LeadDetailsData | null>(null);
   const [leadActivities, setLeadActivities] = useState<LeadActivityData[]>([]);
   const [leadNotes, setLeadNotes] = useState<LeadNoteData[]>([]);
@@ -89,11 +96,15 @@ export default function LeadDetailsPage() {
   const isNotesTabSelected = selectedTab === salesLeadDetailTabs[2];
 
   /**
-   * Handles lead detail tab switch.
+   * Handles lead detail tab switch and tracks slide direction for the panel.
    */
   const handleLeadDetailsTabChange = (
     tabValue: SalesLeadDetailsTabData,
   ): void => {
+    const currentTabIndex = salesLeadDetailTabs.indexOf(selectedTab);
+    const nextTabIndex = salesLeadDetailTabs.indexOf(tabValue);
+
+    setTabSlideDirection(nextTabIndex > currentTabIndex ? 1 : -1);
     setSelectedTab(tabValue);
   };
 
@@ -385,37 +396,52 @@ export default function LeadDetailsPage() {
               onChange={handleLeadDetailsTabChange}
             />
 
-            {/* Info tab */}
-            {isInfoTabSelected ? (
-              <InfoTab
-                contactInfoRows={contactInfoRows}
-                carInterestRows={carInterestRows}
-                leadStatusOptions={leadStatusOptions}
-                lostReasonOptions={lostReasonOptions}
-                selectedLeadStatus={leadStatusFormState.selectedLeadStatus}
-                selectedLostReason={leadStatusFormState.selectedLostReason}
-                onLeadStatusChange={handleLeadStatusChange}
-                onLostReasonChange={handleLostReasonChange}
-                onUpdateStatus={handleUpdateLeadStatus}
-                isUpdatingStatus={leadRequestState.isUpdatingStatus}
-              />
-            ) : null}
+            {/* Sliding tab panel */}
+            <div className="relative overflow-hidden">
+              <AnimatePresence mode="wait" custom={tabSlideDirection} initial={false}>
+                <motion.div
+                  key={selectedTab}
+                  custom={tabSlideDirection}
+                  variants={tabSlideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                >
+                  {/* Info tab */}
+                  {isInfoTabSelected ? (
+                    <InfoTab
+                      contactInfoRows={contactInfoRows}
+                      carInterestRows={carInterestRows}
+                      leadStatusOptions={leadStatusOptions}
+                      lostReasonOptions={lostReasonOptions}
+                      selectedLeadStatus={leadStatusFormState.selectedLeadStatus}
+                      selectedLostReason={leadStatusFormState.selectedLostReason}
+                      onLeadStatusChange={handleLeadStatusChange}
+                      onLostReasonChange={handleLostReasonChange}
+                      onUpdateStatus={handleUpdateLeadStatus}
+                      isUpdatingStatus={leadRequestState.isUpdatingStatus}
+                    />
+                  ) : null}
 
-            {/* Activity tab */}
-            {isActivityTabSelected ? (
-              <ActivityTab activities={activities} />
-            ) : null}
+                  {/* Activity tab */}
+                  {isActivityTabSelected ? (
+                    <ActivityTab activities={activities} />
+                  ) : null}
 
-            {/* Notes tab */}
-            {isNotesTabSelected ? (
-              <NotesTab
-                notes={notes}
-                noteInputValue={noteInputValue}
-                onNoteInputChange={setNoteInputValue}
-                onSendNote={handleSendLeadNote}
-                isSending={leadRequestState.isSendingNote}
-              />
-            ) : null}
+                  {/* Notes tab */}
+                  {isNotesTabSelected ? (
+                    <NotesTab
+                      notes={notes}
+                      noteInputValue={noteInputValue}
+                      onNoteInputChange={setNoteInputValue}
+                      onSendNote={handleSendLeadNote}
+                      isSending={leadRequestState.isSendingNote}
+                    />
+                  ) : null}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>

@@ -590,10 +590,11 @@ export default function LeadsPage() {
                 ) : null}
 
                 {!isSalesLeadsLoading
-                  ? filteredLeads.map((leadItem) => (
+                  ? filteredLeads.map((leadItem, leadIndex) => (
                       <LeadCard
                         key={leadItem.id}
                         href={ROUTES.sales.leadDetails(leadItem.id)}
+                        motionDelay={leadIndex * 0.05}
                         name={leadItem.fullName}
                         phoneNumber={leadItem.phone}
                         source={leadItem.source}

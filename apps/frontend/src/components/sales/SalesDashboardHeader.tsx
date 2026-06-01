@@ -4,9 +4,13 @@
 import { useMemo } from "react";
 
 // COMPONENTS //
+import Motion from "@/components/animations/Motion";
 import FilterDropdown from "@/components/common/FilterDropdown";
 import Building1 from "@/components/icons/neevo-icons/Building1";
 import { CountPlaceholder } from "@/components/sales/CountPlaceholder";
+
+// UTILS //
+import { greetingEnter, summaryCardEnter } from "@/lib/animations";
 
 interface SalesSummaryMetricItemData {
   key: string;
@@ -66,7 +70,11 @@ export function SalesDashboardHeader({
   return (
     <div className="flex flex-col gap-3.5 bg-gradient-to-br from-blue-700 to-blue-900 px-6 py-10">
       {/* Greeting and location row */}
-      <div className="flex items-start justify-between gap-3">
+      <Motion
+        as="div"
+        variants={greetingEnter}
+        className="flex items-start justify-between gap-3"
+      >
         {/* User greeting block */}
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {/* Avatar */}
@@ -98,10 +106,14 @@ export function SalesDashboardHeader({
           }
           className="border-n-300 text-n-600 h-10 max-w-40 shrink-0 rounded-3xl text-xs font-bold sm:max-w-52"
         />
-      </div>
+      </Motion>
 
       {/* Today summary card */}
-      <div className="bg-n-50/12 flex flex-col gap-3 rounded-2xl p-4 backdrop-blur-sm">
+      <Motion
+        as="div"
+        variants={summaryCardEnter}
+        className="bg-n-50/12 flex flex-col gap-3 rounded-2xl p-4 backdrop-blur-sm"
+      >
         <p className="font-secondary text-n-50 text-xs tracking-wide uppercase">
           TODAY&apos;S SUMMARY
         </p>
@@ -136,7 +148,7 @@ export function SalesDashboardHeader({
             </div>
           ))}
         </div>
-      </div>
+      </Motion>
     </div>
   );
 }
