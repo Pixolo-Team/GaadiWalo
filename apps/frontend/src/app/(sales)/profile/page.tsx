@@ -9,6 +9,7 @@ import DesktopMonitorBrowseActivityPerformance from "@/components/icons/neevo-ic
 import LoginPassword from "@/components/icons/neevo-icons/LoginPassword";
 import Logout3 from "@/components/icons/neevo-icons/Logout3";
 import UserEditPencil from "@/components/icons/neevo-icons/UserEditPencil";
+import Motion from "@/components/animations/Motion";
 import MetricItem from "@/components/sales/profile/MetricItem";
 import ProfileMenuItem from "@/components/sales/profile/ProfileMenuItem";
 import ProfileTopSummary from "@/components/sales/profile/ProfileTopSummary";
@@ -16,6 +17,9 @@ import ProfileTopSummary from "@/components/sales/profile/ProfileTopSummary";
 // SERVICES //
 import { logoutRequest } from "@/services/api/auth.api.service";
 import { getSalesProfileRequest } from "@/services/api/sales-profile.api.service";
+
+// UTILS //
+import { slideInUp, staggerContainer } from "@/lib/animations";
 
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
@@ -133,12 +137,7 @@ export default function ProfilePage() {
         // Reset logout submitting state.
         setIsLogoutSubmitting(false);
       });
-  }, [
-    accessToken,
-    clearAuthSessionService,
-    isLogoutSubmitting,
-    router,
-  ]);
+  }, [accessToken, clearAuthSessionService, isLogoutSubmitting, router]);
 
   // Use Effects
   useEffect(() => {
@@ -150,6 +149,18 @@ export default function ProfilePage() {
       window.clearTimeout(profileLoadTimeout);
     };
   }, [getSalesProfile]);
+
+  if (isProfileLoading) {
+    return (
+      <section className="bg-n-50 h-full">
+        <div className="flex h-full items-center justify-center">
+          <p className="font-secondary text-n-600 text-sm">
+            Loading profile...
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   const summaryProfile = {
     avatarLabel:
@@ -167,18 +178,6 @@ export default function ProfilePage() {
     role: salesProfile?.role ?? salesProfileSummaryData.role,
     userId: salesProfile?.userId ?? salesProfileSummaryData.userId,
   };
-
-  if (isProfileLoading) {
-    return (
-      <section className="bg-n-50 h-full">
-        <div className="flex h-full items-center justify-center">
-          <p className="font-secondary text-n-600 text-sm">
-            Loading profile...
-          </p>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section className="bg-n-50 h-full">
@@ -212,60 +211,72 @@ export default function ProfilePage() {
               ))}
             </div>
 
-            {/* Profile menu list */}
-            <div className="flex flex-col gap-3">
+            {/* Profile menu list — items enter one by one */}
+            <Motion
+              as="div"
+              variants={staggerContainer}
+              className="flex flex-col gap-3"
+            >
               {/* Edit profile navigation item */}
-              <ProfileMenuItem
-                href={ROUTES.sales.profileEdit}
-                iconBackgroundColor="bg-blue-100"
-                iconNode={
-                  <UserEditPencil
-                    primaryColor="var(--color-blue-600)"
-                    className="size-5"
-                  />
-                }
-                label="Edit Profile"
-              />
+              <Motion as="div" variants={slideInUp}>
+                <ProfileMenuItem
+                  href={ROUTES.sales.profileEdit}
+                  iconBackgroundColor="bg-blue-100"
+                  iconNode={
+                    <UserEditPencil
+                      primaryColor="var(--color-blue-600)"
+                      className="size-5"
+                    />
+                  }
+                  label="Edit Profile"
+                />
+              </Motion>
 
               {/* Change password action item */}
-              <ProfileMenuItem
-                href={ROUTES.sales.profileChangePassword}
-                iconBackgroundColor="bg-amber-100"
-                iconNode={
-                  <LoginPassword
-                    primaryColor="var(--color-amber-600)"
-                    className="size-5"
-                  />
-                }
-                label="Change Password"
-              />
+              <Motion as="div" variants={slideInUp}>
+                <ProfileMenuItem
+                  href={ROUTES.sales.profileChangePassword}
+                  iconBackgroundColor="bg-amber-100"
+                  iconNode={
+                    <LoginPassword
+                      primaryColor="var(--color-amber-600)"
+                      className="size-5"
+                    />
+                  }
+                  label="Change Password"
+                />
+              </Motion>
 
               {/* Performance report action item */}
-              <ProfileMenuItem
-                href={ROUTES.sales.profilePerformance}
-                iconBackgroundColor="bg-green-100"
-                iconNode={
-                  <DesktopMonitorBrowseActivityPerformance
-                    primaryColor="var(--color-green-600)"
-                    className="size-5"
-                  />
-                }
-                label="My Performance Report"
-              />
+              <Motion as="div" variants={slideInUp}>
+                <ProfileMenuItem
+                  href={ROUTES.sales.profilePerformance}
+                  iconBackgroundColor="bg-green-100"
+                  iconNode={
+                    <DesktopMonitorBrowseActivityPerformance
+                      primaryColor="var(--color-green-600)"
+                      className="size-5"
+                    />
+                  }
+                  label="My Performance Report"
+                />
+              </Motion>
 
               {/* Logout action item */}
-              <ProfileMenuItem
-                iconBackgroundColor="bg-red-100"
-                iconNode={
-                  <Logout3
-                    primaryColor="var(--color-red-600)"
-                    className="size-5"
-                  />
-                }
-                label="Logout"
-                onClick={handleLogout}
-              />
-            </div>
+              <Motion as="div" variants={slideInUp}>
+                <ProfileMenuItem
+                  iconBackgroundColor="bg-red-100"
+                  iconNode={
+                    <Logout3
+                      primaryColor="var(--color-red-600)"
+                      className="size-5"
+                    />
+                  }
+                  label="Logout"
+                  onClick={handleLogout}
+                />
+              </Motion>
+            </Motion>
           </div>
         </div>
       </div>

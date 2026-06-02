@@ -273,11 +273,11 @@ export default function Home() {
                 </p>
               ) : null}
 
-              {filteredRecentLeadItems.map((leadItem) => (
-                // LeadCard Component
+              {filteredRecentLeadItems.map((leadItem, leadIndex) => (
                 <LeadCard
                   key={leadItem.id}
                   href={ROUTES.sales.leadDetails(leadItem.id)}
+                  motionDelay={leadIndex * 0.08}
                   name={leadItem.fullName}
                   phoneNumber={leadItem.phone}
                   source={leadItem.source}

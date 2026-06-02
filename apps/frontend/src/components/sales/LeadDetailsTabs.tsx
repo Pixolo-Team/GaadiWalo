@@ -1,5 +1,13 @@
+"use client";
+
 // TYPES //
 import type { SalesLeadDetailsTabData } from "@/types/leads";
+
+// COMPONENTS //
+import Motion from "@/components/animations/Motion";
+
+// UTILS //
+import { pressTap } from "@/lib/animations";
 
 interface LeadDetailsTabsPropsData {
   onChange: (tab: SalesLeadDetailsTabData) => void;
@@ -35,19 +43,32 @@ export function LeadDetailsTabs({
 
         return (
           /* Lead detail tab */
-          <button
+          <Motion
+            as="button"
             key={tabItem}
             type="button"
             aria-pressed={isSelected}
             onClick={() => onChange(tabItem)}
-            className={`font-secondary flex-1 rounded-[7px] px-1 py-2.5 text-sm ${
+            whileTap={pressTap}
+            className={`font-secondary relative flex-1 rounded-[7px] px-1 py-2.5 text-sm transition-colors ${
               isSelected
-                ? "bg-n-50 font-semibold text-blue-600"
+                ? "font-semibold text-blue-600"
                 : "text-n-600 font-medium"
             }`}
           >
-            {tabItem}
-          </button>
+            {/* Sliding active pill — layoutId drives the shared spring transition */}
+            {isSelected ? (
+              <Motion
+                as="span"
+                layoutId="lead-tab-pill"
+                className="bg-n-50 absolute inset-0 rounded-[7px]"
+                transition={{ type: "spring", stiffness: 400, damping: 32 }}
+              />
+            ) : null}
+
+            {/* Tab label sits above the pill */}
+            <span className="relative z-10">{tabItem}</span>
+          </Motion>
         );
       })}
     </div>

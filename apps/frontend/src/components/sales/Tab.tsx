@@ -7,6 +7,13 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 // LIBRARIES //
+import { motion } from "motion/react";
+
+// UTILS //
+import { pressTap } from "@/lib/animations";
+
+// Motion-enabled Next.js link so each tab gets tactile press feedback.
+const MotionLink = motion.create(Link);
 
 interface TabPropsData {
   className?: string;
@@ -39,8 +46,9 @@ export function Tab({
   // Use Effects
 
   return (
-    <Link
+    <MotionLink
       href={href}
+      whileTap={pressTap}
       className={`${isFloating ? "text-n-500 relative z-50 -mt-12 flex w-14 shrink-0 flex-col items-center gap-1" : `flex min-w-0 flex-1 flex-col items-center gap-1 ${isActive ? "text-blue-600" : "text-n-500"}`} ${className ?? ""}`}
     >
       {icon}
@@ -49,6 +57,6 @@ export function Tab({
       >
         {label}
       </span>
-    </Link>
+    </MotionLink>
   );
 }

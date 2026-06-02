@@ -575,8 +575,8 @@ export default function LeadsPage() {
                 />
               </div>
 
-              {/* Leads list */}
-              <div className="flex flex-col gap-3">
+              {/* Leads list — keyed by status so cards re-animate on tab switch */}
+              <div key={selectedStatusQueryValue} className="flex flex-col gap-3">
                 {isSalesLeadsLoading ? (
                   <p className="font-secondary text-n-600 py-6 text-center text-sm">
                     Loading leads...
@@ -590,10 +590,11 @@ export default function LeadsPage() {
                 ) : null}
 
                 {!isSalesLeadsLoading
-                  ? filteredLeads.map((leadItem) => (
+                  ? filteredLeads.map((leadItem, leadIndex) => (
                       <LeadCard
                         key={leadItem.id}
                         href={ROUTES.sales.leadDetails(leadItem.id)}
+                        motionDelay={leadIndex * 0.08}
                         name={leadItem.fullName}
                         phoneNumber={leadItem.phone}
                         source={leadItem.source}
