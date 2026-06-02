@@ -72,6 +72,7 @@ export function LeadCard({
       {/* Full-card clickable overlay */}
       <Link
         href={detailsPageHref}
+        prefetch={false}
         aria-label={`Open details for ${name}`}
         className="absolute inset-0 z-0 rounded-[20px]"
       />

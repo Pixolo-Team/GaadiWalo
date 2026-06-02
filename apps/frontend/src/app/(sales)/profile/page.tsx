@@ -19,7 +19,7 @@ import { logoutRequest } from "@/services/api/auth.api.service";
 import { getSalesProfileRequest } from "@/services/api/sales-profile.api.service";
 
 // UTILS //
-import { slideInUp, staggerContainer } from "@/lib/animations";
+import { cardEnter, staggerContainer } from "@/lib/animations";
 
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
@@ -218,7 +218,7 @@ export default function ProfilePage() {
               className="flex flex-col gap-3"
             >
               {/* Edit profile navigation item */}
-              <Motion as="div" variants={slideInUp}>
+              <Motion as="div" variants={cardEnter}>
                 <ProfileMenuItem
                   href={ROUTES.sales.profileEdit}
                   iconBackgroundColor="bg-blue-100"
@@ -233,7 +233,7 @@ export default function ProfilePage() {
               </Motion>
 
               {/* Change password action item */}
-              <Motion as="div" variants={slideInUp}>
+              <Motion as="div" variants={cardEnter}>
                 <ProfileMenuItem
                   href={ROUTES.sales.profileChangePassword}
                   iconBackgroundColor="bg-amber-100"
@@ -248,7 +248,7 @@ export default function ProfilePage() {
               </Motion>
 
               {/* Performance report action item */}
-              <Motion as="div" variants={slideInUp}>
+              <Motion as="div" variants={cardEnter}>
                 <ProfileMenuItem
                   href={ROUTES.sales.profilePerformance}
                   iconBackgroundColor="bg-green-100"
@@ -263,7 +263,7 @@ export default function ProfilePage() {
               </Motion>
 
               {/* Logout action item */}
-              <Motion as="div" variants={slideInUp}>
+              <Motion as="div" variants={cardEnter}>
                 <ProfileMenuItem
                   iconBackgroundColor="bg-red-100"
                   iconNode={
