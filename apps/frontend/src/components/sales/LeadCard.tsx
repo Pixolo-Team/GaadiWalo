@@ -1,3 +1,5 @@
+"use client";
+
 // TYPES //
 import type { LeadStatusToneData } from "@/types/leads";
 
@@ -8,12 +10,19 @@ import WhatsappLogo from "@/components/icons/neevo-icons/WhatsappLogo";
 import { LeadContactActions } from "@/components/sales/LeadContactActions";
 import { Badge } from "@/components/ui/badge";
 
+// COMPONENTS //
+import Motion from "@/components/animations/Motion";
+
+// UTILS //
+import { cardEnter } from "@/lib/animations";
+
 // CONSTANTS //
 import { ROUTES } from "@/constants/routes";
 import { salesLeadToneClassNameData } from "@/data/sales";
 
 interface LeadCardPropsData {
   href?: string;
+  motionDelay?: number;
   name: string;
   onCall?: () => void;
   onCopy?: () => void;
@@ -27,6 +36,7 @@ interface LeadCardPropsData {
 /** Lead Card Component */
 export function LeadCard({
   href,
+  motionDelay = 0,
   name,
   onCall,
   onCopy,
@@ -53,12 +63,16 @@ export function LeadCard({
   // Use Effects
 
   return (
-    <div
+    <Motion
+      as="div"
+      variants={cardEnter}
+      delay={motionDelay}
       className={`bg-n-50 relative flex flex-col gap-3 rounded-[20px] border-l-4 px-5 py-4 ${borderToneClassName}`}
     >
       {/* Full-card clickable overlay */}
       <Link
         href={detailsPageHref}
+        prefetch={false}
         aria-label={`Open details for ${name}`}
         className="absolute inset-0 z-0 rounded-[20px]"
       />
@@ -137,6 +151,6 @@ export function LeadCard({
           />
         </Link>
       </div>
-    </div>
+    </Motion>
   );
 }
