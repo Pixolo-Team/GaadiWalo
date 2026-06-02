@@ -18,9 +18,6 @@ import {
 } from "@/services/api/sales-profile.api.service";
 import { mapSalesPerformanceViewService } from "@/services/sales-performance.service";
 
-// CONSTANTS //
-import { SALES_PERFORMANCE_DEFAULT_PERIOD } from "@/constants/performance";
-
 // TYPES //
 import type { ApiResponseData } from "@/types/api";
 import type {
@@ -70,7 +67,7 @@ export default function ProfilePerformancePage() {
      */
     Promise.all([
       getSalesProfileRequest(userCode),
-      getSalesPerformanceRequest(userCode, SALES_PERFORMANCE_DEFAULT_PERIOD),
+      getSalesPerformanceRequest(userCode),
     ])
       .then(
         ([profileResponse, performanceResponse]: [

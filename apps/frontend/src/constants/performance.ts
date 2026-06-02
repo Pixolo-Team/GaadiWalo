@@ -2,9 +2,6 @@
  * Defines centralized display config for the sales performance screen.
  */
 
-/** Default period requested from the performance API. */
-export const SALES_PERFORMANCE_DEFAULT_PERIOD = "this-month";
-
 /**
  * Pipeline statuses in display order with their label and bar color.
  * Keys match the backend pipeline status keys.

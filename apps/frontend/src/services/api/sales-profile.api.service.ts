@@ -83,16 +83,14 @@ export const changeSalesPasswordRequest = async (
 };
 
 /**
- * Fetches performance details for one sales user code and period.
+ * Fetches performance details for one sales user code.
  */
 export const getSalesPerformanceRequest = async (
   userCode: string,
-  period: string,
 ): Promise<ApiResponseData<SalesPerformanceResponseData>> => {
   const config: AxiosRequestConfig = {
     headers: getAuthHeadersService(),
     method: "get",
-    params: { period },
     url: `${CONSTANTS.API_URL}/sales/profile/${userCode}/performance`,
   };
 
