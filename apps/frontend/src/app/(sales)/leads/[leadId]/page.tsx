@@ -398,7 +398,7 @@ export default function LeadDetailsPage() {
 
             {/* Sliding tab panel */}
             <div className="relative overflow-hidden">
-              <AnimatePresence mode="wait" custom={tabSlideDirection} initial={false}>
+              <AnimatePresence mode="wait" custom={tabSlideDirection}>
                 <motion.div
                   key={selectedTab}
                   custom={tabSlideDirection}

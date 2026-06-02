@@ -277,7 +277,7 @@ export default function Home() {
                 <LeadCard
                   key={leadItem.id}
                   href={ROUTES.sales.leadDetails(leadItem.id)}
-                  motionDelay={leadIndex * 0.05}
+                  motionDelay={leadIndex * 0.08}
                   name={leadItem.fullName}
                   phoneNumber={leadItem.phone}
                   source={leadItem.source}

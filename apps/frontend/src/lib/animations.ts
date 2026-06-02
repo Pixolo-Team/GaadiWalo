@@ -22,11 +22,11 @@ export const slideIndown: Variants = {
 };
 
 export const slideInUp: Variants = {
-  hidden: { opacity: 0, y: 40 },
+  hidden: { opacity: 0, y: 16 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
+    transition: { duration: 0.55, ease: "easeOut" },
   },
 };
 
@@ -42,7 +42,7 @@ export const shrinkIn: Variants = {
 /** Stagger wrapper that reveals its children one after another. */
 export const staggerContainer: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.04 } },
+  show: { transition: { staggerChildren: 0.09 } },
 };
 
 /** Shared tap press feedback applied via whileTap on interactive elements. */
@@ -70,11 +70,11 @@ export const summaryCardEnter: Variants = {
 
 /** Subtle entrance for lead cards — fades up from a small offset. */
 export const cardEnter: Variants = {
-  hidden: { opacity: 0, y: 10 },
+  hidden: { opacity: 0, y: 12 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: "easeOut" },
+    transition: { duration: 0.45, ease: "easeOut" },
   },
 };
 
