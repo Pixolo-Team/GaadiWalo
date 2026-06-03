@@ -23,4 +23,15 @@ export const ROUTES = {
     profilePerformance: "/profile/performance",
     leadDetails: (leadId: string): string => `/leads/${leadId}`,
   },
+  admin: {
+    dashboard: "/admin",
+    team: "/admin/team",
+    teamAdd: "/admin/team/add",
+    teamMember: (salespersonId: string): string =>
+      `/admin/team/${salespersonId}`,
+    referrers: "/admin/referrers",
+    referrerDetail: (referrerId: string): string =>
+      `/admin/referrers/${referrerId}`,
+    reports: "/admin/reports",
+  },
 } as const;
