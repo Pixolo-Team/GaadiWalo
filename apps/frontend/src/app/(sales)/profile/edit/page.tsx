@@ -51,7 +51,7 @@ export default function EditProfilePage() {
   const initialEditProfileInputFieldsData: EditProfileInputFieldsData = {
     email: "",
     fullName: "",
-    languagePreference: "",
+    languagePreference: "english",
     phoneNumber: "",
   };
 
@@ -138,7 +138,8 @@ export default function EditProfilePage() {
           setEditProfileInputFields({
             email: response.data.email ?? "",
             fullName: response.data.fullName ?? "",
-            languagePreference: response.data.languagePreference ?? "English",
+            languagePreference:
+              response.data.languagePreference?.toLowerCase() || "english",
             phoneNumber: response.data.phone ?? "",
           });
         } else {
@@ -208,7 +209,8 @@ export default function EditProfilePage() {
     setEditProfileInputFields({
       email: salesProfile?.email ?? "",
       fullName: salesProfile?.fullName ?? "",
-      languagePreference: salesProfile?.languagePreference ?? "English",
+      languagePreference:
+        salesProfile?.languagePreference?.toLowerCase() || "english",
       phoneNumber: salesProfile?.phone ?? "",
     });
   };

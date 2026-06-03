@@ -5,6 +5,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -13,7 +14,7 @@ import type { ReactNode } from "react";
 // TYPES //
 import type { UserData } from "@/types/auth";
 
-// CONSTANTS //
+// MODULES //
 import { CONSTANTS } from "@/constants/constants";
 
 /**
@@ -28,6 +29,7 @@ export type AppSessionData = {
  */
 type AuthStateData = {
   isAuthenticated: boolean;
+  isAuthLoading: boolean;
   session: AppSessionData | null;
   user: UserData | null;
 };
@@ -102,9 +104,13 @@ const readStoredAuthSessionService = (): {
   }
 };
 
-/** Stable server-safe initial state — identical on server and client first render */
+/**
+ * Stable server-safe initial state — identical on server and client first render.
+ * isAuthLoading stays true until the client useEffect resolves localStorage.
+ */
 const INITIAL_AUTH_STATE: AuthStateData = {
   isAuthenticated: false,
+  isAuthLoading: true,
   session: null,
   user: null,
 };
@@ -120,18 +126,8 @@ export function AuthProvider({ children }: AuthProviderPropsData) {
   // Define Refs
 
   // Define States
-  const [authState, setAuthState] = useState<AuthStateData>(() => {
-    if (typeof window === "undefined") {
-      return INITIAL_AUTH_STATE;
-    }
-
-    const storedAuthState = readStoredAuthSessionService();
-    return {
-      isAuthenticated: storedAuthState.isAuthenticated,
-      session: storedAuthState.session,
-      user: storedAuthState.user,
-    };
-  });
+  // Always start from INITIAL_AUTH_STATE so server and client first renders match.
+  const [authState, setAuthState] = useState<AuthStateData>(INITIAL_AUTH_STATE);
 
   // Helper Functions
   /**
@@ -143,6 +139,7 @@ export function AuthProvider({ children }: AuthProviderPropsData) {
         // Clear auth state and persisted auth payload.
         setAuthState({
           isAuthenticated: false,
+          isAuthLoading: false,
           session: null,
           user: null,
         });
@@ -164,6 +161,7 @@ export function AuthProvider({ children }: AuthProviderPropsData) {
 
       setAuthState({
         isAuthenticated: true,
+        isAuthLoading: false,
         session: sessionData,
         user: userData,
       });
@@ -191,6 +189,16 @@ export function AuthProvider({ children }: AuthProviderPropsData) {
   );
 
   // Use Effects
+  useEffect(() => {
+    // Runs only on client after hydration — safe to read localStorage here.
+    const storedAuthState = readStoredAuthSessionService();
+    setAuthState({
+      isAuthenticated: storedAuthState.isAuthenticated,
+      isAuthLoading: false,
+      session: storedAuthState.session,
+      user: storedAuthState.user,
+    });
+  }, []);
 
   return (
     // Provide centralized auth session state and actions.

@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
+import MailSendEmailMessage from "@/components/icons/neevo-icons/MailSendEmailMessage";
 import { LeadDetailsProfile } from "@/components/sales/LeadDetailsProfile";
 import { LeadDetailsTabs } from "@/components/sales/LeadDetailsTabs";
 import { ActivityTab } from "@/components/sales/leads/ActivityTab";
@@ -360,8 +361,8 @@ export default function LeadDetailsPage() {
 
   if (leadRequestState.isLeadLoading || !leadProfileView) {
     return (
-      <section className="bg-n-100">
-        <div className="flex min-h-screen items-center justify-center">
+      <section className="bg-n-100 h-full">
+        <div className="flex h-full items-center justify-center">
           <p className="font-secondary text-n-600 text-sm">Loading lead...</p>
         </div>
       </section>
@@ -369,14 +370,16 @@ export default function LeadDetailsPage() {
   }
 
   return (
-    <section className="bg-n-100">
+    <section className="bg-n-100 h-full">
       {/* Lead details page shell */}
-      <div className="flex flex-col">
-        {/* Lead details header */}
-        <Header title="Lead Details" />
+      <div className="flex h-full flex-col">
+        {/* Lead details header — sticky, does not scroll */}
+        <div className="shrink-0">
+          <Header title="Lead Details" />
+        </div>
 
         {/* Lead details scroll content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
           {/* Lead profile */}
           <LeadDetailsProfile
             age={leadProfileView.age}
@@ -431,19 +434,44 @@ export default function LeadDetailsPage() {
 
                   {/* Notes tab */}
                   {isNotesTabSelected ? (
-                    <NotesTab
-                      notes={notes}
-                      noteInputValue={noteInputValue}
-                      onNoteInputChange={setNoteInputValue}
-                      onSendNote={handleSendLeadNote}
-                      isSending={leadRequestState.isSendingNote}
-                    />
+                    <NotesTab notes={notes} />
                   ) : null}
                 </motion.div>
               </AnimatePresence>
             </div>
           </div>
         </div>
+
+        {/* Note input bar — visible only on Notes tab, never scrolls */}
+        {isNotesTabSelected ? (
+          <div className="border-n-200 bg-n-50 shrink-0 border-t px-3.5 pt-4 pb-5">
+            <div className="border-n-200 bg-n-50 flex min-h-14 items-center gap-2 rounded-[32px] border py-2 pr-2 pl-4">
+              {/* Note input */}
+              <input
+                type="text"
+                aria-label="Add a note about this lead"
+                placeholder="Add a note about this lead..."
+                value={noteInputValue}
+                onChange={(event) => setNoteInputValue(event.target.value)}
+                className="font-secondary text-n-800 placeholder:text-n-400 min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+              />
+
+              {/* Send note action */}
+              <button
+                type="button"
+                onClick={handleSendLeadNote}
+                disabled={leadRequestState.isSendingNote}
+                aria-label="Send note"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-600 disabled:opacity-50"
+              >
+                <MailSendEmailMessage
+                  primaryColor="var(--color-n-50)"
+                  className="size-4.5"
+                />
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );
