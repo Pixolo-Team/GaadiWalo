@@ -4,6 +4,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
+// TYPES //
+import type { ApiResponseData } from "@/types/api";
+import type {
+  LeadActivityData,
+  LeadDetailsData,
+  LeadNoteData,
+  LeadRequestStateData,
+  LeadStatusFormStateData,
+  LeadStatusData,
+  SalesLeadDetailsTabData,
+  LeadStatusOptionData,
+} from "@/types/leads";
+
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
 import MailSendEmailMessage from "@/components/icons/neevo-icons/MailSendEmailMessage";
@@ -15,6 +28,7 @@ import { NotesTab } from "@/components/sales/leads/NotesTab";
 
 // LIBRARIES //
 import { AnimatePresence, motion } from "motion/react";
+import { toast } from "sonner";
 
 // UTILS //
 import { tabSlideVariants } from "@/lib/animations";
@@ -40,22 +54,6 @@ import {
   getLeadStatusOptions,
   getLostReasonOptions,
 } from "@/services/leads.service";
-
-// TYPES //
-import type { ApiResponseData } from "@/types/api";
-import type {
-  LeadActivityData,
-  LeadDetailsData,
-  LeadNoteData,
-  LeadRequestStateData,
-  LeadStatusFormStateData,
-  LeadStatusData,
-  SalesLeadDetailsTabData,
-  LeadStatusOptionData,
-} from "@/types/leads";
-
-// OTHERS //
-import { toast } from "sonner";
 
 /** Lead Details Page */
 export default function LeadDetailsPage() {
