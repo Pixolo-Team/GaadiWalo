@@ -1,6 +1,3 @@
-// COMPONENTS //
-import MailSendEmailMessage from "@/components/icons/neevo-icons/MailSendEmailMessage";
-
 interface LeadNoteData {
   author: string;
   key: string;
@@ -10,21 +7,11 @@ interface LeadNoteData {
 }
 
 interface NotesTabPropsData {
-  isSending: boolean;
-  noteInputValue: string;
-  onNoteInputChange: (value: string) => void;
-  onSendNote: () => void;
   notes: ReadonlyArray<LeadNoteData>;
 }
 
-/** Lead Notes Tab */
-export function NotesTab({
-  isSending,
-  noteInputValue,
-  onNoteInputChange,
-  onSendNote,
-  notes,
-}: NotesTabPropsData) {
+/** Lead Notes Tab — displays note bubbles only. Input bar lives in the page layout. */
+export function NotesTab({ notes }: NotesTabPropsData) {
   // Define Navigation
 
   // Define Context
@@ -38,7 +25,7 @@ export function NotesTab({
   // Use Effects
 
   return (
-    <div className="flex min-h-[660px] flex-col pb-24">
+    <div className="flex flex-col">
       {/* Notes list */}
       <div className="flex flex-col gap-3 py-3">
         {notes.map((noteItem) => {
@@ -85,34 +72,6 @@ export function NotesTab({
         })}
       </div>
 
-      {/* Sticky note input */}
-      <div className="border-n-200 bg-n-50 fixed right-1/2 bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 border-t px-3.5 pt-4 pb-5">
-        <div className="border-n-200 bg-n-50 flex min-h-14 items-center gap-2 rounded-[32px] border py-2 pr-2 pl-4">
-          {/* Note input */}
-          <input
-            type="text"
-            aria-label="Add a note about this lead"
-            placeholder="Add a note about this lead..."
-            value={noteInputValue}
-            onChange={(event) => onNoteInputChange(event.target.value)}
-            className="font-secondary text-n-800 placeholder:text-n-400 min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
-          />
-
-          {/* Send note action */}
-          <button
-            type="button"
-            onClick={onSendNote}
-            disabled={isSending}
-            aria-label="Send note"
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-600 disabled:opacity-50"
-          >
-            <MailSendEmailMessage
-              primaryColor="var(--color-n-50)"
-              className="size-4.5"
-            />
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

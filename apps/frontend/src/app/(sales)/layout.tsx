@@ -3,18 +3,16 @@
 // REACT //
 import { useEffect } from "react";
 import type React from "react";
+import { usePathname, useRouter } from "next/navigation";
+
+// HOOKS //
+import { useAuthContext } from "@/context/AuthContext";
 
 // COMPONENTS //
 import { BottomBar } from "@/components/sales/BottomBar";
-import { useAuthContext } from "@/context/AuthContext";
 
-// CONSTANTS //
+// MODULES //
 import { ROUTES } from "@/constants/routes";
-
-// NAVIGATION //
-import { usePathname, useRouter } from "next/navigation";
-
-// LIBRARIES //
 
 /** Sales Layout Component */
 export default function SalesLayout({
@@ -27,7 +25,7 @@ export default function SalesLayout({
   const pathname = usePathname();
 
   // Define Context
-  const { isAuthenticated } = useAuthContext();
+  const { isAuthenticated, isAuthLoading } = useAuthContext();
 
   // Define Refs
 
@@ -38,12 +36,14 @@ export default function SalesLayout({
 
   // Use Effects
   useEffect(() => {
-    if (!isAuthenticated) {
+    // Only redirect once auth state is resolved — avoids false redirects during hydration.
+    if (!isAuthLoading && !isAuthenticated) {
       router.replace(ROUTES.auth.login);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthLoading, isAuthenticated, router]);
 
-  if (!isAuthenticated) {
+  // Render nothing while auth is being resolved to avoid hydration mismatch.
+  if (isAuthLoading || !isAuthenticated) {
     return null;
   }
 

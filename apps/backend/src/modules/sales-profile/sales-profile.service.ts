@@ -930,17 +930,11 @@ export const createSalesProfileService = (
   }): Record<string, unknown> => {
     const updatePayload: Record<string, unknown> = {};
 
-    if (
-      languagePreference !== undefined &&
-      "language_preference" in userRecord
-    ) {
+    if (languagePreference !== undefined) {
       updatePayload.language_preference = languagePreference;
     }
 
-    if (
-      notificationPreferences !== undefined &&
-      "notification_preferences_json" in userRecord
-    ) {
+    if (notificationPreferences !== undefined) {
       updatePayload.notification_preferences_json = notificationPreferences;
     }
 
