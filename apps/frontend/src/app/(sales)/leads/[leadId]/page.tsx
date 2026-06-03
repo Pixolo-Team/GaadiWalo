@@ -362,13 +362,52 @@ export default function LeadDetailsPage() {
   if (leadRequestState.isLeadLoading || !leadProfileView) {
     return (
       <section className="bg-n-100 h-full">
-        <div className="flex flex-col gap-4 p-6 pt-16">
-          {Array.from({ length: 5 }).map((_, indexItem) => (
-            <div
-              key={indexItem}
-              className="bg-n-200 h-16 animate-pulse rounded-2xl"
-            />
-          ))}
+        <div className="flex h-full flex-col">
+          {/* Header skeleton */}
+          <div className="border-n-200 bg-n-50 flex shrink-0 items-center gap-3.5 border-b px-5 py-4">
+            <div className="bg-n-200 size-9 animate-pulse rounded-full" />
+            <div className="bg-n-200 h-4 w-28 animate-pulse rounded-full" />
+          </div>
+
+          <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
+            {/* Profile card skeleton */}
+            <div className="bg-n-50 px-6 py-5">
+              <div className="flex animate-pulse items-center gap-4">
+                <div className="bg-n-200 size-14 shrink-0 rounded-full" />
+                <div className="flex flex-1 flex-col gap-2">
+                  <div className="bg-n-200 h-4 w-32 rounded-full" />
+                  <div className="bg-n-200 h-5 w-16 rounded-full" />
+                </div>
+              </div>
+              {/* Phone + icons row */}
+              <div className="mt-4 flex animate-pulse items-center gap-3">
+                <div className="bg-n-200 h-4 w-28 rounded-full" />
+                <div className="bg-n-200 size-8 rounded-full" />
+                <div className="bg-n-200 size-8 rounded-full" />
+                <div className="bg-n-200 ml-auto size-8 rounded-full" />
+              </div>
+            </div>
+
+            {/* Tab bar skeleton */}
+            <div className="bg-n-50 border-n-200 flex gap-2 border-b px-6 py-3">
+              {Array.from({ length: 3 }).map((_, indexItem) => (
+                <div
+                  key={indexItem}
+                  className="bg-n-200 h-8 w-20 animate-pulse rounded-full"
+                />
+              ))}
+            </div>
+
+            {/* Content sections skeleton */}
+            <div className="flex flex-col gap-3 px-6 py-4">
+              {Array.from({ length: 4 }).map((_, indexItem) => (
+                <div
+                  key={indexItem}
+                  className="bg-n-200 h-14 animate-pulse rounded-2xl"
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
     );
