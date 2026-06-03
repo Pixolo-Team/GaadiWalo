@@ -154,10 +154,30 @@ export default function ProfilePage() {
   if (isProfileLoading) {
     return (
       <section className="bg-n-50 h-full">
-        <div className="flex h-full items-center justify-center">
-          <p className="font-secondary text-n-600 text-sm">
-            Loading profile...
-          </p>
+        {/* Profile top summary skeleton */}
+        <div className="bg-gradient-to-br from-blue-700 to-blue-900 px-6 pb-8 pt-10">
+          <div className="flex animate-pulse flex-col items-center gap-3">
+            <div className="bg-blue-500/40 size-20 rounded-full" />
+            <div className="bg-blue-500/40 h-4 w-32 rounded-full" />
+            <div className="bg-blue-500/40 h-3 w-24 rounded-full" />
+          </div>
+        </div>
+        {/* Profile content skeleton */}
+        <div className="flex flex-col gap-4 px-6 py-6">
+          <div className="flex gap-2">
+            {Array.from({ length: 3 }).map((_, indexItem) => (
+              <div
+                key={indexItem}
+                className="bg-n-200 h-16 flex-1 animate-pulse rounded-2xl"
+              />
+            ))}
+          </div>
+          {Array.from({ length: 4 }).map((_, indexItem) => (
+            <div
+              key={indexItem}
+              className="bg-n-200 h-14 animate-pulse rounded-2xl"
+            />
+          ))}
         </div>
       </section>
     );

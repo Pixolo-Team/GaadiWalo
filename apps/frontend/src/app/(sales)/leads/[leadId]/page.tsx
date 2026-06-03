@@ -362,8 +362,22 @@ export default function LeadDetailsPage() {
   if (leadRequestState.isLeadLoading || !leadProfileView) {
     return (
       <section className="bg-n-100 h-full">
-        <div className="flex h-full items-center justify-center">
-          <p className="font-secondary text-n-600 text-sm">Loading lead...</p>
+        {/* Lead header skeleton */}
+        <div className="bg-gradient-to-br from-blue-700 to-blue-900 px-6 pb-8 pt-10">
+          <div className="flex animate-pulse flex-col gap-3">
+            <div className="bg-blue-500/40 h-5 w-36 rounded-full" />
+            <div className="bg-blue-500/40 h-4 w-24 rounded-full" />
+            <div className="bg-blue-500/40 mt-1 h-7 w-20 rounded-full" />
+          </div>
+        </div>
+        {/* Lead content skeleton */}
+        <div className="flex flex-col gap-4 p-6">
+          {Array.from({ length: 4 }).map((_, indexItem) => (
+            <div
+              key={indexItem}
+              className="bg-n-200 h-16 animate-pulse rounded-2xl"
+            />
+          ))}
         </div>
       </section>
     );

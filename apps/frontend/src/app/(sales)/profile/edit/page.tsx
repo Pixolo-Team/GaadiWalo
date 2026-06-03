@@ -223,10 +223,13 @@ export default function EditProfilePage() {
   if (isProfileLoading) {
     return (
       <section className="bg-n-100 h-full">
-        <div className="flex h-full items-center justify-center">
-          <p className="font-secondary text-n-600 text-sm">
-            Loading profile...
-          </p>
+        <div className="flex flex-col gap-5 p-6 pt-16">
+          {Array.from({ length: 5 }).map((_, indexItem) => (
+            <div key={indexItem} className="flex flex-col gap-2">
+              <div className="bg-n-200 h-3 w-20 animate-pulse rounded-full" />
+              <div className="bg-n-200 h-12 w-full animate-pulse rounded-xl" />
+            </div>
+          ))}
         </div>
       </section>
     );

@@ -578,11 +578,21 @@ export default function LeadsPage() {
 
               {/* Leads list — keyed by status so cards re-animate on tab switch */}
               <div key={selectedStatusQueryValue} className="flex flex-col gap-3">
-                {isSalesLeadsLoading ? (
-                  <p className="font-secondary text-n-600 py-6 text-center text-sm">
-                    Loading leads...
-                  </p>
-                ) : null}
+                {isSalesLeadsLoading
+                  ? Array.from({ length: 6 }).map((_, indexItem) => (
+                      <div
+                        key={indexItem}
+                        className="bg-n-50 flex animate-pulse items-center gap-3 rounded-2xl p-4"
+                      >
+                        <div className="bg-n-200 size-10 shrink-0 rounded-full" />
+                        <div className="flex flex-1 flex-col gap-2">
+                          <div className="bg-n-200 h-3.5 w-2/3 rounded-full" />
+                          <div className="bg-n-200 h-3 w-1/2 rounded-full" />
+                        </div>
+                        <div className="bg-n-200 h-5 w-14 rounded-full" />
+                      </div>
+                    ))
+                  : null}
 
                 {!isSalesLeadsLoading && filteredLeads.length === 0 ? (
                   <p className="font-secondary text-n-600 py-6 text-center text-sm">
