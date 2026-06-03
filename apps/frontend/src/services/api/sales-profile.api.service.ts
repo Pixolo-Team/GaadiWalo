@@ -1,8 +1,5 @@
-// MODULES //
-import type { AxiosRequestConfig } from "axios";
-import axios from "axios";
-
 // TYPES //
+import type { AxiosRequestConfig } from "axios";
 import type { ApiResponseData } from "@/types/api";
 import type {
   ChangeSalesPasswordRequestData,
@@ -11,8 +8,18 @@ import type {
   UpdateSalesProfileRequestData,
 } from "@/types/profile";
 
-// CONSTANTS //
+// LIBRARIES //
+import axios from "axios";
+
+// MODULES //
 import { CONSTANTS } from "@/constants/constants";
+
+/**
+ * Defines the success payload for a password change response.
+ */
+export interface ChangePasswordSuccessData {
+  success: boolean;
+}
 
 /**
  * Builds authorization header from stored access token.
@@ -69,7 +76,7 @@ export const updateSalesProfileRequest = async (
 export const changeSalesPasswordRequest = async (
   userCode: string,
   payload: ChangeSalesPasswordRequestData,
-): Promise<ApiResponseData<{ success: boolean }>> => {
+): Promise<ApiResponseData<ChangePasswordSuccessData>> => {
   const config: AxiosRequestConfig = {
     data: payload,
     headers: getAuthHeadersService(),
@@ -83,14 +90,17 @@ export const changeSalesPasswordRequest = async (
 };
 
 /**
- * Fetches performance details for one sales user code.
+ * Fetches performance details for one sales user code and optional period.
+ * Period format: "YYYY-MM" (e.g. "2026-06"). Omit for current month.
  */
 export const getSalesPerformanceRequest = async (
   userCode: string,
+  period?: string,
 ): Promise<ApiResponseData<SalesPerformanceResponseData>> => {
   const config: AxiosRequestConfig = {
     headers: getAuthHeadersService(),
     method: "get",
+    params: period ? { period } : undefined,
     url: `${CONSTANTS.API_URL}/sales/profile/${userCode}/performance`,
   };
 
