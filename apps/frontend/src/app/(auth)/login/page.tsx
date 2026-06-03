@@ -19,13 +19,15 @@ import { Button } from "@/components/ui/button";
 // API SERVICES //
 import { loginRequest } from "@/services/api/auth.api.service";
 
-// CONSTANTS //
+// HOOKS //
+import { useAuthContext } from "@/context/AuthContext";
+
+// LIBRARIES //
+import { toast } from "sonner";
+
+// MODULES //
 import { CONSTANTS } from "@/constants/constants";
 import { ROUTES } from "@/constants/routes";
-
-// OTHERS //
-import { useAuthContext } from "@/context/AuthContext";
-import { toast } from "sonner";
 
 /** Login Page Component */
 export default function LoginPage() {

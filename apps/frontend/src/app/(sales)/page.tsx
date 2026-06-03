@@ -51,16 +51,14 @@ import {
   getLeadVehicleName,
 } from "@/services/leads.service";
 
-// CONSTANTS //
-import { ROUTES } from "@/constants/routes";
-
-// OTHERS //
-import { useAuthContext } from "@/context/AuthContext";
-import { toast } from "sonner";
-
 // HOOKS //
+import { useAuthContext } from "@/context/AuthContext";
 
 // LIBRARIES //
+import { toast } from "sonner";
+
+// MODULES //
+import { ROUTES } from "@/constants/routes";
 
 /**
  * Renders the sales home screen with live dashboard data.
