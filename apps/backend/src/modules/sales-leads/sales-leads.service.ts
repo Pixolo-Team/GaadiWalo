@@ -185,6 +185,9 @@ interface SalesLeadsServiceDependenciesData {
   getLeadActivityRecords: (
     leadId: string,
   ) => Promise<SalesLeadActivityRecordData[]>;
+  getLatestStatusChangesByLeadIds?: (
+    leadIds: string[],
+  ) => Promise<SalesLeadActivityRecordData[]>;
   getLeadRecordsByUserIdentifier?: (
     userIdentifier: string,
   ) => Promise<SalesLeadRecordData[]>;
@@ -680,6 +683,19 @@ const createDefaultSalesLeadsServiceDependencies =
 
         return executeReadRequest<SalesLeadActivityRecordData[]>(requestUrl);
       },
+      getLatestStatusChangesByLeadIds: async (leadIds) => {
+        if (leadIds.length === 0) {
+          return [];
+        }
+
+        // One batched read of status changes for all listed leads, newest first.
+        const requestUrl = createSupabaseTableUrl("lead_status_log");
+        requestUrl.searchParams.set("select", "*");
+        requestUrl.searchParams.set("lead_id", `in.(${leadIds.join(",")})`);
+        requestUrl.searchParams.set("order", "updated_at.desc");
+
+        return executeReadRequest<SalesLeadActivityRecordData[]>(requestUrl);
+      },
       getLeadUserRecords: async (leadId) => {
         const requestUrl = createSupabaseTableUrl("lead_user");
         requestUrl.searchParams.set("select", "*");
@@ -1160,7 +1176,10 @@ export const createSalesLeadsService = (
   /**
    * Maps full lead details into the lighter list payload.
    */
-  const mapLeadListItem = (leadDetails: LeadDetailsData): LeadListItemData => {
+  const mapLeadListItem = (
+    leadDetails: LeadDetailsData,
+    statusChangedAt: string | null = null,
+  ): LeadListItemData => {
     return {
       id: leadDetails.id,
       fullName: leadDetails.fullName,
@@ -1175,6 +1194,7 @@ export const createSalesLeadsService = (
       assignedTo: leadDetails.assignedTo,
       createdAt: leadDetails.createdAt,
       updatedAt: leadDetails.updatedAt,
+      statusChangedAt,
     };
   };
 
@@ -1593,6 +1613,28 @@ export const createSalesLeadsService = (
           });
         }
 
+        const accessibleLeadIds = Array.from(accessibleLeadMap.keys());
+
+        // Batch-fetch the most recent status change per lead so the list can
+        // report when each lead last changed status (e.g. when it became WON).
+        const latestStatusChangeRecords =
+          dependencies.getLatestStatusChangesByLeadIds
+            ? await dependencies.getLatestStatusChangesByLeadIds(
+                accessibleLeadIds,
+              )
+            : [];
+        const latestStatusChangeByLeadId = new Map<string, string | null>();
+
+        // Records arrive newest-first, so the first seen per lead is its latest.
+        for (const statusChangeRecord of latestStatusChangeRecords) {
+          if (!latestStatusChangeByLeadId.has(statusChangeRecord.lead_id)) {
+            latestStatusChangeByLeadId.set(
+              statusChangeRecord.lead_id,
+              statusChangeRecord.updated_at,
+            );
+          }
+        }
+
         const leadItems = await Promise.all(
           Array.from(accessibleLeadMap.values())
             .sort((leftItem, rightItem) => {
@@ -1607,7 +1649,10 @@ export const createSalesLeadsService = (
             })
             .map(async (leadRecordItem) => {
               const leadDetails = await mapLeadDetails(leadRecordItem);
-              return mapLeadListItem(leadDetails);
+              return mapLeadListItem(
+                leadDetails,
+                latestStatusChangeByLeadId.get(leadRecordItem.id) ?? null,
+              );
             }),
         );
 

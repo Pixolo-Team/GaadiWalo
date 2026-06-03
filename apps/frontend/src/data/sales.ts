@@ -142,6 +142,47 @@ export const salesProfileLanguageOptions = [
 ] as const;
 
 /**
+ * Ordered list of month names used in the performance period filter.
+ */
+export const salesPerformanceMonthList = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
+/**
+ * Maps month name to zero-padded numeric string for YYYY-MM period format.
+ */
+export const salesPerformanceMonthToNumber: Record<string, string> = {
+  January: "01",
+  February: "02",
+  March: "03",
+  April: "04",
+  May: "05",
+  June: "06",
+  July: "07",
+  August: "08",
+  September: "09",
+  October: "10",
+  November: "11",
+  December: "12",
+};
+
+/**
+ * Number of past years to include in the performance year filter.
+ */
+export const SALES_PERFORMANCE_YEAR_RANGE = 2;
+
+/**
  * Sales notification preference groups.
  */
 export const salesNotificationPreferenceGroups = [

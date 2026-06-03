@@ -207,6 +207,9 @@ interface LeadListItemData {
   assignedTo: LeadUserSummaryData | null;
   createdAt: string | null;
   updatedAt: string | null;
+  // Timestamp of the lead's most recent status change (from lead_status_log).
+  // For a lead currently in WON, this is when it became WON.
+  statusChangedAt: string | null;
 }
 ```
 
