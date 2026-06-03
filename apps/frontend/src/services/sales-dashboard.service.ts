@@ -351,20 +351,22 @@ export const isTodayService = (dateValue: string | null | undefined): boolean =>
 
 /**
  * Resolves whether a lead should count in Won Today summary.
+ * Relies only on the status-change timestamp (when the lead became WON),
+ * never on updatedAt/createdAt, which change on unrelated edits and would
+ * over-count the metric.
  */
 export const isWonTodayService = (leadItem: LeadListItemData): boolean => {
   if (leadItem.status !== "WON") {
     return false;
   }
 
-  return isTodayService(
+  const wonTimestamp =
     leadItem.wonAt ??
-      leadItem.statusChangedAt ??
-      leadItem.statusUpdatedAt ??
-      leadItem.updatedAt ??
-      leadItem.createdAt ??
-      null,
-  );
+    leadItem.statusChangedAt ??
+    leadItem.statusUpdatedAt ??
+    null;
+
+  return isTodayService(wonTimestamp);
 };
 
 /**
