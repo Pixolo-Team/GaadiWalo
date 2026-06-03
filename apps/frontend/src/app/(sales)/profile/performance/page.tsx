@@ -195,10 +195,32 @@ export default function ProfilePerformancePage() {
 
         {/* Loading state */}
         {isPerformanceLoading ? (
-          <div className="flex flex-1 items-center justify-center">
-            <p className="font-secondary text-n-600 text-sm">
-              Loading performance...
-            </p>
+          <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
+            {/* Profile summary skeleton */}
+            <div className="bg-gradient-to-br from-blue-700 to-blue-900 px-6 pb-8 pt-10">
+              <div className="flex animate-pulse flex-col items-center gap-3">
+                <div className="bg-blue-500/40 size-20 rounded-full" />
+                <div className="bg-blue-500/40 h-4 w-32 rounded-full" />
+                <div className="bg-blue-500/40 h-3 w-24 rounded-full" />
+              </div>
+            </div>
+            {/* Metrics + content skeletons */}
+            <div className="flex flex-col gap-6 px-6 py-6">
+              <div className="grid grid-cols-2 gap-3">
+                {Array.from({ length: 4 }).map((_, indexItem) => (
+                  <div
+                    key={indexItem}
+                    className="bg-n-200 h-20 animate-pulse rounded-2xl"
+                  />
+                ))}
+              </div>
+              {Array.from({ length: 3 }).map((_, indexItem) => (
+                <div
+                  key={indexItem}
+                  className="bg-n-200 h-28 animate-pulse rounded-2xl"
+                />
+              ))}
+            </div>
           </div>
         ) : (
           <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">
