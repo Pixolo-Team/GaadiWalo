@@ -223,13 +223,32 @@ export default function EditProfilePage() {
   if (isProfileLoading) {
     return (
       <section className="bg-n-100 h-full">
-        <div className="flex flex-col gap-5 p-6 pt-16">
-          {Array.from({ length: 5 }).map((_, indexItem) => (
-            <div key={indexItem} className="flex flex-col gap-2">
-              <div className="bg-n-200 h-3 w-20 animate-pulse rounded-full" />
-              <div className="bg-n-200 h-12 w-full animate-pulse rounded-xl" />
+        <div className="flex h-full flex-col">
+          {/* Header skeleton */}
+          <div className="border-n-200 bg-n-50 flex shrink-0 items-center gap-3.5 border-b px-5 py-4">
+            <div className="bg-n-200 size-9 animate-pulse rounded-full" />
+            <div className="bg-n-200 h-4 w-24 animate-pulse rounded-full" />
+          </div>
+
+          {/* Content skeleton */}
+          <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-6 py-6">
+            <div className="flex flex-col gap-6">
+              {/* Avatar skeleton */}
+              <div className="flex animate-pulse justify-center">
+                <div className="bg-n-200 size-20 rounded-full" />
+              </div>
+
+              {/* Form field skeletons */}
+              <div className="flex flex-col gap-4">
+                {Array.from({ length: 5 }).map((_, indexItem) => (
+                  <div key={indexItem} className="flex flex-col gap-1.5">
+                    <div className="bg-n-200 h-3 w-20 animate-pulse rounded-full" />
+                    <div className="bg-n-200 h-12 w-full animate-pulse rounded-xl" />
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
+          </div>
         </div>
       </section>
     );
