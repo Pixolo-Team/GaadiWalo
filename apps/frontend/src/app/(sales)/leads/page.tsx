@@ -19,6 +19,7 @@ import type {
 // COMPONENTS //
 import FilterDropdown from "@/components/common/FilterDropdown";
 import { Header } from "@/components/common/Header";
+import { PoweredByFooter } from "@/components/common/PoweredByFooter";
 import { SearchInput } from "@/components/common/SearchInput";
 import HorizontalSlider2 from "@/components/icons/neevo-icons/HorizontalSlider2";
 import { CountPlaceholder } from "@/components/sales/CountPlaceholder";
@@ -606,6 +607,9 @@ export default function LeadsPage() {
                   : null}
               </div>
             </div>
+
+            {/* Powered by GaadiWalo */}
+            <PoweredByFooter />
           </div>
         </div>
 

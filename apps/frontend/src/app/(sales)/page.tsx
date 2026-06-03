@@ -18,6 +18,7 @@ import { PhaseCards } from "@/components/sales/PhaseCards";
 import { QuickActionCard } from "@/components/sales/QuickActionCard";
 import { SalesDashboardHeader } from "@/components/sales/SalesDashboardHeader";
 import { SectionHeader } from "@/components/sales/SectionHeader";
+import { PoweredByFooter } from "@/components/common/PoweredByFooter";
 
 // API SERVICES //
 import {
@@ -321,6 +322,9 @@ export default function Home() {
               />
             </div>
           </div>
+
+          {/* Powered by GaadiWalo */}
+          <PoweredByFooter />
         </div>
       </div>
     </section>

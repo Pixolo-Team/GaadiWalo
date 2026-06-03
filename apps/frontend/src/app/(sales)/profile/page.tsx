@@ -13,6 +13,7 @@ import Motion from "@/components/animations/Motion";
 import MetricItem from "@/components/sales/profile/MetricItem";
 import ProfileMenuItem from "@/components/sales/profile/ProfileMenuItem";
 import ProfileTopSummary from "@/components/sales/profile/ProfileTopSummary";
+import { PoweredByFooter } from "@/components/common/PoweredByFooter";
 
 // SERVICES //
 import { logoutRequest } from "@/services/api/auth.api.service";
@@ -277,6 +278,9 @@ export default function ProfilePage() {
                 />
               </Motion>
             </Motion>
+
+            {/* Powered by GaadiWalo */}
+            <PoweredByFooter />
           </div>
         </div>
       </div>
