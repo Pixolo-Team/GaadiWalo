@@ -446,9 +446,9 @@ interface DetailRowPropsData {
 
 function DetailRow({ label, value }: DetailRowPropsData) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <p className="font-secondary text-n-500 text-xs">{label}</p>
-      <p className="text-n-800 text-sm font-medium">{value}</p>
+    <div className="flex items-start justify-between gap-4">
+      <p className="font-secondary text-n-500 shrink-0 text-xs">{label}</p>
+      <p className="text-n-800 min-w-0 break-all text-right text-sm font-medium">{value}</p>
     </div>
   );
 }
