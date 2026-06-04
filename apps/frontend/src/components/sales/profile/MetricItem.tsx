@@ -4,15 +4,23 @@
 interface MetricItemPropsData {
   className?: string;
   helper: string;
+  helperTone?: "negative" | "neutral" | "positive";
   label: string;
   tone: "blue" | "green" | "neutral" | "red";
   value: string;
 }
 
+const helperToneStyles: Record<string, string> = {
+  positive: "text-green-600",
+  negative: "text-red-500",
+  neutral: "text-n-600",
+};
+
 /** Renders one metric card in profile summary metrics. */
 export default function MetricItem({
   className,
   helper,
+  helperTone = "neutral",
   label,
   tone,
   value,
@@ -41,7 +49,7 @@ export default function MetricItem({
       >
         {value}
       </p>
-      <p className="font-secondary text-n-600 text-xs">{helper}</p>
+      <p className={`font-secondary text-xs ${helperToneStyles[helperTone]}`}>{helper}</p>
     </div>
   );
 }
