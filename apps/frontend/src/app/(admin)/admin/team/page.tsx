@@ -28,6 +28,32 @@ const statusOptions = [
   { label: "Inactive", value: "inactive" },
 ] as const;
 
+/** Returns a deterministic avatar background color class based on name initial. */
+const getAvatarColorService = (name: string): string => {
+  const colors = [
+    "bg-blue-100 text-blue-700",
+    "bg-purple-100 text-purple-700",
+    "bg-amber-100 text-amber-700",
+    "bg-green-100 text-green-700",
+    "bg-rose-100 text-rose-700",
+    "bg-cyan-100 text-cyan-700",
+  ];
+  const index = (name.charCodeAt(0) ?? 0) % colors.length;
+  return colors[index] ?? colors[0];
+};
+
+/** Formats a joinedAt ISO date string to "Jan 2025" format. */
+const formatJoinedDateService = (joinedAt: string): string => {
+  const date = new Date(joinedAt);
+  return date.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+};
+
+/** Computes average leads per day for the current month. */
+const getAvgPerDayService = (leads: number): number => {
+  const dayOfMonth = Math.max(new Date().getDate(), 1);
+  return Math.round(leads / dayOfMonth);
+};
+
 /** Admin Team Management Page */
 export default function AdminTeamPage() {
   // Define Navigation
@@ -93,7 +119,7 @@ export default function AdminTeamPage() {
             <SearchInput
               value={searchValue}
               onChange={setSearchValue}
-              placeholder="Search by name, email, phone..."
+              placeholder="Search salesperson..."
             />
 
             {/* Status filter */}
@@ -114,19 +140,36 @@ export default function AdminTeamPage() {
               ))}
             </div>
 
-            {/* Team count */}
-            <p className="font-secondary text-n-500 text-xs">
-              {isLoading ? "Loading..." : `${teamItems.length} members`}
-            </p>
-
             {/* Team list */}
             <div className="flex flex-col gap-3">
               {isLoading
                 ? Array.from({ length: 4 }).map((_, indexItem) => (
                     <div
                       key={indexItem}
-                      className="bg-n-200 h-20 animate-pulse rounded-2xl"
-                    />
+                      className="bg-n-50 animate-pulse rounded-2xl p-4"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="bg-n-200 size-12 shrink-0 rounded-full" />
+                        <div className="flex flex-1 flex-col gap-2">
+                          <div className="bg-n-200 h-4 w-32 rounded-full" />
+                          <div className="bg-n-200 h-3 w-24 rounded-full" />
+                          <div className="bg-n-200 h-5 w-20 rounded-full" />
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="bg-n-200 h-6 w-6 rounded-full" />
+                          <div className="bg-n-200 h-3 w-8 rounded-full" />
+                        </div>
+                      </div>
+                      <div className="bg-n-200 mt-4 h-px w-full" />
+                      <div className="mt-3 flex justify-between">
+                        {Array.from({ length: 3 }).map((__, statIndex) => (
+                          <div key={statIndex} className="flex flex-col items-center gap-1">
+                            <div className="bg-n-200 h-4 w-8 rounded-full" />
+                            <div className="bg-n-200 h-3 w-12 rounded-full" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ))
                 : null}
 
@@ -144,44 +187,90 @@ export default function AdminTeamPage() {
                       onClick={() =>
                         router.push(ROUTES.admin.teamMember(memberItem.id))
                       }
-                      className="bg-n-50 flex w-full items-center gap-3 rounded-2xl p-4 text-left"
+                      className="bg-n-50 w-full rounded-2xl p-4 text-left shadow-sm"
                     >
-                      {/* Avatar */}
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
-                        <span className="font-secondary text-sm font-bold text-blue-700">
-                          {memberItem.fullName.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-
-                      {/* Info */}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-n-800 truncate text-sm font-semibold">
-                          {memberItem.fullName}
-                        </p>
-                        <p className="font-secondary text-n-500 truncate text-xs">
-                          {memberItem.email}
-                        </p>
-                        <p className="font-secondary text-n-400 text-xs">
-                          {memberItem.branch?.name ?? "—"} ·{" "}
-                          {memberItem.role?.name ?? "—"}
-                        </p>
-                      </div>
-
-                      {/* Status + stats */}
-                      <div className="flex flex-col items-end gap-1">
-                        <span
-                          className={`font-secondary rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                            memberItem.status === "Active"
-                              ? "bg-green-100 text-green-600"
-                              : "bg-n-200 text-n-500"
-                          }`}
+                      {/* Top row — avatar, info, won */}
+                      <div className="flex items-start gap-3">
+                        {/* Avatar */}
+                        <div
+                          className={`flex size-12 shrink-0 items-center justify-center rounded-full text-sm font-bold ${getAvatarColorService(memberItem.fullName)}`}
                         >
-                          {memberItem.status}
-                        </span>
-                        <p className="font-secondary text-n-500 text-[10px]">
-                          {memberItem.thisMonth.leads} leads ·{" "}
-                          {memberItem.thisMonth.won} won
-                        </p>
+                          {memberItem.fullName
+                            .split(" ")
+                            .slice(0, 2)
+                            .map((wordItem) => wordItem.charAt(0).toUpperCase())
+                            .join("")}
+                        </div>
+
+                        {/* Name + ID + badge */}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-n-900 truncate text-base font-bold">
+                            {memberItem.fullName}
+                          </p>
+                          <p className="font-secondary text-n-500 text-xs">
+                            ID: {memberItem.userId} · {memberItem.branch?.name ?? "—"}
+                          </p>
+                          <div className="mt-1.5 flex items-center gap-2">
+                            <span
+                              className={`font-secondary rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                                memberItem.status === "Active"
+                                  ? "bg-green-100 text-green-600"
+                                  : "bg-n-200 text-n-500"
+                              }`}
+                            >
+                              {memberItem.status}
+                            </span>
+                            <span className="font-secondary text-n-400 text-xs">
+                              Joined{" "}
+                              {memberItem.joinedAt
+                                ? formatJoinedDateService(memberItem.joinedAt)
+                                : "—"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Won */}
+                        <div className="flex shrink-0 flex-col items-end">
+                          <p className="text-n-900 text-xl font-bold leading-none">
+                            {memberItem.thisMonth.won}
+                          </p>
+                          <p className="font-secondary text-n-400 text-xs">
+                            Won
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="bg-n-200 my-3 h-px w-full" />
+
+                      {/* Stats row */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <p className="text-n-900 text-base font-bold">
+                            {memberItem.thisMonth.leads}
+                          </p>
+                          <p className="font-secondary text-n-400 text-xs">
+                            Leads
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-0.5">
+                          <p className="text-base font-bold text-green-500">
+                            {memberItem.thisMonth.winRate}%
+                          </p>
+                          <p className="font-secondary text-n-400 text-xs">
+                            Conv. Rate
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-0.5">
+                          <p className="text-n-900 text-base font-bold">
+                            {getAvgPerDayService(memberItem.thisMonth.leads)}
+                          </p>
+                          <p className="font-secondary text-n-400 text-xs">
+                            Avg/day
+                          </p>
+                        </div>
                       </div>
                     </button>
                   ))
