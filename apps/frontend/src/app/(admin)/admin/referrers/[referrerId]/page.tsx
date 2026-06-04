@@ -12,12 +12,14 @@ import type {
 
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
+import MetricItem from "@/components/sales/profile/MetricItem";
 
 // SERVICES //
 import {
   getAdminReferredLeadsRequest,
   getAdminReferrerByIdRequest,
 } from "@/services/api/admin-referrers.api.service";
+
 
 // OTHERS //
 import { toast } from "sonner";
@@ -81,7 +83,7 @@ export default function ReferrerDetailPage() {
         setTotalLeads(response.data.totalItems);
       }
     } catch {
-      // Non-critical — fail silently
+      toast.error("Unable to load referred leads.");
     } finally {
       setIsLeadsLoading(false);
     }
@@ -99,8 +101,31 @@ export default function ReferrerDetailPage() {
         <Header title="Referrer Detail" />
 
         {isLoading ? (
-          <div className="flex h-40 items-center justify-center">
-            <p className="font-secondary text-n-600 text-sm">Loading...</p>
+          <div className="flex flex-col gap-5 p-6 animate-pulse">
+            {/* Profile card skeleton */}
+            <div className="bg-n-50 rounded-2xl p-5">
+              <div className="flex items-center gap-4">
+                <div className="bg-n-200 size-14 shrink-0 rounded-full" />
+                <div className="flex flex-1 flex-col gap-2">
+                  <div className="bg-n-200 h-4 w-36 rounded-lg" />
+                  <div className="bg-n-200 h-3 w-24 rounded-lg" />
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="bg-n-200 h-16 rounded-xl" />
+                <div className="bg-n-200 h-16 rounded-xl" />
+                <div className="bg-n-200 h-16 rounded-xl" />
+              </div>
+            </div>
+            {/* Contact card skeleton */}
+            <div className="bg-n-50 flex flex-col gap-4 rounded-2xl p-5">
+              {Array.from({ length: 3 }).map((_, indexItem) => (
+                <div key={indexItem} className="flex items-center justify-between">
+                  <div className="bg-n-200 h-3 w-16 rounded-lg" />
+                  <div className="bg-n-200 h-3 w-28 rounded-lg" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : !referrer ? null : (
           <div className="flex flex-col gap-5 p-6">
@@ -141,28 +166,24 @@ export default function ReferrerDetailPage() {
 
               {/* Metrics */}
               <div className="mt-4 grid grid-cols-3 gap-2">
-                <div className="bg-n-100 rounded-xl p-3 text-center">
-                  <p className="text-n-900 text-lg font-bold">
-                    {referrer.totalReferrals}
-                  </p>
-                  <p className="font-secondary text-n-500 text-[10px]">
-                    Referrals
-                  </p>
-                </div>
-                <div className="bg-n-100 rounded-xl p-3 text-center">
-                  <p className="text-lg font-bold text-green-600">
-                    {referrer.won}
-                  </p>
-                  <p className="font-secondary text-n-500 text-[10px]">Won</p>
-                </div>
-                <div className="bg-n-100 rounded-xl p-3 text-center">
-                  <p className="text-lg font-bold text-blue-600">
-                    {referrer.conversionRate}%
-                  </p>
-                  <p className="font-secondary text-n-500 text-[10px]">
-                    Conversion
-                  </p>
-                </div>
+                <MetricItem
+                  label="Referrals"
+                  value={String(referrer.totalReferrals)}
+                  helper=""
+                  tone="neutral"
+                />
+                <MetricItem
+                  label="Won"
+                  value={String(referrer.won)}
+                  helper=""
+                  tone="green"
+                />
+                <MetricItem
+                  label="Conv."
+                  value={`${referrer.conversionRate}%`}
+                  helper=""
+                  tone="blue"
+                />
               </div>
             </div>
 

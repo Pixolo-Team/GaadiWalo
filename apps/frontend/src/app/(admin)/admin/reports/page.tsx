@@ -13,6 +13,9 @@ import type {
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
 import { PoweredByFooter } from "@/components/common/PoweredByFooter";
+import { DatePicker } from "@/components/common/DatePicker";
+import { Button } from "@/components/ui/button";
+import MetricItem from "@/components/sales/profile/MetricItem";
 
 // SERVICES //
 import {
@@ -20,6 +23,7 @@ import {
   getAdminReportOverviewRequest,
   getAdminSourcePerformanceRequest,
 } from "@/services/api/admin-reports.api.service";
+
 
 // OTHERS //
 import { toast } from "sonner";
@@ -111,39 +115,45 @@ export default function AdminReportsPage() {
 
         <div className="flex flex-col gap-5 p-6">
           {/* Date range picker */}
-          <div className="bg-n-50 flex flex-col gap-3 rounded-2xl p-4">
-            <p className="text-n-800 text-sm font-semibold">Date Range</p>
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <label className="font-secondary text-n-500 mb-1 block text-[10px] uppercase tracking-wide">
+          <div className="bg-n-50 flex flex-col gap-4 rounded-2xl p-4">
+            <p className="text-n-800 text-sm font-bold">Date Range</p>
+
+            <div className="flex gap-3">
+              {/* From */}
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <label className="font-secondary text-n-500 text-[10px] font-semibold uppercase tracking-wide">
                   From
                 </label>
-                <input
-                  type="date"
+                <DatePicker
                   value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="border-n-200 text-n-800 font-secondary w-full rounded-xl border px-3 py-2.5 text-sm"
+                  onChange={setFromDate}
+                  placeholder="From date"
+                  className="w-full"
                 />
               </div>
-              <div className="flex-1">
-                <label className="font-secondary text-n-500 mb-1 block text-[10px] uppercase tracking-wide">
+
+              {/* To */}
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <label className="font-secondary text-n-500 text-[10px] font-semibold uppercase tracking-wide">
                   To
                 </label>
-                <input
-                  type="date"
+                <DatePicker
                   value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="border-n-200 text-n-800 font-secondary w-full rounded-xl border px-3 py-2.5 text-sm"
+                  onChange={setToDate}
+                  placeholder="To date"
+                  className="w-full"
                 />
               </div>
             </div>
-            <button
+
+            <Button
               type="button"
+              variant="primary"
               onClick={handleApplyDates}
-              className="font-secondary w-full rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white"
+              className="w-full"
             >
               Apply
-            </button>
+            </Button>
           </div>
 
           {/* Overview metrics */}
@@ -162,12 +172,52 @@ export default function AdminReportsPage() {
               </div>
             ) : overview ? (
               <div className="grid grid-cols-2 gap-3">
-                <MetricTile label="Total Leads" value={overview.totalLeads} change={overview.totalLeadsChange} />
-                <MetricTile label="Converted" value={overview.converted} />
-                <MetricTile label="Won" value={overview.won} accent="green" />
-                <MetricTile label="Conv. Rate" value={`${overview.conversionRate}%`} accent="blue" />
-                <MetricTile label="Test Drive" value={overview.testDrive} accent="amber" />
-                <MetricTile label="Lost" value={overview.lostLeads} accent="red" sub={`${overview.lostRate}% loss rate`} />
+                <MetricItem
+                  label="Total Leads"
+                  value={String(overview.totalLeads)}
+                  helper={
+                    overview.totalLeadsChange !== undefined
+                      ? `${overview.totalLeadsChange >= 0 ? "+" : ""}${overview.totalLeadsChange} vs last month`
+                      : ""
+                  }
+                  helperTone={
+                    overview.totalLeadsChange === undefined ? "neutral"
+                      : overview.totalLeadsChange >= 0 ? "positive"
+                      : "negative"
+                  }
+                  tone="blue"
+                />
+                <MetricItem
+                  label="Converted"
+                  value={String(overview.converted)}
+                  helper=""
+                  tone="neutral"
+                />
+                <MetricItem
+                  label="Won"
+                  value={String(overview.won)}
+                  helper=""
+                  tone="green"
+                />
+                <MetricItem
+                  label="Conv. Rate"
+                  value={`${overview.conversionRate}%`}
+                  helper=""
+                  tone="blue"
+                />
+                <MetricItem
+                  label="Test Drive"
+                  value={String(overview.testDrive)}
+                  helper=""
+                  tone="neutral"
+                />
+                <MetricItem
+                  label="Lost"
+                  value={String(overview.lostLeads)}
+                  helper={`${overview.lostRate}% loss rate`}
+                  helperTone="negative"
+                  tone="red"
+                />
               </div>
             ) : (
               <p className="font-secondary text-n-500 py-4 text-center text-sm">
@@ -306,45 +356,3 @@ export default function AdminReportsPage() {
   );
 }
 
-// ─── Local sub-component ────────────────────────────────────────────────────
-
-interface MetricTilePropsData {
-  accent?: "amber" | "blue" | "green" | "red";
-  change?: number;
-  label: string;
-  sub?: string;
-  value: number | string;
-}
-
-const accentTextColors: Record<string, string> = {
-  blue: "text-blue-700",
-  green: "text-green-700",
-  amber: "text-amber-700",
-  red: "text-red-600",
-};
-
-function MetricTile({ accent, change, label, sub, value }: MetricTilePropsData) {
-  const textColor = accent ? (accentTextColors[accent] ?? "text-n-800") : "text-n-800";
-  const hasChange = change !== undefined && change !== null;
-  const isPositive = (change ?? 0) >= 0;
-
-  return (
-    <div className="bg-n-50 flex flex-col gap-0.5 rounded-2xl p-4">
-      <p className="font-secondary text-n-500 text-xs">{label}</p>
-      <p className={`text-xl font-bold ${textColor}`}>{value}</p>
-      {sub ? (
-        <p className="font-secondary text-n-400 text-[10px]">{sub}</p>
-      ) : null}
-      {hasChange ? (
-        <span
-          className={`font-secondary w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-            isPositive ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"
-          }`}
-        >
-          {isPositive ? "+" : ""}
-          {change}
-        </span>
-      ) : null}
-    </div>
-  );
-}

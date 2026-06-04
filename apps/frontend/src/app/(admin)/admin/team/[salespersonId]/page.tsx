@@ -15,11 +15,14 @@ import type {
 
 // COMPONENTS //
 import { Header } from "@/components/common/Header";
+import InputBox from "@/components/common/InputBox";
+import Dropdown from "@/components/common/Dropdown";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import LineArrowReloadHorizontal2 from "@/components/icons/neevo-icons/LineArrowReloadHorizontal2";
 import DeleteCircle from "@/components/icons/neevo-icons/DeleteCircle";
 
-// API SERVICES //
+// SERVICES //
 import {
   getAdminSalespersonByIdRequest,
   getAdminTeamOptionsRequest,
@@ -146,6 +149,7 @@ export default function SalespersonDetailPage() {
     }
   };
 
+  /** Opens the edit form and fetches branch/role options. */
   const handleOpenEdit = (): void => {
     void getAdminTeamOptionsRequest().then((response) => {
       if (response.status_code === 200) setTeamOptions(response.data ?? null);
@@ -162,8 +166,38 @@ export default function SalespersonDetailPage() {
     return (
       <section className="bg-n-100 h-full">
         <Header title="Team Member" />
-        <div className="flex h-40 items-center justify-center">
-          <p className="font-secondary text-n-600 text-sm">Loading...</p>
+        <div className="flex flex-col gap-5 p-6 animate-pulse">
+          {/* Profile card skeleton */}
+          <div className="bg-n-50 rounded-2xl p-5">
+            <div className="flex items-center gap-4">
+              <div className="bg-n-200 size-14 shrink-0 rounded-full" />
+              <div className="flex flex-1 flex-col gap-2">
+                <div className="bg-n-200 h-4 w-36 rounded-lg" />
+                <div className="bg-n-200 h-3 w-24 rounded-lg" />
+                <div className="bg-n-200 h-4 w-14 rounded-full" />
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="bg-n-200 h-16 rounded-xl" />
+              <div className="bg-n-200 h-16 rounded-xl" />
+            </div>
+          </div>
+
+          {/* Detail card skeleton */}
+          <div className="bg-n-50 flex flex-col gap-4 rounded-2xl p-5">
+            {Array.from({ length: 4 }).map((_, indexItem) => (
+              <div key={indexItem} className="flex items-center justify-between">
+                <div className="bg-n-200 h-3 w-16 rounded-lg" />
+                <div className="bg-n-200 h-3 w-28 rounded-lg" />
+              </div>
+            ))}
+          </div>
+
+          {/* Action buttons skeleton */}
+          <div className="flex flex-col gap-3">
+            <div className="bg-n-200 h-16 rounded-2xl" />
+            <div className="bg-n-200 h-16 rounded-2xl" />
+          </div>
         </div>
       </section>
     );
@@ -231,86 +265,60 @@ export default function SalespersonDetailPage() {
             <div className="bg-n-50 flex flex-col gap-4 rounded-2xl p-5">
               <p className="text-n-800 text-sm font-bold">Edit Details</p>
 
-              <EditField
+              <InputBox
                 label="Full Name"
+                placeholder="Enter full name"
                 value={editFields.fullName ?? ""}
                 onChange={(val) => setEditFields((prev) => ({ ...prev, fullName: val }))}
               />
-              <EditField
+              <InputBox
                 label="Phone"
-                value={editFields.phone ?? ""}
+                placeholder="Enter phone number"
                 type="tel"
+                value={editFields.phone ?? ""}
                 onChange={(val) => setEditFields((prev) => ({ ...prev, phone: val }))}
               />
-              <EditField
+              <InputBox
                 label="Email"
-                value={editFields.email ?? ""}
+                placeholder="Enter email address"
                 type="email"
+                value={editFields.email ?? ""}
                 onChange={(val) => setEditFields((prev) => ({ ...prev, email: val }))}
               />
 
-              {/* Branch */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-n-700 text-xs font-semibold uppercase tracking-wide">
-                  Branch
-                </label>
-                <select
-                  value={editFields.branchId ?? ""}
-                  onChange={(e) =>
-                    setEditFields((prev) => ({ ...prev, branchId: e.target.value }))
-                  }
-                  className="border-n-200 text-n-800 font-secondary w-full rounded-xl border bg-white px-4 py-3 text-sm"
-                >
-                  <option value="">Select branch</option>
-                  {(teamOptions?.branches ?? []).map((branchItem: AdminOptionItemData) => (
-                    <option key={branchItem.id} value={branchItem.id}>
-                      {branchItem.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Dropdown
+                label="Branch"
+                placeholder="Select branch"
+                selectedOption={editFields.branchId ?? ""}
+                options={(teamOptions?.branches ?? []).map((branchItem: AdminOptionItemData) => ({
+                  label: branchItem.name,
+                  value: branchItem.id,
+                }))}
+                onChange={(val) => setEditFields((prev) => ({ ...prev, branchId: val }))}
+              />
 
-              {/* Role */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-n-700 text-xs font-semibold uppercase tracking-wide">
-                  Role
-                </label>
-                <select
-                  value={editFields.roleId ?? ""}
-                  onChange={(e) =>
-                    setEditFields((prev) => ({ ...prev, roleId: e.target.value }))
-                  }
-                  className="border-n-200 text-n-800 font-secondary w-full rounded-xl border bg-white px-4 py-3 text-sm"
-                >
-                  <option value="">Select role</option>
-                  {(teamOptions?.roles ?? []).map((roleItem: AdminOptionItemData) => (
-                    <option key={roleItem.id} value={roleItem.id}>
-                      {roleItem.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Dropdown
+                label="Role"
+                placeholder="Select role"
+                selectedOption={editFields.roleId ?? ""}
+                options={(teamOptions?.roles ?? []).map((roleItem: AdminOptionItemData) => ({
+                  label: roleItem.name,
+                  value: roleItem.id,
+                }))}
+                onChange={(val) => setEditFields((prev) => ({ ...prev, roleId: val }))}
+              />
 
               {/* Active toggle */}
               <div className="flex items-center justify-between">
-                <p className="text-n-700 text-xs font-semibold uppercase tracking-wide">
+                <p className="font-secondary text-n-600 text-xs font-medium tracking-wide uppercase">
                   Active Status
                 </p>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEditFields((prev) => ({ ...prev, isActive: !prev.isActive }))
+                <Switch
+                  checked={editFields.isActive ?? false}
+                  onCheckedChange={(checked) =>
+                    setEditFields((prev) => ({ ...prev, isActive: checked }))
                   }
-                  className={`relative h-6 w-11 rounded-full transition-colors ${
-                    editFields.isActive ? "bg-blue-600" : "bg-n-300"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-transform ${
-                      editFields.isActive ? "translate-x-5" : "translate-x-0.5"
-                    }`}
-                  />
-                </button>
+                />
               </div>
 
               <Button
@@ -445,33 +453,3 @@ function DetailRow({ label, value }: DetailRowPropsData) {
   );
 }
 
-interface EditFieldPropsData {
-  label: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  type?: string;
-  value: string;
-}
-
-function EditField({
-  label,
-  onChange,
-  placeholder = "",
-  type = "text",
-  value,
-}: EditFieldPropsData) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-n-700 text-xs font-semibold uppercase tracking-wide">
-        {label}
-      </label>
-      <input
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        className="border-n-200 text-n-800 font-secondary w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-blue-500"
-      />
-    </div>
-  );
-}

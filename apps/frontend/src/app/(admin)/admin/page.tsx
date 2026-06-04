@@ -14,8 +14,9 @@ import type {
 // COMPONENTS //
 import Image from "next/image";
 import { PoweredByFooter } from "@/components/common/PoweredByFooter";
+import MetricItem from "@/components/sales/profile/MetricItem";
 
-// API SERVICES //
+// SERVICES //
 import {
   getAdminLeadsBySourceRequest,
   getAdminSummaryRequest,
@@ -152,27 +153,47 @@ export default function AdminDashboardPage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              <SummaryCard
+              <MetricItem
                 label="Total Leads"
-                value={summary?.totalLeads ?? 0}
-                change={summary?.totalLeadsChange}
-                accent="blue"
+                value={String(summary?.totalLeads ?? 0)}
+                helper={
+                  summary?.totalLeadsChange !== undefined
+                    ? `${summary.totalLeadsChange >= 0 ? "+" : ""}${summary.totalLeadsChange} vs last month`
+                    : ""
+                }
+                helperTone={
+                  summary?.totalLeadsChange === undefined ? "neutral"
+                    : summary.totalLeadsChange >= 0 ? "positive"
+                    : "negative"
+                }
+                tone="blue"
               />
-              <SummaryCard
+              <MetricItem
                 label="Active Leads"
-                value={summary?.activeLeads ?? 0}
-                accent="amber"
+                value={String(summary?.activeLeads ?? 0)}
+                helper=""
+                tone="neutral"
               />
-              <SummaryCard
+              <MetricItem
                 label="Won"
-                value={summary?.won ?? 0}
-                change={summary?.wonChange}
-                accent="green"
+                value={String(summary?.won ?? 0)}
+                helper={
+                  summary?.wonChange !== undefined
+                    ? `${summary.wonChange >= 0 ? "+" : ""}${summary.wonChange} vs last month`
+                    : ""
+                }
+                helperTone={
+                  summary?.wonChange === undefined ? "neutral"
+                    : summary.wonChange >= 0 ? "positive"
+                    : "negative"
+                }
+                tone="green"
               />
-              <SummaryCard
+              <MetricItem
                 label="Conversion"
                 value={`${summary?.conversionRate ?? 0}%`}
-                accent="purple"
+                helper=""
+                tone="blue"
               />
             </div>
           )}
@@ -330,62 +351,3 @@ export default function AdminDashboardPage() {
   );
 }
 
-// ─── Local sub-component ────────────────────────────────────────────────────
-
-interface SummaryCardPropsData {
-  accent: "amber" | "blue" | "green" | "purple";
-  change?: number;
-  label: string;
-  value: number | string;
-}
-
-const accentStyles: Record<
-  SummaryCardPropsData["accent"],
-  { bg: string; text: string; badge: string }
-> = {
-  blue: {
-    bg: "bg-blue-50",
-    text: "text-blue-700",
-    badge: "bg-blue-100 text-blue-600",
-  },
-  amber: {
-    bg: "bg-amber-50",
-    text: "text-amber-700",
-    badge: "bg-amber-100 text-amber-600",
-  },
-  green: {
-    bg: "bg-green-50",
-    text: "text-green-700",
-    badge: "bg-green-100 text-green-600",
-  },
-  purple: {
-    bg: "bg-purple-50",
-    text: "text-purple-700",
-    badge: "bg-purple-100 text-purple-600",
-  },
-};
-
-function SummaryCard({ accent, change, label, value }: SummaryCardPropsData) {
-  const styles = accentStyles[accent];
-  const hasChange = change !== undefined && change !== null;
-  const isPositive = (change ?? 0) >= 0;
-
-  return (
-    <div className={`${styles.bg} flex flex-col gap-1 rounded-2xl p-4`}>
-      <p className="font-secondary text-n-600 text-xs">{label}</p>
-      <p className={`text-2xl font-bold ${styles.text}`}>{value}</p>
-      {hasChange ? (
-        <span
-          className={`font-secondary w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-            isPositive
-              ? "bg-green-100 text-green-600"
-              : "bg-red-100 text-red-600"
-          }`}
-        >
-          {isPositive ? "+" : ""}
-          {change} vs last month
-        </span>
-      ) : null}
-    </div>
-  );
-}
