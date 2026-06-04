@@ -536,16 +536,18 @@ export default function LeadsPage() {
                       }`}
                     >
                       {statusTabItem.label}
-                      {shouldShowLeadsCountPlaceholders ? (
-                        <span className="inline-flex items-center">
-                          {" "}
-                          (
-                          <CountPlaceholder className="mx-1 h-4 w-5 rounded-xl align-middle" />
-                          )
-                        </span>
-                      ) : (
-                        ` (${statusTabItem.count})`
-                      )}
+                      {isActive ? (
+                        shouldShowLeadsCountPlaceholders ? (
+                          <span className="inline-flex items-center">
+                            {" "}
+                            (
+                            <CountPlaceholder className="mx-1 h-4 w-5 rounded-xl align-middle" />
+                            )
+                          </span>
+                        ) : (
+                          ` (${statusTabItem.count})`
+                        )
+                      ) : null}
                     </button>
                   );
                 })}

@@ -37,7 +37,7 @@ export default function MetricItem({
         {label}
       </p>
       <p
-        className={`font-primary text-3xl leading-none font-bold ${tone === "blue" ? "text-blue-600" : tone === "green" ? "text-green-600" : tone === "red" ? "text-red-500" : "text-n-800"}`}
+        className={`font-primary text-2xl leading-none font-bold ${tone === "blue" ? "text-blue-600" : tone === "green" ? "text-green-600" : tone === "red" ? "text-red-500" : "text-n-800"}`}
       >
         {value}
       </p>

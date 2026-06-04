@@ -31,14 +31,14 @@ import {
 // DATA //
 import { salesLeadBudgetOptions } from "@/data/sales";
 
-// CONSTANTS //
-import { ROUTES } from "@/constants/routes";
-
 // UTILS //
 import { validatePhoneNumberValue } from "@/utils/validations";
 
-// OTHERS //
+// LIBRARIES //
 import { toast } from "sonner";
+
+// MODULES //
+import { ROUTES } from "@/constants/routes";
 
 interface LeadInputFiledData {
   budget: string;
@@ -48,6 +48,8 @@ interface LeadInputFiledData {
   fullName: string;
   initialNote: string;
   phoneNumber: string;
+  referrerName: string;
+  referrerPhone: string;
   source: string;
 }
 
@@ -59,6 +61,8 @@ const initialLeadInputFiledData: LeadInputFiledData = {
   fullName: "",
   initialNote: "",
   phoneNumber: "",
+  referrerName: "",
+  referrerPhone: "",
   source: "",
 };
 
@@ -120,6 +124,8 @@ export default function AddLeadPage() {
       value: carModelItem,
     })) ?? [];
 
+  const isReferralSource = leadInputFiled.source.toLowerCase() === "referral";
+
   /**
    * Maps local form state to create-lead API payload.
    */
@@ -131,6 +137,12 @@ export default function AddLeadPage() {
     fullName: leadInputFiled.fullName,
     initialNote: leadInputFiled.initialNote.trim() || undefined,
     phone: leadInputFiled.phoneNumber,
+    referrerName: isReferralSource
+      ? leadInputFiled.referrerName.trim() || null
+      : null,
+    referrerPhone: isReferralSource
+      ? leadInputFiled.referrerPhone.trim() || null
+      : null,
     source: leadInputFiled.source,
   };
 
@@ -282,7 +294,9 @@ export default function AddLeadPage() {
                 className="mt-0.5 size-5 shrink-0"
               />
               <p className="font-secondary text-sm leading-normal font-medium text-blue-800">
-                Fill in Name, Phone number, and Source to create a lead.
+                Fields marked with{" "}
+                <span className="text-red-500">*</span> are required. Fill in
+                Name, Phone, and Source to enable the Create button.
               </p>
             </div>
 
@@ -342,6 +356,29 @@ export default function AddLeadPage() {
                   selectedOption={leadInputFiled.source}
                   onChange={(value) => updateLeadInputFiled("source", value)}
                 />
+
+                {/* Referrer fields — shown only when source is Referral */}
+                {isReferralSource ? (
+                  <div className="flex flex-col gap-4">
+                    <InputBox
+                      label="REFERRER NAME"
+                      placeholder="e.g. Suresh Mehta"
+                      value={leadInputFiled.referrerName}
+                      onChange={(value) =>
+                        updateLeadInputFiled("referrerName", value)
+                      }
+                    />
+                    <InputBox
+                      label="REFERRER PHONE"
+                      placeholder="e.g. 9876543210"
+                      type="tel"
+                      value={leadInputFiled.referrerPhone}
+                      onChange={(value) =>
+                        updateLeadInputFiled("referrerPhone", value)
+                      }
+                    />
+                  </div>
+                ) : null}
               </div>
 
               <div className="bg-n-200 h-px w-full" />

@@ -4,6 +4,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+// TYPES //
+import type { ApiResponseData } from "@/types/api";
+import type { LogoutResponseData } from "@/types/auth";
+import type {
+  SalesPerformanceResponseData,
+  SalesProfileData,
+} from "@/types/profile";
+
 // COMPONENTS //
 import DesktopMonitorBrowseActivityPerformance from "@/components/icons/neevo-icons/DesktopMonitorBrowseActivityPerformance";
 import LoginPassword from "@/components/icons/neevo-icons/LoginPassword";
@@ -17,25 +25,25 @@ import { PoweredByFooter } from "@/components/common/PoweredByFooter";
 
 // SERVICES //
 import { logoutRequest } from "@/services/api/auth.api.service";
-import { getSalesProfileRequest } from "@/services/api/sales-profile.api.service";
+import {
+  getSalesPerformanceRequest,
+  getSalesProfileRequest,
+} from "@/services/api/sales-profile.api.service";
 
 // UTILS //
 import { cardEnter, staggerContainer } from "@/lib/animations";
 
-// CONSTANTS //
-import { ROUTES } from "@/constants/routes";
-
 // DATA //
-import { salesProfileMetrics, salesProfileSummaryData } from "@/data/sales";
+import { salesProfileSummaryData } from "@/data/sales";
 
-// TYPES //
-import type { ApiResponseData } from "@/types/api";
-import type { LogoutResponseData } from "@/types/auth";
-import type { SalesProfileData } from "@/types/profile";
-
-// OTHERS //
+// HOOKS //
 import { useAuthContext } from "@/context/AuthContext";
+
+// LIBRARIES //
 import { toast } from "sonner";
+
+// MODULES //
+import { ROUTES } from "@/constants/routes";
 
 /** Profile Page Component */
 export default function ProfilePage() {
@@ -51,6 +59,8 @@ export default function ProfilePage() {
   const [salesProfile, setSalesProfile] = useState<SalesProfileData | null>(
     null,
   );
+  const [salesPerformance, setSalesPerformance] =
+    useState<SalesPerformanceResponseData | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState<boolean>(true);
   const [isLogoutSubmitting, setIsLogoutSubmitting] = useState<boolean>(false);
 
@@ -59,7 +69,8 @@ export default function ProfilePage() {
   const accessToken = session?.token ?? "";
 
   /**
-   * Fetches sales profile for logged-in user.
+   * Fetches sales profile and performance stats for logged-in user.
+   * Performance fetch is non-blocking — profile always renders even if it fails.
    */
   const getSalesProfile = useCallback((): void => {
     if (!userCode) {
@@ -67,29 +78,31 @@ export default function ProfilePage() {
       return;
     }
 
-    /**
-     * Call get sales profile API.
-     */
     getSalesProfileRequest(userCode)
       .then((response: ApiResponseData<SalesProfileData>) => {
         if (response.status_code === 200 && response.data) {
-          // Set sales profile state
           setSalesProfile(response.data);
         } else {
-          // Reset sales profile state
           setSalesProfile(null);
         }
       })
       .catch(() => {
-        // Error toast
         toast.error("Unable to load profile right now.");
-
-        // Reset sales profile state
         setSalesProfile(null);
       })
       .finally(() => {
-        // Set profile loading false
         setIsProfileLoading(false);
+      });
+
+    // Fetch performance stats independently — does not block profile rendering
+    getSalesPerformanceRequest(userCode)
+      .then((response) => {
+        if (response.status_code === 200 && response.data) {
+          setSalesPerformance(response.data);
+        }
+      })
+      .catch(() => {
+        // Non-critical — silently fall back to showing dashes in metric cards
       });
   }, [userCode]);
 
@@ -218,18 +231,41 @@ export default function ProfilePage() {
         <div className="bg-n-100 scrollbar-hide min-h-0 flex-1 overflow-y-auto px-6 py-6">
           {/* Content stack */}
           <div className="flex flex-col gap-6">
-            {/* Metrics cards */}
+            {/* Metrics cards — live data from performance API */}
             <div className="flex gap-2">
-              {salesProfileMetrics.map((metricItem) => (
-                <MetricItem
-                  key={metricItem.key}
-                  className="items-center"
-                  helper={metricItem.helper}
-                  label={metricItem.label}
-                  tone={metricItem.tone}
-                  value={metricItem.value}
-                />
-              ))}
+              <MetricItem
+                className="items-center"
+                helper="Conversion"
+                label="RATE"
+                tone="blue"
+                value={
+                  salesPerformance
+                    ? `${Math.round(salesPerformance.wonRate)}%`
+                    : "—"
+                }
+              />
+              <MetricItem
+                className="items-center"
+                helper="Converted"
+                label="WON"
+                tone="green"
+                value={
+                  salesPerformance
+                    ? String(salesPerformance.won)
+                    : "—"
+                }
+              />
+              <MetricItem
+                className="items-center"
+                helper="This month"
+                label="LEADS"
+                tone="neutral"
+                value={
+                  salesPerformance
+                    ? String(salesPerformance.totalLeads)
+                    : "—"
+                }
+              />
             </div>
 
             {/* Profile menu list — items enter one by one */}
