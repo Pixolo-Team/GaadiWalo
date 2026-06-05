@@ -57,7 +57,7 @@ export default function AdminLayout({
   }
 
   return (
-    <section className="bg-n-100 h-screen">
+    <section className="bg-n-100 h-dvh">
       {/* Admin page frame */}
       <div className="bg-n-100 mx-auto flex h-full w-full max-w-md flex-col">
         {/* Admin page content */}

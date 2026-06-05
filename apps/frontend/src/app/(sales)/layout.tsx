@@ -48,7 +48,7 @@ export default function SalesLayout({
   }
 
   return (
-    <section className="bg-n-100 h-screen">
+    <section className="bg-n-100 h-dvh">
       {/* Sales page frame */}
       <div className="bg-n-100 mx-auto flex h-full w-full max-w-md flex-col">
         {/* Sales page content */}
