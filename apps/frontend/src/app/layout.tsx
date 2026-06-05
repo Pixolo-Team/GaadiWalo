@@ -15,7 +15,6 @@ import { AuthProvider } from "@/context/AuthContext";
 
 // MODULES //
 import { QueryProvider } from "@/providers/QueryProvider";
-import { AxiosProvider } from "@/providers/AxiosProvider";
 
 export const metadata: Metadata = {
   title: "GaadiWalo",
@@ -45,7 +44,6 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col font-sans">
         <QueryProvider>
           <AuthProvider>
-            <AxiosProvider>
               {children}
               <Toaster
                 duration={2000}
@@ -58,7 +56,6 @@ export default function RootLayout({
                   },
                 }}
               />
-            </AxiosProvider>
           </AuthProvider>
         </QueryProvider>
       </body>
