@@ -189,7 +189,11 @@ export const downloadLeadImportTemplateService = (): void => {
 
   linkElement.href = objectUrl;
   linkElement.download = "gaadiwalo-leads-import-template.csv";
+
+  // Append to DOM before clicking — required for mobile browsers
+  document.body.appendChild(linkElement);
   linkElement.click();
+  document.body.removeChild(linkElement);
   window.URL.revokeObjectURL(objectUrl);
 };
 

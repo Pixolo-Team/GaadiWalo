@@ -3,8 +3,11 @@
 // REACT //
 import { useEffect, useState } from "react";
 
+// TYPES //
+import type { ApiResponseData } from "@/types/api";
+import type { SalesProfileData } from "@/types/profile";
+
 // COMPONENTS //
-import Dropdown from "@/components/common/Dropdown";
 import { Header } from "@/components/common/Header";
 import InputBox from "@/components/common/InputBox";
 import { LeadDetailsInfoCard } from "@/components/sales/LeadDetailsInfoCard";
@@ -18,23 +21,17 @@ import {
 } from "@/services/api/sales-profile.api.service";
 
 // DATA //
-import {
-  salesProfileLanguageOptions,
-  salesProfileSummaryData,
-} from "@/data/sales";
+import { salesProfileSummaryData } from "@/data/sales";
 
-// TYPES //
-import type { ApiResponseData } from "@/types/api";
-import type { SalesProfileData } from "@/types/profile";
-
-// OTHERS //
+// HOOKS //
 import { useAuthContext } from "@/context/AuthContext";
+
+// LIBRARIES //
 import { toast } from "sonner";
 
 interface EditProfileInputFieldsData {
   email: string;
   fullName: string;
-  languagePreference: string;
   phoneNumber: string;
 }
 
@@ -43,7 +40,7 @@ export default function EditProfilePage() {
   // Define Navigation
 
   // Define Context
-  const { user } = useAuthContext();
+  const { user, session, setAuthSessionService } = useAuthContext();
 
   // Define Refs
 
@@ -51,7 +48,6 @@ export default function EditProfilePage() {
   const initialEditProfileInputFieldsData: EditProfileInputFieldsData = {
     email: "",
     fullName: "",
-    languagePreference: "english",
     phoneNumber: "",
   };
 
@@ -138,8 +134,6 @@ export default function EditProfilePage() {
           setEditProfileInputFields({
             email: response.data.email ?? "",
             fullName: response.data.fullName ?? "",
-            languagePreference:
-              response.data.languagePreference?.toLowerCase() || "english",
             phoneNumber: response.data.phone ?? "",
           });
         } else {
@@ -177,13 +171,21 @@ export default function EditProfilePage() {
     updateSalesProfileRequest(userCode, {
       email: editProfileInputFields.email.trim(),
       fullName: editProfileInputFields.fullName.trim(),
-      languagePreference: editProfileInputFields.languagePreference.trim(),
+      languagePreference: "",
       phone: editProfileInputFields.phoneNumber.trim(),
     })
       .then((response: ApiResponseData<SalesProfileData>) => {
         if (response.status_code === 200 && response.data) {
           // Set updated sales profile state
           setSalesProfile(response.data);
+
+          // Sync updated name into AuthContext so Home page reflects it
+          if (user && session) {
+            setAuthSessionService(session, {
+              ...user,
+              name: response.data.fullName,
+            });
+          }
 
           // Success toast
           toast.success(response.message);
@@ -209,8 +211,6 @@ export default function EditProfilePage() {
     setEditProfileInputFields({
       email: salesProfile?.email ?? "",
       fullName: salesProfile?.fullName ?? "",
-      languagePreference:
-        salesProfile?.languagePreference?.toLowerCase() || "english",
       phoneNumber: salesProfile?.phone ?? "",
     });
   };
@@ -313,19 +313,6 @@ export default function EditProfilePage() {
                 }
               />
 
-              {/* Language preference dropdown */}
-              <Dropdown
-                label="LANGUAGE PREFERENCE"
-                options={salesProfileLanguageOptions}
-                selectedOption={editProfileInputFields.languagePreference}
-                onChange={(languagePreferenceValue: string) =>
-                  updateEditProfileInputFields(
-                    "languagePreference",
-                    languagePreferenceValue,
-                  )
-                }
-                title="English"
-              />
             </div>
 
             {/* Static profile info */}

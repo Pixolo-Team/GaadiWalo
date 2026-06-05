@@ -25,7 +25,7 @@ import {
 } from "@/services/api/admin-reports.api.service";
 
 
-// OTHERS //
+// LIBRARIES //
 import { toast } from "sonner";
 
 /** Returns YYYY-MM-DD string for a given Date. */
@@ -303,9 +303,9 @@ export default function AdminReportsPage() {
                         {stageItem.count} · {stageItem.percentage}%
                       </span>
                     </div>
-                    <div className="bg-n-200 h-2.5 w-full overflow-hidden rounded-full">
+                    <div className="bg-n-200 h-1.5 w-full overflow-hidden rounded-full">
                       <div
-                        className={`h-2.5 rounded-full transition-all duration-500 ${
+                        className={`h-1.5 rounded-full transition-all duration-500 ${
                           funnelStageColors[stageItem.stage] ?? "bg-blue-500"
                         }`}
                         style={{ width: `${stageItem.percentage}%` }}

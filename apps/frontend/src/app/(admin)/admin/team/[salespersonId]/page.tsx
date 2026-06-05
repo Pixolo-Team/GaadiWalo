@@ -10,7 +10,6 @@ import type {
   AdminSalespersonData,
   AdminTeamOptionsData,
   SalespersonEditFieldsData,
-  UpdateSalespersonRequestData,
 } from "@/types/admin";
 
 // COMPONENTS //
@@ -22,20 +21,19 @@ import { Switch } from "@/components/ui/switch";
 import LineArrowReloadHorizontal2 from "@/components/icons/neevo-icons/LineArrowReloadHorizontal2";
 import DeleteCircle from "@/components/icons/neevo-icons/DeleteCircle";
 
-// SERVICES //
+// API SERVICES //
 import {
   getAdminSalespersonByIdRequest,
   getAdminTeamOptionsRequest,
-  removeSalespersonRequest,
   resetSalespersonPasswordRequest,
   updateSalespersonRequest,
 } from "@/services/api/admin-team.api.service";
 
+// LIBRARIES //
+import { toast } from "sonner";
+
 // MODULES //
 import { ROUTES } from "@/constants/routes";
-
-// OTHERS //
-import { toast } from "sonner";
 
 /** Admin — Salesperson Detail Page */
 export default function SalespersonDetailPage() {
@@ -127,22 +125,32 @@ export default function SalespersonDetailPage() {
     }
   };
 
-  /** Removes the salesperson with unassign strategy. */
-  const handleRemove = async (): Promise<void> => {
+  /** Deactivates or reactivates the salesperson. */
+  const handleToggleActive = async (): Promise<void> => {
     if (isRemoving) return;
     setIsRemoving(true);
+    const isCurrentlyActive = salesperson?.status === "Active";
     try {
-      const response = await removeSalespersonRequest(salespersonId, {
-        strategy: "unassigned",
+      const response = await updateSalespersonRequest(salespersonId, {
+        isActive: !isCurrentlyActive,
       });
       if (response.status_code === 200) {
-        toast.success("Salesperson removed.");
-        router.replace(ROUTES.admin.team);
+        toast.success(
+          isCurrentlyActive
+            ? "Member deactivated and moved to inactive."
+            : "Member reactivated.",
+        );
+        setSalesperson(response.data ?? null);
+        setIsRemoveSheetOpen(false);
       } else {
         toast.error(response.error ?? response.message);
       }
     } catch {
-      toast.error("Unable to remove salesperson.");
+      toast.error(
+        isCurrentlyActive
+          ? "Unable to deactivate member."
+          : "Unable to reactivate member.",
+      );
     } finally {
       setIsRemoving(false);
       setIsRemoveSheetOpen(false);
@@ -377,18 +385,42 @@ export default function SalespersonDetailPage() {
             <button
               type="button"
               onClick={() => setIsRemoveSheetOpen(true)}
-              className="flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4"
+              className={`flex items-center gap-3 rounded-2xl border p-4 ${
+                salesperson.status === "Active"
+                  ? "border-red-100 bg-red-50"
+                  : "border-green-100 bg-green-50"
+              }`}
             >
-              <div className="flex size-9 items-center justify-center rounded-full bg-red-100">
+              <div
+                className={`flex size-9 items-center justify-center rounded-full ${
+                  salesperson.status === "Active" ? "bg-red-100" : "bg-green-100"
+                }`}
+              >
                 <DeleteCircle
-                  primaryColor="var(--color-red-600)"
+                  primaryColor={
+                    salesperson.status === "Active"
+                      ? "var(--color-red-600)"
+                      : "var(--color-green-600)"
+                  }
                   className="size-5"
                 />
               </div>
               <div className="text-left">
-                <p className="text-sm font-semibold text-red-600">Remove Member</p>
+                <p
+                  className={`text-sm font-semibold ${
+                    salesperson.status === "Active"
+                      ? "text-red-600"
+                      : "text-green-600"
+                  }`}
+                >
+                  {salesperson.status === "Active"
+                    ? "Deactivate Member"
+                    : "Reactivate Member"}
+                </p>
                 <p className="font-secondary text-n-500 text-xs">
-                  Permanently remove from team
+                  {salesperson.status === "Active"
+                    ? "Moves member to the inactive list"
+                    : "Restores member to the active list"}
                 </p>
               </div>
             </button>
@@ -396,7 +428,7 @@ export default function SalespersonDetailPage() {
         </div>
       </div>
 
-      {/* Remove confirmation sheet */}
+      {/* Deactivate / Reactivate confirmation sheet */}
       {isRemoveSheetOpen ? (
         <div className="fixed inset-0 z-50 flex items-end">
           <button
@@ -406,20 +438,41 @@ export default function SalespersonDetailPage() {
             aria-label="Close"
           />
           <div className="relative z-10 w-full rounded-t-3xl bg-white px-6 pb-8 pt-6">
-            <p className="text-n-900 text-base font-bold">Remove Member?</p>
+            <p className="text-n-900 text-base font-bold">
+              {salesperson.status === "Active"
+                ? "Deactivate Member?"
+                : "Reactivate Member?"}
+            </p>
             <p className="font-secondary text-n-600 mt-1 text-sm">
-              This will permanently remove{" "}
-              <span className="font-semibold">{salesperson.fullName}</span> and
-              leave their leads unassigned.
+              {salesperson.status === "Active" ? (
+                <>
+                  <span className="font-semibold">{salesperson.fullName}</span>{" "}
+                  will be moved to the inactive list. Their leads will remain
+                  assigned.
+                </>
+              ) : (
+                <>
+                  <span className="font-semibold">{salesperson.fullName}</span>{" "}
+                  will be restored to the active list.
+                </>
+              )}
             </p>
             <div className="mt-6 flex flex-col gap-3">
               <Button
                 type="button"
                 disabled={isRemoving}
-                onClick={() => void handleRemove()}
-                className="w-full bg-red-600 text-white hover:bg-red-700"
+                onClick={() => void handleToggleActive()}
+                className={`w-full text-white ${
+                  salesperson.status === "Active"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-green-600 hover:bg-green-700"
+                }`}
               >
-                {isRemoving ? "Removing..." : "Yes, Remove"}
+                {isRemoving
+                  ? "Processing..."
+                  : salesperson.status === "Active"
+                    ? "Yes, Deactivate"
+                    : "Yes, Reactivate"}
               </Button>
               <Button
                 type="button"

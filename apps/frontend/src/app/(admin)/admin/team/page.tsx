@@ -70,19 +70,31 @@ export default function AdminTeamPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("");
 
   // Helper Functions
-  /** Fetches team list with current filters. */
+  /** Fetches team list — fetches both active and inactive when All is selected. */
   const fetchTeamService = useCallback(async (): Promise<void> => {
     setIsLoading(true);
     try {
-      const response = await getAdminTeamRequest({
-        search: searchValue || undefined,
-        status: (selectedStatus as "active" | "inactive") || undefined,
-      });
+      if (selectedStatus === "") {
+        // All tab — fetch active and inactive in parallel and combine
+        const [activeResponse, inactiveResponse] = await Promise.all([
+          getAdminTeamRequest({ search: searchValue || undefined, status: "active" }),
+          getAdminTeamRequest({ search: searchValue || undefined, status: "inactive" }),
+        ]);
 
-      if (response.status_code === 200) {
-        setTeamItems(response.data ?? []);
+        const activeItems = activeResponse.status_code === 200 ? (activeResponse.data ?? []) : [];
+        const inactiveItems = inactiveResponse.status_code === 200 ? (inactiveResponse.data ?? []) : [];
+        setTeamItems([...activeItems, ...inactiveItems]);
       } else {
-        toast.error(response.error ?? response.message);
+        const response = await getAdminTeamRequest({
+          search: searchValue || undefined,
+          status: selectedStatus as "active" | "inactive",
+        });
+
+        if (response.status_code === 200) {
+          setTeamItems(response.data ?? []);
+        } else {
+          toast.error(response.error ?? response.message);
+        }
       }
     } catch {
       toast.error("Unable to load team. Please try again.");
@@ -220,12 +232,12 @@ export default function AdminTeamPage() {
                             >
                               {memberItem.status}
                             </span>
-                            <span className="font-secondary text-n-400 text-xs">
-                              Joined{" "}
-                              {memberItem.joinedAt
-                                ? formatJoinedDateService(memberItem.joinedAt)
-                                : "—"}
-                            </span>
+                            {memberItem.joinedAt ? (
+                              <span className="font-secondary text-n-400 text-xs">
+                                Joined{" "}
+                                {formatJoinedDateService(memberItem.joinedAt)}
+                              </span>
+                            ) : null}
                           </div>
                         </div>
 
