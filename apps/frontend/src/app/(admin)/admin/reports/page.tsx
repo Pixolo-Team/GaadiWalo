@@ -25,7 +25,7 @@ import {
 } from "@/services/api/admin-reports.api.service";
 
 
-// OTHERS //
+// LIBRARIES //
 import { toast } from "sonner";
 
 /** Returns YYYY-MM-DD string for a given Date. */
