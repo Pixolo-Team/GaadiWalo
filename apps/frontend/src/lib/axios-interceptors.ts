@@ -76,6 +76,16 @@ export const setupAxiosInterceptorsService = (): void => {
         return Promise.reject(error);
       }
 
+      // If there is no stored access token the user was never authenticated —
+      // no session to restore, no redirect needed, just reject cleanly.
+      const storedAccessToken = window.localStorage.getItem(
+        CONSTANTS.ACCESS_TOKEN,
+      );
+
+      if (!storedAccessToken) {
+        return Promise.reject(error);
+      }
+
       // Prevent infinite retry loops on already-retried requests.
       if (originalRequest._retried) {
         clearSessionService();

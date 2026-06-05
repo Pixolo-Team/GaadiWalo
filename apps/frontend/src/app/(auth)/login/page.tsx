@@ -95,12 +95,12 @@ export default function LoginPage() {
           // Route to Home page
           router.push(ROUTES.home);
         } else {
-          // Show the backend message for known errors (wrong credentials, inactive account, etc.)
-          // Fall back to a generic message only if the backend returned nothing useful
-          const isCredentialsError = response.status_code === 401;
-          const errorMessage = isCredentialsError
-            ? "Please enter correct User ID and password."
-            : (response.message ?? "Unable to login. Please try again.");
+          // 401 = wrong User ID or password. All other errors (403 inactive, 429 rate limit)
+          // use the backend message directly since they carry the correct user-facing text.
+          const errorMessage =
+            response.status_code === 401
+              ? "Please enter correct User ID and password."
+              : response.message ?? "Unable to login. Please try again.";
 
           toast.error(errorMessage);
 
