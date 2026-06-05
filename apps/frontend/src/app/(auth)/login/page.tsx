@@ -95,15 +95,21 @@ export default function LoginPage() {
           // Route to Home page
           router.push(ROUTES.home);
         } else {
-          // Show error toast
-          toast.error(response.error ?? response.message);
+          // Show the backend message for known errors (wrong credentials, inactive account, etc.)
+          // Fall back to a generic message only if the backend returned nothing useful
+          const isCredentialsError = response.status_code === 401;
+          const errorMessage = isCredentialsError
+            ? "Please enter correct User ID and password."
+            : (response.message ?? "Unable to login. Please try again.");
+
+          toast.error(errorMessage);
 
           // Reset submitting state
           setIsSubmitting(false);
         }
       })
       .catch(() => {
-        // Show error toast
+        // Network or unexpected failure — backend envelope was not returned
         toast.error("Unable to login. Please try again.");
 
         // Reset submitting state

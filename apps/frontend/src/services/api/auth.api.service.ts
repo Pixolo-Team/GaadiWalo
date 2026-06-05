@@ -1,5 +1,5 @@
 // MODULES //
-import type { AxiosRequestConfig } from "axios";
+import type { AxiosRequestConfig, AxiosError } from "axios";
 import axios from "axios";
 
 // TYPES //
@@ -37,10 +37,17 @@ export const loginRequest = async (
     },
   };
 
-  // Make the API Call and return Data
-  const response =
-    await axios.request<ApiResponseData<LoginResponseData>>(config);
-  return response.data;
+  try {
+    const response =
+      await axios.request<ApiResponseData<LoginResponseData>>(config);
+    return response.data;
+  } catch (error) {
+    const axiosError = error as AxiosError<ApiResponseData<LoginResponseData>>;
+    if (axiosError.response?.data) {
+      return axiosError.response.data;
+    }
+    throw error;
+  }
 };
 
 /**
