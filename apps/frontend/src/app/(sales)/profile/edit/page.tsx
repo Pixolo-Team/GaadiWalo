@@ -30,7 +30,6 @@ import { useAuthContext } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 interface EditProfileInputFieldsData {
-  email: string;
   fullName: string;
   phoneNumber: string;
 }
@@ -46,7 +45,6 @@ export default function EditProfilePage() {
 
   // Define States
   const initialEditProfileInputFieldsData: EditProfileInputFieldsData = {
-    email: "",
     fullName: "",
     phoneNumber: "",
   };
@@ -81,6 +79,12 @@ export default function EditProfilePage() {
       key: "user-id",
       label: "User ID",
       value: salesProfile?.userId ?? salesProfileSummaryData.userId,
+    },
+    {
+      isHighlighted: false,
+      key: "email",
+      label: "Email",
+      value: salesProfile?.email ?? "—",
     },
     {
       isHighlighted: false,
@@ -132,7 +136,6 @@ export default function EditProfilePage() {
 
           // Set editable field state
           setEditProfileInputFields({
-            email: response.data.email ?? "",
             fullName: response.data.fullName ?? "",
             phoneNumber: response.data.phone ?? "",
           });
@@ -169,9 +172,7 @@ export default function EditProfilePage() {
      * Call update sales profile API.
      */
     updateSalesProfileRequest(userCode, {
-      email: editProfileInputFields.email.trim(),
       fullName: editProfileInputFields.fullName.trim(),
-      languagePreference: "",
       phone: editProfileInputFields.phoneNumber.trim(),
     })
       .then((response: ApiResponseData<SalesProfileData>) => {
@@ -209,7 +210,6 @@ export default function EditProfilePage() {
    */
   const handleCancelProfileEdit = (): void => {
     setEditProfileInputFields({
-      email: salesProfile?.email ?? "",
       fullName: salesProfile?.fullName ?? "",
       phoneNumber: salesProfile?.phone ?? "",
     });
@@ -299,17 +299,6 @@ export default function EditProfilePage() {
                 value={editProfileInputFields.phoneNumber}
                 onChange={(phoneNumberValue: string) =>
                   updateEditProfileInputFields("phoneNumber", phoneNumberValue)
-                }
-              />
-
-              {/* Email input */}
-              <InputBox
-                label="EMAIL"
-                placeholder="Email"
-                type="email"
-                value={editProfileInputFields.email}
-                onChange={(emailValue: string) =>
-                  updateEditProfileInputFields("email", emailValue)
                 }
               />
 

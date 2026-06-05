@@ -46,7 +46,7 @@ export function LeadDetailsInfoCard({
                 {rowItem.label}
               </p>
               <p
-                className={`font-secondary text-right text-sm font-medium ${
+                className={`font-secondary min-w-0 break-all text-right text-sm font-medium ${
                   rowItem.isHighlighted ? "text-blue-600" : "text-n-800"
                 }`}
               >

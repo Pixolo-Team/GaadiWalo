@@ -18,9 +18,9 @@ export interface SalesProfileData {
  * Defines request payload for profile update.
  */
 export interface UpdateSalesProfileRequestData {
-  email: string;
+  email?: string;
   fullName: string;
-  languagePreference: string;
+  languagePreference?: string;
   phone: string;
 }
 
