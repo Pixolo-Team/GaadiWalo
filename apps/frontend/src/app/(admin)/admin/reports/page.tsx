@@ -330,10 +330,7 @@ export default function AdminReportsPage() {
                     className="flex items-center justify-between gap-3"
                   >
                     <p className="font-secondary text-n-700 text-xs">
-                      {reasonItem.reason
-                        .replace(/_/g, " ")
-                        .toLowerCase()
-                        .replace(/\b\w/g, (c) => c.toUpperCase())}
+                      {reasonItem.reason}
                     </p>
                     <div className="flex items-center gap-2">
                       <div className="bg-n-200 h-1.5 w-20 overflow-hidden rounded-full">
