@@ -14,6 +14,7 @@ import type {
   LeadsFilterStateData,
   LeadSourceData,
   LeadStatusOptionData,
+  LeadTemperatureData,
 } from "@/types/leads";
 
 // COMPONENTS //
@@ -59,6 +60,17 @@ import { toast } from "sonner";
 // LIBRARIES //
 
 const salesSortOptions = ["Newest", "Oldest"] as const;
+
+const TEMPERATURE_FILTER_CHIPS: {
+  label: string;
+  value: LeadTemperatureData | "all";
+  dot: string;
+}[] = [
+  { label: "All Temps", value: "all", dot: "" },
+  { label: "Hot", value: "HOT", dot: "🔴" },
+  { label: "Warm", value: "WARM", dot: "🟡" },
+  { label: "Cold", value: "COLD", dot: "🔵" },
+];
 const leadMasterDataStaleTime = 10 * 60 * 1000;
 const salesLeadsStaleTime = 30 * 1000;
 
@@ -448,6 +460,33 @@ export default function LeadsPage() {
     selectedStatusQueryValue,
   ]);
 
+  /**
+   * Handles temperature chip selection on the leads list inline filter row.
+   */
+  const handleTemperatureChipSelect = (
+    value: LeadTemperatureData | "all",
+  ): void => {
+    if (value === "all") {
+      setAppliedFilterState((previousFilterStateItem) => ({
+        ...previousFilterStateItem,
+        selectedTemperatureFilters: [],
+      }));
+      return;
+    }
+
+    setAppliedFilterState((previousFilterStateItem) => {
+      const currentFilters = previousFilterStateItem.selectedTemperatureFilters;
+      const isSelected = currentFilters.includes(value);
+
+      return {
+        ...previousFilterStateItem,
+        selectedTemperatureFilters: isSelected
+          ? currentFilters.filter((filterItem) => filterItem !== value)
+          : [...currentFilters, value],
+      };
+    });
+  };
+
   const handleOpenFilterDrawer = (): void => {
     setDraftFilterState(appliedFilterState);
     setIsFilterDrawerOpen(true);
@@ -562,6 +601,38 @@ export default function LeadsPage() {
                   );
                 })}
               </div>
+
+              {/* Temperature filter chips */}
+              <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
+                {TEMPERATURE_FILTER_CHIPS.map((chipItem) => {
+                  const isAllTemps = chipItem.value === "all";
+                  const isActive = isAllTemps
+                    ? appliedFilterState.selectedTemperatureFilters.length === 0
+                    : appliedFilterState.selectedTemperatureFilters.includes(
+                        chipItem.value as LeadTemperatureData,
+                      );
+
+                  return (
+                    <button
+                      key={chipItem.value}
+                      type="button"
+                      onClick={() =>
+                        handleTemperatureChipSelect(chipItem.value)
+                      }
+                      className={`font-secondary shrink-0 rounded-3xl border px-4 py-2.5 text-sm transition-colors ${
+                        isActive
+                          ? "border-blue-600 bg-blue-600 font-bold text-white"
+                          : "border-n-200 bg-n-50 text-n-700"
+                      }`}
+                    >
+                      {chipItem.dot ? (
+                        <span className="mr-1.5">{chipItem.dot}</span>
+                      ) : null}
+                      {chipItem.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Leads list section */}
@@ -623,6 +694,7 @@ export default function LeadsPage() {
                         source={leadItem.source}
                         statusLabel={getLeadStatusLabel(leadItem.status)}
                         statusTone={getLeadStatusTone(leadItem.status)}
+                        temperature={leadItem.temperature}
                         vehicleName={getLeadVehicleName(leadItem)}
                       />
                     ))

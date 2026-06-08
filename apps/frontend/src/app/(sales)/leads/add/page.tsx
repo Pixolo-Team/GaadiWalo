@@ -42,9 +42,9 @@ import { toast } from "sonner";
 import { ROUTES } from "@/constants/routes";
 
 const LEAD_TEMPERATURE_OPTIONS: DropdownOptionData[] = [
-  { label: "🔥 Hot", value: "HOT" },
-  { label: "☀️ Warm", value: "WARM" },
-  { label: "❄️ Cold", value: "COLD" },
+  { label: "🔴 Hot", value: "HOT" },
+  { label: "🟡 Warm", value: "WARM" },
+  { label: "🔵 Cold", value: "COLD" },
 ];
 
 interface LeadInputFiledData {

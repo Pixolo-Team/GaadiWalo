@@ -1,8 +1,5 @@
 // TYPES //
-import type { LeadStatusToneData } from "@/types/leads";
-
-// DATA //
-import { salesLeadToneClassNameData } from "@/data/sales";
+import type { LeadStatusToneData, LeadTemperatureData } from "@/types/leads";
 
 // LIBRARIES //
 import Link from "next/link";
@@ -12,6 +9,10 @@ import WhatsappLogo from "@/components/icons/neevo-icons/WhatsappLogo";
 import { LeadContactActions } from "@/components/sales/LeadContactActions";
 import { Badge } from "@/components/ui/badge";
 
+// MODULES //
+import { TEMPERATURE_ICON, TEMPERATURE_LABEL } from "@/constants/temperature";
+import { salesLeadToneClassNameData } from "@/data/sales";
+
 interface LeadDetailsProfilePropsData {
   age: string;
   avatarLabel: string;
@@ -19,6 +20,7 @@ interface LeadDetailsProfilePropsData {
   phoneNumber: string;
   status: string;
   statusTone: LeadStatusToneData;
+  temperature?: LeadTemperatureData | null;
 }
 
 /**
@@ -31,6 +33,7 @@ export function LeadDetailsProfile({
   phoneNumber,
   status,
   statusTone,
+  temperature,
 }: LeadDetailsProfilePropsData) {
   // Define Navigation
 
@@ -61,12 +64,21 @@ export function LeadDetailsProfile({
           <p className="text-n-800 text-lg font-bold">{name}</p>
 
           {/* Lead status row */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge
               className={`font-secondary h-auto rounded-3xl px-3 py-1 text-xs tracking-[-0.2px] ${statusClassName}`}
             >
               {status}
             </Badge>
+
+            {/* Temperature badge */}
+            {temperature ? (
+              <span className="font-secondary border-n-200 bg-n-100 text-n-700 flex items-center gap-1 rounded-3xl border px-2.5 py-1 text-xs">
+                <span>{TEMPERATURE_ICON[temperature]}</span>
+                {TEMPERATURE_LABEL[temperature]}
+              </span>
+            ) : null}
+
             <span className="font-secondary text-n-500 text-xs">{age}</span>
           </div>
         </div>

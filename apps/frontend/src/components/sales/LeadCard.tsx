@@ -1,23 +1,22 @@
 "use client";
 
 // TYPES //
-import type { LeadStatusToneData } from "@/types/leads";
+import type { LeadStatusToneData, LeadTemperatureData } from "@/types/leads";
 
 // COMPONENTS //
 import Image from "next/image";
 import Link from "next/link";
+import Motion from "@/components/animations/Motion";
 import WhatsappLogo from "@/components/icons/neevo-icons/WhatsappLogo";
 import { LeadContactActions } from "@/components/sales/LeadContactActions";
 import { Badge } from "@/components/ui/badge";
 
-// COMPONENTS //
-import Motion from "@/components/animations/Motion";
-
 // UTILS //
 import { cardEnter } from "@/lib/animations";
 
-// CONSTANTS //
+// MODULES //
 import { ROUTES } from "@/constants/routes";
+import { TEMPERATURE_ICON, TEMPERATURE_LABEL } from "@/constants/temperature";
 import { salesLeadToneClassNameData } from "@/data/sales";
 
 interface LeadCardPropsData {
@@ -30,6 +29,7 @@ interface LeadCardPropsData {
   source: string;
   statusLabel: string;
   statusTone: LeadStatusToneData;
+  temperature?: LeadTemperatureData | null;
   vehicleName: string;
 }
 
@@ -44,6 +44,7 @@ export function LeadCard({
   source,
   statusLabel,
   statusTone,
+  temperature,
   vehicleName,
 }: LeadCardPropsData) {
   // Define Navigation
@@ -119,12 +120,22 @@ export function LeadCard({
           </div>
         </div>
 
-        {/* Status badge */}
-        <Badge
-          className={`font-secondary h-auto rounded-3xl text-xs tracking-[-0.2px] ${statusClassName}`}
-        >
-          {statusLabel}
-        </Badge>
+        {/* Status and temperature badges */}
+        <div className="flex flex-col items-end gap-1.5">
+          <Badge
+            className={`font-secondary h-auto rounded-3xl text-xs tracking-[-0.2px] ${statusClassName}`}
+          >
+            {statusLabel}
+          </Badge>
+
+          {/* Temperature badge */}
+          {temperature ? (
+            <span className="font-secondary border-n-200 bg-n-100 text-n-700 flex items-center gap-1 rounded-3xl border px-2 py-0.5 text-xs">
+              <span>{TEMPERATURE_ICON[temperature]}</span>
+              {TEMPERATURE_LABEL[temperature]}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       {/* Contact actions */}

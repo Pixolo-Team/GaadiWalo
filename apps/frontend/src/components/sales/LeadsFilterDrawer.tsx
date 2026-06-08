@@ -1,5 +1,9 @@
 "use client";
 
+// TYPES //
+import type { DropdownOptionData } from "@/types/dropdown";
+import type { LeadsFilterStateData } from "@/types/leads";
+
 // COMPONENTS //
 import { DatePicker } from "@/components/common/DatePicker";
 import Dropdown from "@/components/common/Dropdown";
@@ -7,16 +11,6 @@ import FilterDrawer from "@/components/common/FilterDrawer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-// TYPES //
-import type { DropdownOptionData } from "@/types/dropdown";
-import type { LeadTemperatureData, LeadsFilterStateData } from "@/types/leads";
-
-const TEMPERATURE_FILTER_OPTIONS: LeadTemperatureData[] = ["HOT", "WARM", "COLD"];
-const TEMPERATURE_LABELS: Record<LeadTemperatureData, string> = {
-  HOT: "🔥 Hot",
-  WARM: "☀️ Warm",
-  COLD: "❄️ Cold",
-};
 
 interface LeadsFilterDrawerPropsData {
   branchOptions: ReadonlyArray<DropdownOptionData>;
@@ -74,27 +68,6 @@ export function LeadsFilterDrawer({
     onFilterStateChange({
       ...filterState,
       [filterKey]: nextFilterValues,
-    });
-  };
-
-  /**
-   * Toggles a temperature filter chip on/off.
-   */
-  const handleTemperatureFilterToggle = (
-    temperatureValue: LeadTemperatureData,
-  ): void => {
-    const currentTemperatureFilters = filterState.selectedTemperatureFilters;
-    const isSelected = currentTemperatureFilters.includes(temperatureValue);
-
-    const nextTemperatureFilters = isSelected
-      ? currentTemperatureFilters.filter(
-          (filterItem) => filterItem !== temperatureValue,
-        )
-      : [...currentTemperatureFilters, temperatureValue];
-
-    onFilterStateChange({
-      ...filterState,
-      selectedTemperatureFilters: nextTemperatureFilters,
     });
   };
 
@@ -189,45 +162,6 @@ export function LeadsFilterDrawer({
                     }`}
                   >
                     {sourceFilterItem}
-                  </Badge>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Temperature filters */}
-        <div className="flex flex-col gap-2">
-          {/* Filter group label */}
-          <p className="font-secondary text-n-600 text-xs font-semibold uppercase">
-            Temperature
-          </p>
-
-          {/* Temperature options */}
-          <div className="flex flex-wrap gap-2">
-            {TEMPERATURE_FILTER_OPTIONS.map((temperatureItem) => {
-              const isSelected =
-                filterState.selectedTemperatureFilters.includes(temperatureItem);
-
-              return (
-                /* Temperature filter chip */
-                <button
-                  key={temperatureItem}
-                  type="button"
-                  aria-pressed={isSelected}
-                  onClick={() =>
-                    handleTemperatureFilterToggle(temperatureItem)
-                  }
-                  className="h-auto w-auto rounded-3xl p-0"
-                >
-                  <Badge
-                    className={`font-secondary h-10 rounded-3xl px-4 text-sm font-normal ${
-                      isSelected
-                        ? "bg-blue-600 font-bold text-white"
-                        : "border-n-200 bg-n-50 text-n-700 border"
-                    }`}
-                  >
-                    {TEMPERATURE_LABELS[temperatureItem]}
                   </Badge>
                 </button>
               );

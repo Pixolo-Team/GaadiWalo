@@ -14,6 +14,7 @@ import type {
 import ImportInput from "@/components/icons/neevo-icons/ImportInput";
 import UserAddPlus from "@/components/icons/neevo-icons/UserAddPlus";
 import { LeadCard } from "@/components/sales/LeadCard";
+import { LeadTemperatureCard } from "@/components/sales/LeadTemperatureCard";
 import { PhaseCards } from "@/components/sales/PhaseCards";
 import { QuickActionCard } from "@/components/sales/QuickActionCard";
 import { SalesDashboardHeader } from "@/components/sales/SalesDashboardHeader";
@@ -292,11 +293,18 @@ export default function Home() {
                   source={leadItem.source}
                   statusLabel={getLeadStatusLabel(leadItem.status)}
                   statusTone={getLeadStatusTone(leadItem.status)}
+                  temperature={leadItem.temperature}
                   vehicleName={getLeadVehicleName(leadItem)}
                 />
               ))}
             </div>
           </div>
+
+          {/* Lead temperature section */}
+          <LeadTemperatureCard
+            isLoading={shouldShowDashboardCountPlaceholders}
+            leads={filteredBranchLeadItems}
+          />
 
           {/* Quick actions section */}
           <div className="flex flex-col gap-3">
