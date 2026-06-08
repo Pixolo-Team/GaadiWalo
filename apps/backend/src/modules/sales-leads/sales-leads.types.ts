@@ -1,7 +1,7 @@
 // LIBRARIES //
 import { z } from "zod";
 // CONSTANTS //
-import { LEAD_ACTIVITY_TYPE_VALUES, LEAD_STATUS_VALUES } from "../../common/constants/lead.constants.js";
+import { LEAD_ACTIVITY_TYPE_VALUES, LEAD_STATUS_VALUES, LEAD_TEMPERATURE_VALUES } from "../../common/constants/lead.constants.js";
 
 const mobilePhoneRegex = /^[0-9]{10}$/;
 
@@ -14,6 +14,7 @@ const optionalTrimmedStringSchema = z
 
 export type LeadStatusData = (typeof LEAD_STATUS_VALUES)[number];
 export type LeadActivityTypeData = (typeof LEAD_ACTIVITY_TYPE_VALUES)[number];
+export type LeadTemperatureData = (typeof LEAD_TEMPERATURE_VALUES)[number];
 
 export interface CarBrandData {
   id: string;
@@ -56,6 +57,7 @@ export interface LeadDetailsData {
   email: string | null;
   source: string;
   status: LeadStatusData;
+  temperature: LeadTemperatureData | null;
   lostReason: string | null;
   referrerName: string | null;
   referrerPhone: string | null;
@@ -80,6 +82,7 @@ export interface LeadListItemData {
   email: string | null;
   source: string;
   status: LeadStatusData;
+  temperature: LeadTemperatureData | null;
   carBrand: string | null;
   carModel: string | null;
   branchId: string | null;
@@ -177,6 +180,7 @@ export const updateLeadStatusRequestSchema = z
   .object({
     status: z.enum(LEAD_STATUS_VALUES),
     lostReason: optionalTrimmedStringSchema,
+    temperature: z.enum(LEAD_TEMPERATURE_VALUES).nullable().optional(),
   })
   .superRefine((value, context) => {
     if (value.status === "LOST" && !value.lostReason) {
@@ -225,6 +229,7 @@ const leadDetailsMutationBaseSchema = z.object({
   colorPreference: optionalTrimmedStringSchema,
   budget: optionalTrimmedStringSchema,
   isUsed: z.boolean().nullable().optional(),
+  temperature: z.enum(LEAD_TEMPERATURE_VALUES).nullable().optional(),
 });
 
 export const leadDetailsMutationSchema = leadDetailsMutationBaseSchema

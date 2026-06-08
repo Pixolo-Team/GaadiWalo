@@ -640,10 +640,20 @@ export const createAdminDashboardService = (
 
         const topPerformerEntries = Array.from(performerCountsMap.entries())
           .sort((leftItem, rightItem) => {
-            if (rightItem[1].won !== leftItem[1].won) {
-              return rightItem[1].won - leftItem[1].won;
+            const rightWinRate =
+              rightItem[1].leads > 0
+                ? rightItem[1].won / rightItem[1].leads
+                : 0;
+            const leftWinRate =
+              leftItem[1].leads > 0
+                ? leftItem[1].won / leftItem[1].leads
+                : 0;
+
+            if (rightWinRate !== leftWinRate) {
+              return rightWinRate - leftWinRate;
             }
 
+            // Tiebreaker: more total leads handled ranks higher
             return rightItem[1].leads - leftItem[1].leads;
           })
           .slice(0, limit);

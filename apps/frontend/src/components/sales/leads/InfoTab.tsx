@@ -3,6 +3,12 @@ import Dropdown from "@/components/common/Dropdown";
 import { LeadDetailsInfoCard } from "@/components/sales/LeadDetailsInfoCard";
 import { Button } from "@/components/ui/button";
 
+const TEMPERATURE_OPTIONS = [
+  { label: "🔥 Hot", value: "HOT" },
+  { label: "☀️ Warm", value: "WARM" },
+  { label: "❄️ Cold", value: "COLD" },
+];
+
 interface InfoTabPropsData {
   carInterestRows: ReadonlyArray<{
     isHighlighted: boolean;
@@ -16,28 +22,32 @@ interface InfoTabPropsData {
     label: string;
     value: string;
   }>;
+  isUpdatingStatus: boolean;
   leadStatusOptions: ReadonlyArray<{ label: string; value: string }>;
   lostReasonOptions: ReadonlyArray<{ label: string; value: string }>;
   onLeadStatusChange: (value: string) => void;
   onLostReasonChange: (value: string) => void;
+  onTemperatureChange: (value: string) => void;
   onUpdateStatus: () => void;
   selectedLeadStatus: string;
   selectedLostReason: string;
-  isUpdatingStatus: boolean;
+  selectedTemperature: string;
 }
 
 /** Lead Info Tab */
 export function InfoTab({
   carInterestRows,
   contactInfoRows,
+  isUpdatingStatus,
   leadStatusOptions,
   lostReasonOptions,
   onLeadStatusChange,
   onLostReasonChange,
+  onTemperatureChange,
   onUpdateStatus,
   selectedLeadStatus,
   selectedLostReason,
-  isUpdatingStatus,
+  selectedTemperature,
 }: InfoTabPropsData) {
   // Define Navigation
 
@@ -77,6 +87,14 @@ export function InfoTab({
             placeholder={lostReasonOptions[0]?.label}
           />
         ) : null}
+
+        {/* Temperature dropdown */}
+        <Dropdown
+          options={TEMPERATURE_OPTIONS}
+          selectedOption={selectedTemperature}
+          onChange={onTemperatureChange}
+          placeholder="Set Temperature"
+        />
 
         {/* Update status action */}
         <Button

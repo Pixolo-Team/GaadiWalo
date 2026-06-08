@@ -11,6 +11,7 @@ import type {
   CreateLeadResponseData,
   LeadCarBrandData,
   LeadSourceData,
+  LeadTemperatureData,
 } from "@/types/leads";
 
 // COMPONENTS //
@@ -40,6 +41,12 @@ import { toast } from "sonner";
 // MODULES //
 import { ROUTES } from "@/constants/routes";
 
+const LEAD_TEMPERATURE_OPTIONS: DropdownOptionData[] = [
+  { label: "🔥 Hot", value: "HOT" },
+  { label: "☀️ Warm", value: "WARM" },
+  { label: "❄️ Cold", value: "COLD" },
+];
+
 interface LeadInputFiledData {
   budget: string;
   carBrandId: string;
@@ -51,6 +58,7 @@ interface LeadInputFiledData {
   referrerName: string;
   referrerPhone: string;
   source: string;
+  temperature: string;
 }
 
 const initialLeadInputFiledData: LeadInputFiledData = {
@@ -64,6 +72,7 @@ const initialLeadInputFiledData: LeadInputFiledData = {
   referrerName: "",
   referrerPhone: "",
   source: "",
+  temperature: "",
 };
 
 /** Add Lead Page Component */
@@ -144,6 +153,8 @@ export default function AddLeadPage() {
       ? leadInputFiled.referrerPhone.trim() || null
       : null,
     source: leadInputFiled.source,
+    temperature:
+      (leadInputFiled.temperature as LeadTemperatureData) || null,
   };
 
   /**
@@ -379,6 +390,25 @@ export default function AddLeadPage() {
                     />
                   </div>
                 ) : null}
+              </div>
+
+              <div className="bg-n-200 h-px w-full" />
+
+              {/* Lead temperature section */}
+              <div className="flex flex-col gap-3">
+                <p className="font-secondary text-n-600 text-xs leading-normal font-semibold tracking-wide uppercase">
+                  Lead Temperature
+                </p>
+
+                <Dropdown
+                  label="TEMPERATURE"
+                  title="Select Temperature"
+                  options={LEAD_TEMPERATURE_OPTIONS}
+                  selectedOption={leadInputFiled.temperature}
+                  onChange={(value) =>
+                    updateLeadInputFiled("temperature", value)
+                  }
+                />
               </div>
 
               <div className="bg-n-200 h-px w-full" />

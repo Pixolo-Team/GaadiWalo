@@ -1,3 +1,5 @@
+export const LEAD_TEMPERATURE_VALUES = ["HOT", "WARM", "COLD"] as const;
+
 export const LEAD_STATUS_VALUES = [
   "NEW",
   "CONTACTED",
@@ -56,6 +58,8 @@ export const LEAD_ACTIVITIES_SUCCESS_MESSAGE =
 export const LEAD_NOTES_SUCCESS_MESSAGE = "Lead notes fetched successfully.";
 export const LEAD_STATUS_UPDATED_SUCCESS_MESSAGE =
   "Lead status updated successfully.";
+export const LEAD_TEMPERATURE_UPDATED_SUCCESS_MESSAGE =
+  "Lead temperature updated successfully.";
 export const LEAD_DETAILS_UPDATED_SUCCESS_MESSAGE =
   "Lead details updated successfully.";
 export const LEAD_NOTE_CREATED_SUCCESS_MESSAGE =

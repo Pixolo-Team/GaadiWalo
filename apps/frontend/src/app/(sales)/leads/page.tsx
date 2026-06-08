@@ -69,6 +69,7 @@ const initialLeadsFilterState: LeadsFilterStateData = {
   selectedSourceFilters: [],
   selectedStartDate: "",
   selectedStatusFilters: [],
+  selectedTemperatureFilters: [],
 };
 
 /**
@@ -377,6 +378,15 @@ export default function LeadsPage() {
       if (
         appliedFilterState.selectedCarBrand !== "all" &&
         leadItem.carBrand !== appliedFilterState.selectedCarBrand
+      ) {
+        return false;
+      }
+
+      if (
+        appliedFilterState.selectedTemperatureFilters.length > 0 &&
+        !appliedFilterState.selectedTemperatureFilters.includes(
+          leadItem.temperature ?? ("" as never),
+        )
       ) {
         return false;
       }

@@ -1,4 +1,9 @@
 /**
+ * Defines supported lead temperature values.
+ */
+export type LeadTemperatureData = "HOT" | "WARM" | "COLD";
+
+/**
  * Defines supported lead status values.
  */
 export type LeadStatusData =
@@ -58,6 +63,7 @@ export interface LeadDetailsData {
   id: string;
   isUsed: boolean | null;
   lostReason: string | null;
+  temperature: LeadTemperatureData | null;
   phone: string;
   referrerName: string | null;
   referrerPhone: string | null;
@@ -80,6 +86,7 @@ export interface LeadListItemData {
   phone: string;
   source: string;
   status: LeadStatusData;
+  temperature: LeadTemperatureData | null;
   statusChangedAt?: string | null;
   statusUpdatedAt?: string | null;
   updatedAt?: string | null;
@@ -201,6 +208,7 @@ export interface LeadsFilterStateData {
   selectedSourceFilters: string[];
   selectedStartDate: string;
   selectedStatusFilters: string[];
+  selectedTemperatureFilters: LeadTemperatureData[];
 }
 
 /**
@@ -232,6 +240,7 @@ export interface LeadNoteData {
 export interface UpdateLeadStatusRequestData {
   lostReason?: string | null;
   status: LeadStatusData;
+  temperature?: LeadTemperatureData | null;
 }
 
 /**
@@ -275,6 +284,7 @@ export interface CreateLeadRequestData {
   referrerName?: string | null;
   referrerPhone?: string | null;
   source: string;
+  temperature?: LeadTemperatureData | null;
   variantName?: string | null;
 }
 

@@ -13,6 +13,7 @@ import type {
   LeadRequestStateData,
   LeadStatusFormStateData,
   LeadStatusData,
+  LeadTemperatureData,
   SalesLeadDetailsTabData,
   LeadStatusOptionData,
 } from "@/types/leads";
@@ -77,6 +78,8 @@ export default function LeadDetailsPage() {
       selectedLeadStatus: "NEW",
       selectedLostReason: "",
     });
+  const [selectedTemperature, setSelectedTemperature] =
+    useState<LeadTemperatureData | null>(null);
   const [leadStatusItems, setLeadStatusItems] = useState<
     LeadStatusOptionData[]
   >([]);
@@ -118,6 +121,13 @@ export default function LeadDetailsPage() {
   };
 
   /**
+   * Handles temperature value change.
+   */
+  const handleTemperatureChange = (value: string): void => {
+    setSelectedTemperature((value as LeadTemperatureData) || null);
+  };
+
+  /**
    * Handles lost reason value change.
    */
   const handleLostReasonChange = (value: string): void => {
@@ -145,6 +155,9 @@ export default function LeadDetailsPage() {
             selectedLeadStatus: response.data.status,
             selectedLostReason: response.data.lostReason ?? "",
           });
+
+          // Set Lead Temperature
+          setSelectedTemperature(response.data.temperature ?? null);
         }
       })
       .catch(() => {
@@ -249,6 +262,7 @@ export default function LeadDetailsPage() {
           ? leadStatusFormState.selectedLostReason
           : null,
       status: leadStatusFormState.selectedLeadStatus,
+      temperature: selectedTemperature,
     })
       .then((response: ApiResponseData<LeadDetailsData>) => {
         if (response.status_code === 200 && response.data) {
@@ -260,6 +274,9 @@ export default function LeadDetailsPage() {
             selectedLeadStatus: response.data.status,
             selectedLostReason: response.data.lostReason ?? "",
           });
+
+          // Sync updated temperature
+          setSelectedTemperature(response.data.temperature ?? null);
 
           // Success toast
           toast.success(response.message);
@@ -462,8 +479,10 @@ export default function LeadDetailsPage() {
                       lostReasonOptions={lostReasonOptions}
                       selectedLeadStatus={leadStatusFormState.selectedLeadStatus}
                       selectedLostReason={leadStatusFormState.selectedLostReason}
+                      selectedTemperature={selectedTemperature ?? ""}
                       onLeadStatusChange={handleLeadStatusChange}
                       onLostReasonChange={handleLostReasonChange}
+                      onTemperatureChange={handleTemperatureChange}
                       onUpdateStatus={handleUpdateLeadStatus}
                       isUpdatingStatus={leadRequestState.isUpdatingStatus}
                     />

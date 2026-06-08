@@ -23,6 +23,7 @@ import type {
   LeadListItemData,
   LeadNoteData,
   LeadStatusData,
+  LeadTemperatureData,
   LeadUserSummaryData,
   SalesLeadServiceErrorData,
   UpdateLeadDetailsRequestData,
@@ -71,6 +72,7 @@ interface SalesLeadRecordData {
   color_preference?: string | null;
   budget?: string | null;
   is_used?: boolean | null;
+  temperature?: string | null;
   [key: string]: unknown;
 }
 
@@ -128,6 +130,7 @@ interface CreateLeadRecordInputData {
   is_used: boolean | null;
   lost_reason?: string | null;
   lost_reason_id?: string | null;
+  temperature?: string | null;
 }
 
 interface UpdateLeadRecordInputData {
@@ -149,6 +152,7 @@ interface UpdateLeadRecordInputData {
   color_preference?: string | null;
   budget?: string | null;
   is_used?: boolean | null;
+  temperature?: string | null;
 }
 
 interface CreateLeadNoteRecordInputData {
@@ -244,6 +248,7 @@ const LEADS_OPTIONAL_MUTATION_COLUMNS = new Set<string>([
   "color_preference",
   "budget",
   "is_used",
+  "temperature",
 ]);
 
 /**
@@ -527,6 +532,7 @@ const createLeadMutationPayload = (
     color_preference: payload.colorPreference ?? null,
     budget: payload.budget ?? null,
     is_used: payload.isUsed ?? null,
+    temperature: payload.temperature ?? null,
   };
 };
 
@@ -1164,6 +1170,9 @@ export const createSalesLeadsService = (
         ]) ?? null,
       budget: getOptionalString(leadRecord, ["budget"]) ?? null,
       isUsed: getOptionalBoolean(leadRecord, ["is_used", "isUsed"]),
+      temperature:
+        (getOptionalString(leadRecord, ["temperature"]) as LeadTemperatureData | null) ??
+        null,
       branchId: assignedToUserRecord?.branch_id ?? null,
       branchName: resolvedBranchLookup?.name ?? null,
       assignedTo: mapLeadUserSummary(assignedToUserRecord),
@@ -1187,6 +1196,7 @@ export const createSalesLeadsService = (
       email: leadDetails.email,
       source: leadDetails.source,
       status: leadDetails.status,
+      temperature: leadDetails.temperature,
       carBrand: leadDetails.carBrand,
       carModel: leadDetails.carModel,
       branchId: leadDetails.branchId,
@@ -1879,6 +1889,7 @@ export const createSalesLeadsService = (
         const updatedLeadRecord = await dependencies.updateLeadRecord(leadId, {
           status_id: statusId,
           lost_reason_id: payload.status === "LOST" ? lostReasonId : null,
+          temperature: payload.temperature ?? undefined,
         });
 
         await dependencies.createLeadActivityRecord({
