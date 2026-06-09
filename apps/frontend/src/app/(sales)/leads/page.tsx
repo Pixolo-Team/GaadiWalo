@@ -291,9 +291,68 @@ export default function LeadsPage() {
     staleTime: leadMasterDataStaleTime,
   });
 
+  /**
+   * Leads filtered by everything except the status tab and status drawer filters.
+   * Used to compute accurate per-status counts that reflect active non-status filters.
+   */
+  const statusCountLeads = useMemo(() => {
+    return salesLeads.filter((leadItem) => {
+      if (
+        appliedFilterState.selectedSourceFilters.length > 0 &&
+        !appliedFilterState.selectedSourceFilters.includes(leadItem.source)
+      ) {
+        return false;
+      }
+
+      if (
+        appliedFilterState.selectedBranch !== "all" &&
+        leadItem.branch !== appliedFilterState.selectedBranch
+      ) {
+        return false;
+      }
+
+      if (
+        appliedFilterState.selectedCarBrand !== "all" &&
+        leadItem.carBrand !== appliedFilterState.selectedCarBrand
+      ) {
+        return false;
+      }
+
+      if (
+        appliedFilterState.selectedTemperatureFilters.length > 0 &&
+        (leadItem.temperature === null ||
+          !appliedFilterState.selectedTemperatureFilters.includes(
+            leadItem.temperature,
+          ))
+      ) {
+        return false;
+      }
+
+      const leadDateValue = leadItem.updatedAt ?? leadItem.createdAt ?? null;
+      const leadDateObject = leadDateValue ? new Date(leadDateValue) : null;
+
+      if (appliedFilterState.selectedStartDate && leadDateObject) {
+        const startDateObject = new Date(appliedFilterState.selectedStartDate);
+        if (leadDateObject < startDateObject) {
+          return false;
+        }
+      }
+
+      if (appliedFilterState.selectedEndDate && leadDateObject) {
+        const endDateObject = new Date(appliedFilterState.selectedEndDate);
+        endDateObject.setHours(23, 59, 59, 999);
+        if (leadDateObject > endDateObject) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [appliedFilterState, salesLeads]);
+
   const statusTabItems = useMemo(() => {
     const dynamicStatusTabs = leadStatusItems.map((statusItem) => ({
-      count: salesLeads.filter(
+      count: statusCountLeads.filter(
         (leadItem) => leadItem.status === statusItem.name,
       ).length,
       key: statusItem.name.toLowerCase(),
@@ -302,13 +361,13 @@ export default function LeadsPage() {
 
     return [
       {
-        count: salesLeads.length,
+        count: statusCountLeads.length,
         key: "all",
         label: "All",
       },
       ...dynamicStatusTabs,
     ];
-  }, [leadStatusItems, salesLeads]);
+  }, [leadStatusItems, statusCountLeads]);
 
   const branchOptions = useMemo<DropdownOptionData[]>(() => {
     const normalizedBranchOptions = leadBranchItems
@@ -396,9 +455,10 @@ export default function LeadsPage() {
 
       if (
         appliedFilterState.selectedTemperatureFilters.length > 0 &&
-        !appliedFilterState.selectedTemperatureFilters.includes(
-          leadItem.temperature ?? ("" as never),
-        )
+        (leadItem.temperature === null ||
+          !appliedFilterState.selectedTemperatureFilters.includes(
+            leadItem.temperature,
+          ))
       ) {
         return false;
       }
@@ -462,27 +522,20 @@ export default function LeadsPage() {
 
   /**
    * Handles temperature chip selection on the leads list inline filter row.
+   * Single-select — selecting an already-active chip clears the filter.
    */
   const handleTemperatureChipSelect = (
     value: LeadTemperatureData | "all",
   ): void => {
-    if (value === "all") {
-      setAppliedFilterState((previousFilterStateItem) => ({
-        ...previousFilterStateItem,
-        selectedTemperatureFilters: [],
-      }));
-      return;
-    }
-
     setAppliedFilterState((previousFilterStateItem) => {
       const currentFilters = previousFilterStateItem.selectedTemperatureFilters;
-      const isSelected = currentFilters.includes(value);
+      const isAlreadySelected =
+        value !== "all" && currentFilters.includes(value);
 
       return {
         ...previousFilterStateItem,
-        selectedTemperatureFilters: isSelected
-          ? currentFilters.filter((filterItem) => filterItem !== value)
-          : [...currentFilters, value],
+        selectedTemperatureFilters:
+          value === "all" || isAlreadySelected ? [] : [value],
       };
     });
   };
