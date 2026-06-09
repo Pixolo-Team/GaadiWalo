@@ -4,9 +4,9 @@ import { LeadDetailsInfoCard } from "@/components/sales/LeadDetailsInfoCard";
 import { Button } from "@/components/ui/button";
 
 const TEMPERATURE_OPTIONS = [
-  { label: "🔥 Hot", value: "HOT" },
-  { label: "☀️ Warm", value: "WARM" },
-  { label: "❄️ Cold", value: "COLD" },
+  { label: "🔴 Hot", value: "HOT" },
+  { label: "🟡 Warm", value: "WARM" },
+  { label: "🔵 Cold", value: "COLD" },
 ];
 
 interface InfoTabPropsData {

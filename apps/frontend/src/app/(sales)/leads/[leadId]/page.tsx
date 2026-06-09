@@ -447,6 +447,7 @@ export default function LeadDetailsPage() {
             phoneNumber={leadProfileView.phoneNumber}
             status={leadProfileView.status}
             statusTone={leadProfileView.statusTone}
+            temperature={selectedTemperature}
           />
 
           {/* Lead details content */}

@@ -14,6 +14,7 @@ import type {
   LeadsFilterStateData,
   LeadSourceData,
   LeadStatusOptionData,
+  LeadTemperatureData,
 } from "@/types/leads";
 
 // COMPONENTS //
@@ -59,6 +60,17 @@ import { toast } from "sonner";
 // LIBRARIES //
 
 const salesSortOptions = ["Newest", "Oldest"] as const;
+
+const TEMPERATURE_FILTER_CHIPS: {
+  label: string;
+  value: LeadTemperatureData | "all";
+  dot: string;
+}[] = [
+  { label: "All Temps", value: "all", dot: "" },
+  { label: "Hot", value: "HOT", dot: "🔴" },
+  { label: "Warm", value: "WARM", dot: "🟡" },
+  { label: "Cold", value: "COLD", dot: "🔵" },
+];
 const leadMasterDataStaleTime = 10 * 60 * 1000;
 const salesLeadsStaleTime = 30 * 1000;
 
@@ -279,9 +291,68 @@ export default function LeadsPage() {
     staleTime: leadMasterDataStaleTime,
   });
 
+  /**
+   * Leads filtered by everything except the status tab and status drawer filters.
+   * Used to compute accurate per-status counts that reflect active non-status filters.
+   */
+  const statusCountLeads = useMemo(() => {
+    return salesLeads.filter((leadItem) => {
+      if (
+        appliedFilterState.selectedSourceFilters.length > 0 &&
+        !appliedFilterState.selectedSourceFilters.includes(leadItem.source)
+      ) {
+        return false;
+      }
+
+      if (
+        appliedFilterState.selectedBranch !== "all" &&
+        leadItem.branch !== appliedFilterState.selectedBranch
+      ) {
+        return false;
+      }
+
+      if (
+        appliedFilterState.selectedCarBrand !== "all" &&
+        leadItem.carBrand !== appliedFilterState.selectedCarBrand
+      ) {
+        return false;
+      }
+
+      if (
+        appliedFilterState.selectedTemperatureFilters.length > 0 &&
+        (leadItem.temperature === null ||
+          !appliedFilterState.selectedTemperatureFilters.includes(
+            leadItem.temperature,
+          ))
+      ) {
+        return false;
+      }
+
+      const leadDateValue = leadItem.updatedAt ?? leadItem.createdAt ?? null;
+      const leadDateObject = leadDateValue ? new Date(leadDateValue) : null;
+
+      if (appliedFilterState.selectedStartDate && leadDateObject) {
+        const startDateObject = new Date(appliedFilterState.selectedStartDate);
+        if (leadDateObject < startDateObject) {
+          return false;
+        }
+      }
+
+      if (appliedFilterState.selectedEndDate && leadDateObject) {
+        const endDateObject = new Date(appliedFilterState.selectedEndDate);
+        endDateObject.setHours(23, 59, 59, 999);
+        if (leadDateObject > endDateObject) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [appliedFilterState, salesLeads]);
+
   const statusTabItems = useMemo(() => {
     const dynamicStatusTabs = leadStatusItems.map((statusItem) => ({
-      count: salesLeads.filter(
+      count: statusCountLeads.filter(
         (leadItem) => leadItem.status === statusItem.name,
       ).length,
       key: statusItem.name.toLowerCase(),
@@ -290,13 +361,13 @@ export default function LeadsPage() {
 
     return [
       {
-        count: salesLeads.length,
+        count: statusCountLeads.length,
         key: "all",
         label: "All",
       },
       ...dynamicStatusTabs,
     ];
-  }, [leadStatusItems, salesLeads]);
+  }, [leadStatusItems, statusCountLeads]);
 
   const branchOptions = useMemo<DropdownOptionData[]>(() => {
     const normalizedBranchOptions = leadBranchItems
@@ -384,9 +455,10 @@ export default function LeadsPage() {
 
       if (
         appliedFilterState.selectedTemperatureFilters.length > 0 &&
-        !appliedFilterState.selectedTemperatureFilters.includes(
-          leadItem.temperature ?? ("" as never),
-        )
+        (leadItem.temperature === null ||
+          !appliedFilterState.selectedTemperatureFilters.includes(
+            leadItem.temperature,
+          ))
       ) {
         return false;
       }
@@ -447,6 +519,26 @@ export default function LeadsPage() {
     selectedSort,
     selectedStatusQueryValue,
   ]);
+
+  /**
+   * Handles temperature chip selection on the leads list inline filter row.
+   * Single-select — selecting an already-active chip clears the filter.
+   */
+  const handleTemperatureChipSelect = (
+    value: LeadTemperatureData | "all",
+  ): void => {
+    setAppliedFilterState((previousFilterStateItem) => {
+      const currentFilters = previousFilterStateItem.selectedTemperatureFilters;
+      const isAlreadySelected =
+        value !== "all" && currentFilters.includes(value);
+
+      return {
+        ...previousFilterStateItem,
+        selectedTemperatureFilters:
+          value === "all" || isAlreadySelected ? [] : [value],
+      };
+    });
+  };
 
   const handleOpenFilterDrawer = (): void => {
     setDraftFilterState(appliedFilterState);
@@ -562,6 +654,38 @@ export default function LeadsPage() {
                   );
                 })}
               </div>
+
+              {/* Temperature filter chips */}
+              <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
+                {TEMPERATURE_FILTER_CHIPS.map((chipItem) => {
+                  const isAllTemps = chipItem.value === "all";
+                  const isActive = isAllTemps
+                    ? appliedFilterState.selectedTemperatureFilters.length === 0
+                    : appliedFilterState.selectedTemperatureFilters.includes(
+                        chipItem.value as LeadTemperatureData,
+                      );
+
+                  return (
+                    <button
+                      key={chipItem.value}
+                      type="button"
+                      onClick={() =>
+                        handleTemperatureChipSelect(chipItem.value)
+                      }
+                      className={`font-secondary shrink-0 rounded-3xl border px-4 py-2.5 text-sm transition-colors ${
+                        isActive
+                          ? "border-blue-600 bg-blue-600 font-bold text-white"
+                          : "border-n-200 bg-n-50 text-n-700"
+                      }`}
+                    >
+                      {chipItem.dot ? (
+                        <span className="mr-1.5">{chipItem.dot}</span>
+                      ) : null}
+                      {chipItem.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Leads list section */}
@@ -623,6 +747,7 @@ export default function LeadsPage() {
                         source={leadItem.source}
                         statusLabel={getLeadStatusLabel(leadItem.status)}
                         statusTone={getLeadStatusTone(leadItem.status)}
+                        temperature={leadItem.temperature}
                         vehicleName={getLeadVehicleName(leadItem)}
                       />
                     ))
