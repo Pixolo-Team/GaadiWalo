@@ -149,7 +149,9 @@ export default function AdminReferrersPage() {
                       key={referrerItem.id}
                       type="button"
                       onClick={() =>
-                        router.push(ROUTES.admin.referrerDetail(referrerItem.id))
+                        router.push(
+                          `${ROUTES.admin.referrerDetail(referrerItem.id)}?from=${selectedSort}`,
+                        )
                       }
                       className="bg-n-50 flex w-full items-center gap-3 rounded-2xl p-4 text-left"
                     >

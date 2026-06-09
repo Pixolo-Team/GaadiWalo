@@ -2,7 +2,7 @@
 
 // REACT //
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 // TYPES //
 import type {
@@ -38,6 +38,7 @@ const leadStatusColors: Record<string, string> = {
 export default function ReferrerDetailPage() {
   // Define Navigation
   const params = useParams<{ referrerId: string }>();
+  const searchParams = useSearchParams();
   const referrerId = params.referrerId;
 
   // Define Context
@@ -54,6 +55,14 @@ export default function ReferrerDetailPage() {
   const [totalLeads, setTotalLeads] = useState<number>(0);
 
   // Helper Functions
+  const fromCategory = searchParams.get("from");
+  const categoryLabel =
+    fromCategory === "most-referrals"
+      ? "🏆 Most Referrals"
+      : fromCategory === "best-conversion"
+        ? "🎯 Best Conversion"
+        : null;
+
   /** Fetches referrer profile. */
   const fetchReferrerService = useCallback(async (): Promise<void> => {
     setIsLoading(true);
@@ -143,13 +152,18 @@ export default function ReferrerDetailPage() {
                   ) : null}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <p className="text-n-900 truncate text-base font-bold">
                       {referrer.name}
                     </p>
                     {referrer.isTopReferrer ? (
                       <span className="font-secondary rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
                         Top Referrer
+                      </span>
+                    ) : null}
+                    {categoryLabel ? (
+                      <span className="font-secondary rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                        {categoryLabel}
                       </span>
                     ) : null}
                   </div>
