@@ -108,13 +108,14 @@ export default function AdminDashboardPage() {
               Welcome, {user?.name ?? "Admin"}
             </p>
           </div>
-          <Image
-            src="/images/brand/brand-logo.png"
-            alt="GaadiWalo"
-            width={90}
-            height={30}
-            className="h-auto w-auto max-w-[80px] object-contain"
-          />
+
+        <Image
+              src="/images/brand/brand-logo.png"
+              alt="GaadiWalo"
+              width={80}
+              height={27}
+              className="h-auto w-auto max-w-[80px] object-contain"
+            />
         </div>
 
         {/* Period selector */}

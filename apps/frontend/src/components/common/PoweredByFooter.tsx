@@ -21,8 +21,8 @@ export function PoweredByFooter() {
       <Image
         src="/images/brand/brand-logo-dark.png"
         alt="GaadiWalo"
-        width={120}
-        height={40}
+        width={100}
+        height={33}
         className="h-auto w-full max-w-[100px] object-contain"
       />
     </div>

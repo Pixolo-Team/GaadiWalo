@@ -124,14 +124,14 @@ export default function LoginPage() {
     <section className="min-h-screen bg-white">
       <div className="flex min-h-screen flex-col">
         {/* Top hero — company logo */}
-        <div className="flex items-center justify-center bg-gradient-to-br from-blue-700 to-blue-900 px-6 py-18">
+        <div className="flex items-center justify-center bg-gradient-to-br from-blue-700 to-blue-900 px-6 py-8">
           <Image
-            src="/images/gt-auto-logo.png"
+            src="/images/gt-auto-logo-preview.png"
             alt="Company Logo"
-            width={160}
-            height={100}
             priority
-            className="h-auto w-full max-w-[140px] object-contain"
+            width={180}
+            height={113}
+            className="h-auto w-full max-w-[180px] object-contain"
           />
         </div>
 
