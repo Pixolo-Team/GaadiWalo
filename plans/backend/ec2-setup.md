@@ -9,11 +9,12 @@ It covers the server only. Deploying the backend container onto it is a separate
 | ---- | ------ | --- |
 | Region | `ap-south-1` (Mumbai) | Lowest latency for Indian users |
 | Instance | `t3.micro` (or `t2.micro`, whichever shows **Free tier eligible**) | 2 vCPU burst, 1 GB RAM, free-tier eligible |
-| OS | Ubuntu Server 24.04 LTS (x86_64) | Long-term support, simple Docker + Certbot install |
+| OS | Ubuntu Server 24.04 LTS or newer (x86_64); demo host runs 26.04 LTS | Long-term support, simple Docker + Certbot install |
 | Disk | 20 GB `gp3` | Fits Docker images + logs; free tier covers up to 30 GB |
 | Runtime | Docker (existing `apps/backend/Dockerfile`) behind Nginx | Same image as local/Render; Nginx handles HTTPS later |
-| Public IP | Elastic IP | Stable address for the frontend `.env` and DNS |
+| Public IP | Elastic IP | Same hourly price as an auto-assigned IP, but survives stop/start |
 | Bootstrap | [`apps/backend/deploy/ec2-bootstrap.sh`](../../apps/backend/deploy/ec2-bootstrap.sh) | Swap, Docker, Nginx, Certbot in one script |
+| Deploy | [`apps/backend/deploy/deploy-ec2.sh`](../../apps/backend/deploy/deploy-ec2.sh) | Build locally, stream image over SSH, restart container |
 
 Images are built on a laptop or CI (`--platform=linux/amd64`), never on the 1 GB instance.
 
@@ -74,7 +75,7 @@ EC2 -> Instances -> **Launch instances**:
 | Field | Value |
 | ----- | ----- |
 | Name | `gaadiwalo-backend-demo` |
-| AMI | Ubuntu Server 24.04 LTS (HVM), SSD Volume Type, 64-bit (x86) |
+| AMI | Ubuntu Server 24.04 LTS or newer (HVM), SSD Volume Type, 64-bit (x86) |
 | Instance type | `t3.micro` (pick `t2.micro` instead if only it shows **Free tier eligible**) |
 | Key pair | `gaadiwalo-demo` |
 
@@ -106,7 +107,12 @@ Click **Launch instance**. Bootstrap takes about 3-5 minutes after the instance 
 EC2 -> Network & Security -> **Elastic IPs** -> **Allocate Elastic IP address** -> Allocate.
 Select it -> **Actions** -> **Associate Elastic IP address** -> instance `gaadiwalo-backend-demo` -> Associate.
 
-Use this Elastic IP everywhere below as `<EC2_IP>`. The auto-assigned public IP is released, so it is not billed twice.
+Use this Elastic IP everywhere below as `<EC2_IP>`.
+
+- Public IPv4 is billed the same (USD 0.005/hour) whether it is auto-assigned or an attached Elastic IP. Associating
+  the Elastic IP releases the auto-assigned IP, so it is not billed twice.
+- Unlike the auto-assigned IP, the Elastic IP survives instance stop/start, so the frontend URL and DNS stay valid.
+- An Elastic IP **not** attached to a running instance still costs USD 0.005/hour. Release it when the demo ends.
 
 ## Step 5: Verify the Host
 
@@ -172,11 +178,66 @@ Then `ssh gaadiwalo-demo` is enough.
 - Certbot with the Nginx plugin (installed, not yet configured)
 - `/opt/gaadiwalo` (owner `ubuntu`, mode `0750`) for the backend `.env` file
 
-## Next Steps (Not Part of This Setup)
+## Deploying the Backend
 
-1. Deploy the backend container: build `linux/amd64` image, ship it (registry or `docker save | ssh docker load`),
-   create `/opt/gaadiwalo/.env` from `.env.example`, run it on `127.0.0.1:8080` with `--restart unless-stopped`.
-2. Point a domain/subdomain (e.g. `api.<domain>`) at `<EC2_IP>`, then run
-   `sudo certbot --nginx -d api.<domain>` for HTTPS.
-3. Set the Vercel frontend API base URL to the HTTPS backend URL (Vercel pages cannot call plain HTTP APIs).
-4. After the demo, terminate the instance and release the Elastic IP.
+[`apps/backend/deploy/deploy-ec2.sh`](../../apps/backend/deploy/deploy-ec2.sh) runs from the repository root on a
+laptop with Docker running. It:
+
+1. Builds `gaadiwalo-backend:<git short sha>` for `linux/amd64` from `apps/backend/Dockerfile`
+2. Streams the image to the host over SSH (`docker save | gzip | ssh docker load`), so no registry is needed
+3. Optionally uploads the backend env file to `/opt/gaadiwalo/.env` (mode `0600`)
+4. Replaces the `gaadiwalo-backend` container (`--restart unless-stopped`, bound to `127.0.0.1:8080` behind Nginx)
+5. Polls the container's `/health` on the host (`127.0.0.1:8080`) and prints container logs if it never becomes healthy
+
+First deploy, before secrets are available:
+
+```bash
+EC2_HOST=<EC2_IP> SSH_KEY=~/Documents/keys/product-backend-key.pem apps/backend/deploy/deploy-ec2.sh
+```
+
+Without an env file on the server, the script creates an empty `/opt/gaadiwalo/.env`. The container starts and
+`/health` responds, but Supabase-backed endpoints (auth, leads, admin) fail until secrets are added.
+
+Add or update secrets later by creating `apps/backend/.env` from `.env.example` (gitignored, plain `KEY=value` lines,
+no quotes, since Docker reads values literally) and re-running with `ENV_FILE`:
+
+```bash
+EC2_HOST=<EC2_IP> SSH_KEY=~/Documents/keys/product-backend-key.pem ENV_FILE=apps/backend/.env apps/backend/deploy/deploy-ec2.sh
+```
+
+Useful commands on the host:
+
+```bash
+docker logs -f gaadiwalo-backend
+```
+
+```bash
+docker ps --filter name=gaadiwalo-backend
+```
+
+## HTTPS (Let's Encrypt)
+
+The demo backend is served at `https://gadiwale-backend.pixolotechnologies.com` (DNS `A` record -> `3.6.163.232`).
+
+[`apps/backend/deploy/enable-https.sh`](../../apps/backend/deploy/enable-https.sh) sets the Nginx `server_name`, issues
+the certificate with `certbot --nginx`, adds an HTTP -> HTTPS redirect, and dry-runs renewal. Running it accepts the
+Let's Encrypt Subscriber Agreement.
+
+```bash
+EC2_HOST=<EC2_IP> SSH_KEY=~/Documents/keys/product-backend-key.pem BACKEND_DOMAIN=<hostname> apps/backend/deploy/enable-https.sh
+```
+
+- The domain must resolve to `<EC2_IP>` first, and security group ports 80 and 443 must be open (80 is used for
+  issuance and renewal challenges).
+- Optional `CERTBOT_EMAIL=<email>` registers expiry notices; the demo host is registered without an email.
+- Certificates last 90 days; the `certbot.timer` systemd timer renews them automatically and reloads Nginx.
+- The renewal dry-run waits a random delay of up to ~8 minutes when non-interactive. That pause is expected.
+- After HTTPS is enabled, Nginx only answers for the configured hostname. Requests to the bare IP return `404`, and
+  `/nginx-health` is reachable at `https://<hostname>/nginx-health`.
+
+## Next Steps
+
+1. Set the Vercel frontend API base URL to `https://gadiwale-backend.pixolotechnologies.com`.
+2. Upload the backend `.env` (see Deploying the Backend) so Supabase-backed endpoints work.
+3. After the demo, terminate the instance, release the Elastic IP, and delete the DNS record. the Vercel frontend API base URL to the HTTPS backend URL (Vercel pages cannot call plain HTTP APIs).
+3. After the demo, terminate the instance and release the Elastic IP.

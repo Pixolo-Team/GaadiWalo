@@ -18,7 +18,7 @@
 - Engineering requirements documented in `plans/project-spec.md`
 - Sales goals and staged roadmap documented in `plans/sales-project-spec.md`
 - Frontend step files imported and renamed to snake_case under `plans/frontend/implementation-steps/`
-- Backend sales-demo hosting plan: free-tier EC2 setup guide (`plans/backend/ec2-setup.md`) and host bootstrap script (`apps/backend/deploy/ec2-bootstrap.sh`); container deployment onto the host is pending
+- Backend sales-demo hosting plan: free-tier EC2 setup guide (`plans/backend/ec2-setup.md`) and host bootstrap script (`apps/backend/deploy/ec2-bootstrap.sh`); backend container deployed to the Mumbai demo host via `apps/backend/deploy/deploy-ec2.sh` and served over HTTPS at `https://gadiwale-backend.pixolotechnologies.com` (Let's Encrypt via `apps/backend/deploy/enable-https.sh`); Supabase secrets not yet uploaded to the server `.env`
 
 ## 3) What's next?
 

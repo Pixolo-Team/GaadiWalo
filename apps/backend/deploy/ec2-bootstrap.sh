@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# GaadiWalo backend - EC2 host bootstrap (Ubuntu 24.04 LTS, t3.micro / t2.micro).
+# GaadiWalo backend - EC2 host bootstrap (Ubuntu 24.04 LTS or newer, t3.micro / t2.micro).
 #
 # Prepares a fresh instance to run the backend container behind Nginx:
 #   - 2 GB swap (the micro instance only has 1 GB RAM)
