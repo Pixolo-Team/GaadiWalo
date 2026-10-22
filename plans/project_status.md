@@ -18,6 +18,7 @@
 - Engineering requirements documented in `plans/project-spec.md`
 - Sales goals and staged roadmap documented in `plans/sales-project-spec.md`
 - Frontend step files imported and renamed to snake_case under `plans/frontend/implementation-steps/`
+- Backend sales-demo hosting plan: free-tier EC2 setup guide (`plans/backend/ec2-setup.md`) and host bootstrap script (`apps/backend/deploy/ec2-bootstrap.sh`); container deployment onto the host is pending
 
 ## 3) What's next?
 
